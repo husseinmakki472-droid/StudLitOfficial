@@ -1235,182 +1235,117 @@ border-radius:10px;padding:10px 13px;font-size:12.5px;color:#f87171;margin:4px 0
 </div>
 
 <script>
+const API_BASE = '';  // Netlify functions are on same domain
 
-// ============================================================
-// BACKEND API BASE URL
-// ─────────────────────────────────────────────────────────────
-// After deploying to Render, replace the URL below with your
-// actual Render URL, e.g.:
-//   const API_BASE = ''; // Netlify functions are on the same domain — leave this empty
-// For local dev leave it as empty string.
-// ============================================================
-const API_BASE = '';  // ← PASTE YOUR RENDER URL HERE
 
-function showLoading(label) {
-  showResult(`<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;font-size:14px;color:var(--text-2)"><div style="width:20px;height:20px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0"></div>${escHtml(label||'Generating…')}</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style><div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:80px"></div></div>`);
-
-}
-function showErrorCard(msg) {
-showResult(`<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`);
-}
-function resultHeader(modeLabel, topic, meta=[]) {
-const tags = meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${escHtml(m.text)}</span>`).join(’’);
-return `<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${escHtml(modeLabel)}</div></div>`;
-}
-
-function renderSolveHTML(topic, d) {
-return `${resultHeader('Solve',topic,[{text:'📚 Explanation',accent:true},{text:'Step-by-step'}])} <div class="content-card"><div class="card-label">Quick Answer</div><div class="card-title">${escHtml(topic)}</div><div class="card-body">${escHtml(d.overview||'')}</div></div> <div class="content-card"><div class="card-label">Step-by-Step</div><div class="card-body"><ul>${(d.steps||[]).map(s=>`<li>${escHtml(s)}</li>`).join('')}</ul></div></div> ${d.mistake?`<div class="content-card"><div class="card-label">⚠️ Common Mistake</div><div class="card-body">${escHtml(d.mistake)}</div></div>`:''} ${d.example?`<div class="content-card"><div class="card-label">🌍 Real-World Example</div><div class="card-body">${escHtml(d.example)}</div></div>`:''} <div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz →</button></div>`;
-}
-function renderFlashcardsHTML(topic, d) {
-fcCards = d.cards || []; fcIndex = 0; fcFlipped = false;
-if (!fcCards.length) return renderErrorBlock(‘flashcards’,‘No cards returned.’);
-return `${resultHeader('Flashcards',topic,[{text:`🃏 ${fcCards.length} Cards`,accent:true}])} <div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div> <div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><div class="fc-arrow" onclick="fcNext()">→</div></div></div> <div class="flashcard" id="flashcard" onclick="fcFlip()"> <div class="fc-face fc-front"><div class="fc-indicator">Question</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal</div></div> <div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div> </div> <div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div></div>`;
-}
-function renderQuizHTML(topic, d) {
-quizData = d.questions || []; quizCurrent = 0; quizScore = 0;
-if (!quizData.length) return renderErrorBlock(‘quiz’,‘No questions returned.’);
-return `${resultHeader('Quiz',topic,[{text:`📝 ${quizData.length} Questions`,accent:true}])}<div id="quizBody">${renderQuizQuestion()}</div>`;
-}
-function renderSummaryHTML(topic, d) {
-return `${resultHeader('Summary',topic,[{text:'📋 Summary',accent:true}])} <div class="content-card"><div class="card-label">Overview</div><div class="card-body">${escHtml(d.overview||'')}</div></div> <div class="content-card"><div class="card-label">Key Takeaways</div><div class="card-body"><ul>${(d.takeaways||[]).map(t=>`<li>${escHtml(t)}</li>`).join('')}</ul></div></div> ${d.mustRemember?`<div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.06));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Must Remember</div><div class="card-body" style="font-size:15px;font-weight:500">${escHtml(d.mustRemember)}</div></div>`:''} ${d.examTip?`<div class="content-card"><div class="card-label">💡 Exam Tip</div><div class="card-body">${escHtml(d.examTip)}</div></div>`:''}`;
-}
-function renderNotesHTML(topic, d) {
-const vocab=(d.vocabulary||[]).map(v=>`<li><strong>${escHtml(v.term)}</strong> — ${escHtml(v.definition)}</li>`).join(’’);
-return `${resultHeader('Notes',topic,[{text:'📓 Notes',accent:true}])} <div class="content-card"><div class="card-label">Definition</div><div class="card-body">${escHtml(d.definition||'')}</div></div> ${vocab?`<div class="content-card"><div class="card-label">Vocabulary</div><div class="card-body"><ul>${vocab}</ul></div></div>`:''} ${d.memoryCue?`<div class="content-card"><div class="card-label">Memory Cue</div><div class="card-body"><div class="highlight-block">🧠 ${escHtml(d.memoryCue)}</div></div></div>`:''}`;
-}
-function renderTutorHTML(topic, d) {
-const msgs = d.messages||[];
-return `${resultHeader('Tutor Mode',topic,[{text:'🧑‍🏫 AI Tutor',accent:true}])} ${msgs.map((m,i)=>`<div class="tutor-msg" style="animation-delay:${i*.07}s"><div class="tutor-msg-wrap"><div class="tutor-avatar">🧑‍🏫</div><div class="tutor-bubble">${escHtml(m)}</div></div></div>`).join('')} ${d.followup?`<div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>${escHtml(d.followup)}</strong> Click to quiz yourself →</div>`:''}`;
-}
-function renderPracticeTestHTML(topic, d) {
-const qs=(d.questions||[]).map((q,i)=>`<div class="content-card"><div class="card-label">Question ${i+1}</div><div class="card-body">${escHtml(q)}</div></div>`).join(’’);
-const sc=(d.scoring||[]).map(s=>`<li>${escHtml(s)}</li>`).join(’’);
-return `${resultHeader('Practice Test',topic,[{text:'🎯 Practice Test',accent:true}])} <div class="test-header-strip"><div class="test-header-title">📋 ${escHtml(d.title||topic)}</div><div class="test-timer-badge">⏱ ~10 min</div></div> ${qs}${sc?`<div class="content-card" style="background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.2)"><div class="card-label" style="color:#4ade80">✅ Scoring</div><div class="card-body"><ul>${sc}</ul></div></div>`:''}`;
-}
-function renderFITBHTML(topic, d) {
-fitbData = d.items||[];
-if (!fitbData.length) return renderErrorBlock(‘fitb’,‘No sentences returned.’);
-const cards=fitbData.map((item,i)=>`<div class="content-card"><div class="card-label">Sentence ${i+1}</div><div class="fitb-sentence">${escHtml(item.before)}<span class="fitb-blank" id="fitb-${i}" onclick="revealFITB(${i},'${escHtml(item.blank).replace(/'/g,"\\'")}')">      </span>${escHtml(item.after)}</div></div>`).join(’’);
-return `${resultHeader('Fill in the Blanks',topic,[{text:'✏️ Fill Blanks',accent:true}])}${cards}`;
-}
-function renderKeyConceptsHTML(topic, d) {
-const items=(d.items||[]).map(c=>`<div class="concept-item"><div class="concept-term"><div class="concept-importance importance-${c.importance||'med'}"></div>${escHtml(c.term)}</div><div class="concept-def">${escHtml(c.def)}</div></div>`).join(’’);
-return `${resultHeader('Key Concepts',topic,[{text:'🔑 Concepts',accent:true}])}<div class="content-card">${items}</div>`;
-}
-function renderStudyPlanHTML(topic, d) {
-const steps=(d.steps||[]).map((s,i)=>`<div class="roadmap-step"><div class="step-num">${s.num}</div><div class="step-content"><div class="step-title">${escHtml(s.title)}</div><div class="step-desc">${escHtml(s.desc)}</div><div class="step-meta"><span class="step-tag">⏱ ${escHtml(s.time)}</span><span class="step-tag">→ ${escHtml(s.mode)}</span></div></div></div>`).join(’’);
-return `${resultHeader('Study Plan',topic,[{text:'📊 Study Plan',accent:true}])} <div class="content-card">${steps}</div> ${d.proTip?`<div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.07));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Pro Tip</div><div class="card-body">${escHtml(d.proTip)}</div></div>`:''}`;
-}
-
-let selectedModes=new Set([‘solve’]);
+let selectedModes=new Set(['solve']);
 let fcCards=[],fcIndex=0,fcFlipped=false;
 let quizData=[],quizCurrent=0,quizScore=0;
 let fitbData=[];
-let studySets=JSON.parse(localStorage.getItem(‘sl-sets’)||’[]’);
+let studySets=JSON.parse(localStorage.getItem('sl-sets')||'[]');
 let lastResult=null;
 let uploadedFiles=[];
-let podcastScript=’’,podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
+let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 
-(function(){const s=localStorage.getItem(‘sl-theme’)||‘dark’;document.documentElement.setAttribute(‘data-theme’,s)})();
-document.getElementById(‘themeToggle’).addEventListener(‘click’,()=>{const n=document.documentElement.getAttribute(‘data-theme’)===‘dark’?‘light’:‘dark’;document.documentElement.setAttribute(‘data-theme’,n);localStorage.setItem(‘sl-theme’,n)});
+(function(){const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s)})();
+document.getElementById('themeToggle').addEventListener('click',()=>{const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('sl-theme',n)});
 
-function switchTab(t){document.querySelectorAll(’.page-tab’).forEach(x=>x.classList.remove(‘active’));document.getElementById(‘tab-’+t).classList.add(‘active’);[‘home’,‘workspace’,‘writing’].forEach(v=>{const el=document.getElementById(‘view-’+v);if(el)el.classList.toggle(‘active’,v===t)});document.getElementById(‘view-home-extra’).classList.toggle(‘active’,t===‘home’);window.scrollTo({top:0,behavior:‘smooth’})}
+function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');['home','workspace','writing'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});document.getElementById('view-home-extra').classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'})}
 
-function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(selectedModes.size===1)return;selectedModes.delete(m);btn.classList.remove(‘selected’)}else{selectedModes.add(m);btn.classList.add(‘selected’)}updateModesBar()}
-function updateModesBar(){const bar=document.getElementById(‘selectedModesBar’);const names={solve:‘Solve’,flashcards:‘Flashcards’,quiz:‘Quiz’,summary:‘Summary’,notes:‘Notes’,tutor:‘Tutor’,practicetest:‘Test’,fitb:‘Fill’,keyconcepts:‘Concepts’,studyplan:‘Plan’};if(selectedModes.size>1){bar.style.display=‘flex’;bar.innerHTML=’<span style="font-size:11px;color:var(--text-3);font-weight:600">Generating:</span>’+[…selectedModes].map(m=>`<span class="sel-mode-tag">${names[m]||m}</span>`).join(’’)}else bar.style.display=‘none’}
-function selectMode(btn){document.querySelectorAll(’.mode-btn’).forEach(b=>b.classList.remove(‘selected’));btn.classList.add(‘selected’);selectedModes=new Set([btn.dataset.mode]);updateModesBar()}
+function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(selectedModes.size===1)return;selectedModes.delete(m);btn.classList.remove('selected')}else{selectedModes.add(m);btn.classList.add('selected')}updateModesBar()}
+function updateModesBar(){const bar=document.getElementById('selectedModesBar');const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'};if(selectedModes.size>1){bar.style.display='flex';bar.innerHTML='<span style="font-size:11px;color:var(--text-3);font-weight:600">Generating:</span>'+[...selectedModes].map(m=>`<span class="sel-mode-tag">${names[m]||m}</span>`).join('')}else bar.style.display='none'}
+function selectMode(btn){document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedModes=new Set([btn.dataset.mode]);updateModesBar()}
 
-function saveSets(){localStorage.setItem(‘sl-sets’,JSON.stringify(studySets))}
-function renderSets(filter=’’){const list=document.getElementById(‘setsList’);const empty=document.getElementById(‘setsEmpty’);const f=studySets.filter(s=>s.name.toLowerCase().includes(filter.toLowerCase()));if(!f.length){empty.style.display=‘block’;list.innerHTML=’’;list.appendChild(empty);return}empty.style.display=‘none’;list.innerHTML=f.map(set=>{const sess=set.sessions||[];const sh=sess.length?sess.map(s=>`<div class="session-item" onclick="loadSession('${set.id}','${s.id}')"><span class="session-mode-badge">${s.modes}</span><span class="session-title">${escHtml(s.topic)}</span><span class="session-date">${s.date}</span></div>`).join(’’):’<div style="padding:8px 10px;font-size:12px;color:var(--text-3)">No sessions yet</div>’;return`<div class="set-folder" id="folder-${set.id}"><div class="set-folder-header" onclick="toggleFolder('${set.id}')"><div class="set-folder-icon">📁</div><div class="set-folder-info"><div class="set-folder-name">${escHtml(set.name)}</div><div class="set-folder-meta">${sess.length} session${sess.length!==1?'s':''}</div></div><div class="set-folder-actions" onclick="event.stopPropagation()"><button class="set-action-btn" onclick="deleteSet('${set.id}')">🗑</button></div><div class="set-folder-arrow">▶</div></div><div class="set-sessions">${sh}</div></div>`}).join(’’);updateSaveSelect()}
-function toggleFolder(id){document.getElementById(‘folder-’+id)?.classList.toggle(‘open’)}
+function saveSets(){localStorage.setItem('sl-sets',JSON.stringify(studySets))}
+function renderSets(filter=''){const list=document.getElementById('setsList');const empty=document.getElementById('setsEmpty');const f=studySets.filter(s=>s.name.toLowerCase().includes(filter.toLowerCase()));if(!f.length){empty.style.display='block';list.innerHTML='';list.appendChild(empty);return}empty.style.display='none';list.innerHTML=f.map(set=>{const sess=set.sessions||[];const sh=sess.length?sess.map(s=>`<div class="session-item" onclick="loadSession('${set.id}','${s.id}')"><span class="session-mode-badge">${s.modes}</span><span class="session-title">${escHtml(s.topic)}</span><span class="session-date">${s.date}</span></div>`).join(''):'<div style="padding:8px 10px;font-size:12px;color:var(--text-3)">No sessions yet</div>';return`<div class="set-folder" id="folder-${set.id}"><div class="set-folder-header" onclick="toggleFolder('${set.id}')"><div class="set-folder-icon">📁</div><div class="set-folder-info"><div class="set-folder-name">${escHtml(set.name)}</div><div class="set-folder-meta">${sess.length} session${sess.length!==1?'s':''}</div></div><div class="set-folder-actions" onclick="event.stopPropagation()"><button class="set-action-btn" onclick="deleteSet('${set.id}')">🗑</button></div><div class="set-folder-arrow">▶</div></div><div class="set-sessions">${sh}</div></div>`}).join('');updateSaveSelect()}
+function toggleFolder(id){document.getElementById('folder-'+id)?.classList.toggle('open')}
 function filterSets(v){renderSets(v)}
-function openNewSetModal(){document.getElementById(‘newSetModal’).classList.add(‘open’);setTimeout(()=>document.getElementById(‘newSetName’).focus(),100)}
-function closeNewSetModal(){document.getElementById(‘newSetModal’).classList.remove(‘open’);document.getElementById(‘newSetName’).value=’’;document.getElementById(‘newSetDesc’).value=’’}
-function createNewSet(){const n=document.getElementById(‘newSetName’).value.trim();if(!n){document.getElementById(‘newSetName’).focus();return}studySets.unshift({id:Date.now().toString(),name:n,desc:document.getElementById(‘newSetDesc’).value.trim(),sessions:[]});saveSets();renderSets();closeNewSetModal()}
-function deleteSet(id){if(!confirm(‘Delete this study set?’))return;studySets=studySets.filter(s=>s.id!==id);saveSets();renderSets()}
-function updateSaveSelect(){const sel=document.getElementById(‘saveSetSelect’);sel.innerHTML=’<option value="">— choose a set —</option>’+studySets.map(s=>`<option value="${s.id}">${escHtml(s.name)}</option>`).join(’’)}
-function saveSession(){const id=document.getElementById(‘saveSetSelect’).value;if(!id||!lastResult)return;const set=studySets.find(s=>s.id===id);if(!set)return;set.sessions.unshift({id:Date.now().toString(),topic:lastResult.topic,modes:lastResult.modes,html:lastResult.html,date:new Date().toLocaleDateString()});saveSets();renderSets();const c=document.getElementById(‘saveConfirm’);c.classList.add(‘show’);setTimeout(()=>c.classList.remove(‘show’),2000)}
-function loadSession(sid,ssid){const set=studySets.find(s=>s.id===sid);if(!set)return;const sess=set.sessions.find(s=>s.id===ssid);if(!sess)return;switchTab(‘workspace’);showResult(sess.html);lastResult={topic:sess.topic,modes:sess.modes,html:sess.html};document.getElementById(‘saveBar’).classList.add(‘visible’)}
+function openNewSetModal(){document.getElementById('newSetModal').classList.add('open');setTimeout(()=>document.getElementById('newSetName').focus(),100)}
+function closeNewSetModal(){document.getElementById('newSetModal').classList.remove('open');document.getElementById('newSetName').value='';document.getElementById('newSetDesc').value=''}
+function createNewSet(){const n=document.getElementById('newSetName').value.trim();if(!n){document.getElementById('newSetName').focus();return}studySets.unshift({id:Date.now().toString(),name:n,desc:document.getElementById('newSetDesc').value.trim(),sessions:[]});saveSets();renderSets();closeNewSetModal()}
+function deleteSet(id){if(!confirm('Delete this study set?'))return;studySets=studySets.filter(s=>s.id!==id);saveSets();renderSets()}
+function updateSaveSelect(){const sel=document.getElementById('saveSetSelect');sel.innerHTML='<option value="">— choose a set —</option>'+studySets.map(s=>`<option value="${s.id}">${escHtml(s.name)}</option>`).join('')}
+function saveSession(){const id=document.getElementById('saveSetSelect').value;if(!id||!lastResult)return;const set=studySets.find(s=>s.id===id);if(!set)return;set.sessions.unshift({id:Date.now().toString(),topic:lastResult.topic,modes:lastResult.modes,html:lastResult.html,date:new Date().toLocaleDateString()});saveSets();renderSets();const c=document.getElementById('saveConfirm');c.classList.add('show');setTimeout(()=>c.classList.remove('show'),2000)}
+function loadSession(sid,ssid){const set=studySets.find(s=>s.id===sid);if(!set)return;const sess=set.sessions.find(s=>s.id===ssid);if(!sess)return;switchTab('workspace');showResult(sess.html);lastResult={topic:sess.topic,modes:sess.modes,html:sess.html};document.getElementById('saveBar').classList.add('visible')}
 
-function showPricingModal(){document.getElementById(‘pricingModal’).classList.add(‘open’)}
-function hidePricingModal(){document.getElementById(‘pricingModal’).classList.remove(‘open’)}
-function closePricingModal(e){if(e.target===document.getElementById(‘pricingModal’))hidePricingModal()}
-function startTrial(){hidePricingModal();switchTab(‘workspace’)}
+function showPricingModal(){document.getElementById('pricingModal').classList.add('open')}
+function hidePricingModal(){document.getElementById('pricingModal').classList.remove('open')}
+function closePricingModal(e){if(e.target===document.getElementById('pricingModal'))hidePricingModal()}
+function startTrial(){hidePricingModal();switchTab('workspace')}
 
-function updateCharCount(){document.getElementById(‘charCount’).textContent=`${document.getElementById('studyInput').value.length} / 2000`}
-function useChip(el){document.getElementById(‘studyInput’).value=el.textContent.trim();updateCharCount()}
-function clearInput(){document.getElementById(‘studyInput’).value=’’;uploadedFiles=[];renderFileList();updateCharCount();showEmpty()}
-const randomPrompts=[‘The water cycle’,‘Quadratic equations’,‘World War II causes’,“Shakespeare’s Hamlet”,‘The human digestive system’,‘DNA replication’,‘The French Revolution’];
-function randomPrompt(){document.getElementById(‘studyInput’).value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount()}
-function previewMode(mode){selectMode(document.querySelector(`[data-mode="${mode}"]`));if(!document.getElementById(‘studyInput’).value){document.getElementById(‘studyInput’).value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount()}switchTab(‘workspace’);generate()}
-function demoMode(){document.getElementById(‘studyInput’).value=‘Photosynthesis’;updateCharCount();selectMode(document.querySelector(’[data-mode=“flashcards”]’));switchTab(‘workspace’);setTimeout(generate,300)}
+function updateCharCount(){document.getElementById('charCount').textContent=`${document.getElementById('studyInput').value.length} / 2000`}
+function useChip(el){document.getElementById('studyInput').value=el.textContent.trim();updateCharCount()}
+function clearInput(){document.getElementById('studyInput').value='';uploadedFiles=[];renderFileList();updateCharCount();showEmpty()}
+const randomPrompts=['The water cycle','Quadratic equations','World War II causes',"Shakespeare's Hamlet",'The human digestive system','DNA replication','The French Revolution'];
+function randomPrompt(){document.getElementById('studyInput').value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount()}
+function previewMode(mode){selectMode(document.querySelector(`[data-mode="${mode}"]`));if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount()}switchTab('workspace');generate()}
+function demoMode(){document.getElementById('studyInput').value='Photosynthesis';updateCharCount();selectMode(document.querySelector('[data-mode="flashcards"]'));switchTab('workspace');setTimeout(generate,300)}
 
-function showEmpty(){document.getElementById(‘emptyState’).style.display=‘flex’;document.getElementById(‘resultArea’).style.display=‘none’;document.getElementById(‘saveBar’).classList.remove(‘visible’)}
-function showResult(html){document.getElementById(‘emptyState’).style.display=‘none’;const r=document.getElementById(‘resultArea’);r.style.display=‘block’;r.innerHTML=html}
-function getInput(){return document.getElementById(‘studyInput’).value.trim()}
-function topicFromInput(raw){if(!raw)return’your topic’;const w=raw.split(/\s+/).slice(0,6).join(’ ‘);return w.length<raw.length?w+’…’:w}
-function escHtml(s){return String(s).replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’)}
-function resultHeader(mode,topic,meta=[]){const names={solve:‘Solve’,flashcards:‘Flashcards’,quiz:‘Quiz’,summary:‘Summary’,notes:‘Notes’,tutor:‘Tutor Mode’,practicetest:‘Practice Test’,fitb:‘Fill in the Blanks’,keyconcepts:‘Key Concepts’,studyplan:‘Study Plan’};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join(’’);return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${names[mode]||mode}</div></div>`}
+function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible')}
+function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html}
+function getInput(){return document.getElementById('studyInput').value.trim()}
+function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${names[mode]||mode}</div></div>`}
 function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
 
 async function generate() {
-const input = getInput();
-if (!input && !uploadedFiles.length) {
-const ta = document.getElementById(‘studyInput’);
-ta.focus(); ta.style.borderColor=’#f87171’; ta.style.boxShadow=‘0 0 0 3px rgba(248,113,113,0.15)’;
-setTimeout(()=>{ta.style.borderColor=’’;ta.style.boxShadow=’’;}, 1800); return;
-}
-const modes = […selectedModes];
-const btn = document.getElementById(‘generateBtn’) || document.getElementById(‘generateBtn2’);
-if (btn) { btn.disabled = true; btn.textContent = ‘⏳ Generating…’; }
-showLoading(‘Generating with AI — this may take a few seconds…’);
-const filesPayload = uploadedFiles.map(f => ({ name: f.name, type: f.type, textContent: f.textContent || null }));
-try {
-const res = await fetch(’/.netlify/functions/study’, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ topic: input, modes, files: filesPayload, urls: uploadedUrls })
-});
-const data = await res.json();
-if (!res.ok || data.error) { showErrorCard(data.error || `Server error ${res.status}`); return; }
-const topic = data.topic || input || ‘Study Set’;
-let combined = ‘’;
-const modeLabel = modes.map(m => ({solve:‘Solve’,flashcards:‘Cards’,quiz:‘Quiz’,summary:‘Summary’,notes:‘Notes’,tutor:‘Tutor’,practicetest:‘Test’,fitb:‘Fill’,keyconcepts:‘Concepts’,studyplan:‘Plan’}[m]||m)).join(’+’);
-modes.forEach((mode, i) => {
-if (modes.length > 1) combined += `<div style="margin-bottom:32px;${i>0?'border-top:1px solid var(--border);padding-top:24px':''}">`;
-const modeData = data.results?.[mode];
-if (!modeData) { combined += renderErrorBlock(mode, ‘No data returned for this mode.’); }
-else {
-switch(mode) {
-case ‘solve’:        combined += renderSolveHTML(topic, modeData); break;
-case ‘flashcards’:   combined += renderFlashcardsHTML(topic, modeData); break;
-case ‘quiz’:         combined += renderQuizHTML(topic, modeData); break;
-case ‘summary’:      combined += renderSummaryHTML(topic, modeData); break;
-case ‘notes’:        combined += renderNotesHTML(topic, modeData); break;
-case ‘tutor’:        combined += renderTutorHTML(topic, modeData); break;
-case ‘practicetest’: combined += renderPracticeTestHTML(topic, modeData); break;
-case ‘fitb’:         combined += renderFITBHTML(topic, modeData); break;
-case ‘keyconcepts’:  combined += renderKeyConceptsHTML(topic, modeData); break;
-case ‘studyplan’:    combined += renderStudyPlanHTML(topic, modeData); break;
-}
-}
-if (modes.length > 1) combined += ‘</div>’;
-});
-showResult(combined);
-lastResult = { topic, modes: modeLabel, html: combined };
-if (studySets.length > 0) { document.getElementById(‘saveBar2’) && (document.getElementById(‘saveBar2’).classList.add(‘visible’)); updateSaveSelect(); }
-} catch(err) { showErrorCard(‘Network error: ’ + err.message + ’ — Is your backend running?’); }
-finally { if (btn) { btn.disabled = false; btn.textContent = ‘⚡ Generate Study Set’; } }
+  const input = getInput();
+  if (!input && !uploadedFiles.length) {
+    const ta = document.getElementById('studyInput');
+    if(ta){ta.focus();ta.style.borderColor='#f87171';setTimeout(()=>{ta.style.borderColor='';},1800);}
+    return;
+  }
+  const modes = [...selectedModes];
+  const btn = document.getElementById('generateBtn')||document.getElementById('generateBtn2');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generating…';}
+  showLoading('Generating with AI…');
+  const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,textContent:f.textContent||null}));
+  try {
+    const res = await fetch('/.netlify/functions/study',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls})
+    });
+    const data = await res.json();
+    if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Server error')+'</div></div>');return;}
+    const topic = data.topic||input||'Study Set';
+    const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
+    let combined='';
+    modes.forEach((mode,i)=>{
+      if(modes.length>1)combined+=`<div style="margin-bottom:32px;${i>0?'border-top:1px solid var(--border);padding-top:24px':''}">`;
+      const d=data.results?.[mode];
+      if(!d){combined+='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned.</div></div>';}
+      else{
+        switch(mode){
+          case 'solve':combined+=renderSolveHTML(topic,d);break;
+          case 'flashcards':combined+=renderFlashcardsHTML(topic,d);break;
+          case 'quiz':combined+=renderQuizHTML(topic,d);break;
+          case 'summary':combined+=renderSummaryHTML(topic,d);break;
+          case 'notes':combined+=renderNotesHTML(topic,d);break;
+          case 'tutor':combined+=renderTutorHTML(topic,d);break;
+          case 'practicetest':combined+=renderPracticeTestHTML(topic,d);break;
+          case 'fitb':combined+=renderFITBHTML(topic,d);break;
+          case 'keyconcepts':combined+=renderKeyConceptsHTML(topic,d);break;
+          case 'studyplan':combined+=renderStudyPlanHTML(topic,d);break;
+        }
+      }
+      if(modes.length>1)combined+='</div>';
+    });
+    showResult(combined);
+    lastResult={topic,modes:modeLabel,html:combined};
+    updateSaveSelect();
+  } catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
+  finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generate Study Set';}}
 }
 function renderErrorBlock(mode, msg) { return `<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml(msg)}</div></div>`; }
-function switchAndGenerate(mode) { selectSingleMode(mode); generate(); }
+
 function switchAndGenerate(mode){selectMode(document.querySelector(`[data-mode="${mode}"]`));generate()}
 
 function renderSolveHTML(input){const t=topicFromInput(input);return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true},{text:'Step-by-step'}])}<div class="content-card" style="animation-delay:0s"><div class="card-label">Quick Answer</div><div class="card-title">${escHtml(t)}</div><div class="card-body"><strong>${escHtml(t)}</strong> is a fundamental concept with interconnected principles that explain how and why things happen the way they do.</div></div><div class="content-card" style="animation-delay:.05s"><div class="card-label">Step-by-Step Breakdown</div><div class="card-body"><ul><li><strong>Step 1 — Foundation:</strong> Understand the basic premise.</li><li><strong>Step 2 — Mechanism:</strong> Trace how the key process works.</li><li><strong>Step 3 — Examples:</strong> Anchor the concept in something real.</li><li><strong>Step 4 — Connections:</strong> Link it to related ideas.</li></ul></div></div><div class="content-card" style="animation-delay:.1s"><div class="card-label">⚠️ Common Mistake</div><div class="card-body">Students often confuse the surface definition with the deeper mechanism. Understand <em>why</em> it works, not just <em>what</em> it is.</div></div><div class="content-card" style="animation-delay:.15s"><div class="card-label">🌍 Real-World Example</div><div class="card-body">Think of <strong>${escHtml(t)}</strong> like a recipe — ingredients are components, instructions are the process, and the dish is the outcome.<div class="highlight-block">📌 The ability to explain this to someone else is the strongest sign you've truly understood it.</div></div></div><div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz me →</button></div>`}
 
 function renderFlashcardsHTML(input){const t=topicFromInput(input);fcCards=[{q:`What is the core definition of ${t}?`,a:`${t} refers to the fundamental process or concept that explains a specific mechanism in its domain.`},{q:`What are the key components of ${t}?`,a:`The main components include the initiating factor, the central process, and the observable outcome.`},{q:`Why is ${t} important?`,a:`It underpins many related concepts and has direct real-world applications.`},{q:`What is a common misconception about ${t}?`,a:`Many students confuse the surface outcome with the underlying mechanism.`},{q:`How does ${t} connect to related concepts?`,a:`It shares key characteristics with adjacent topics and serves as a prerequisite for more complex phenomena.`},{q:`Give one real-world application of ${t}.`,a:`Practical examples appear in everyday systems — from biology to engineering — wherever this principle is at play.`}];fcIndex=0;fcFlipped=false;return`${resultHeader('flashcards',t,[{text:'🃏 6 Cards',accent:true},{text:'Active Recall'}])}<div id="fcContainer"><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div><div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><div class="fc-arrow" onclick="fcNext()">→</div></div></div><div class="flashcard" id="flashcard" onclick="fcFlip()"><div class="fc-face fc-front"><div class="fc-indicator">Question</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal answer</div></div><div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div></div><div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div></div>`}
 
-function renderQuizHTML(input){const t=topicFromInput(input);quizData=[{q:`Which best describes ${t}?`,opts:[‘A process involving energy transformation’,‘The study of ancient structures’,`A fundamental mechanism in ${t}'s domain`,‘A statistical method’],correct:2,difficulty:‘Medium’},{q:`What is a key characteristic of ${t}?`,opts:[‘Only applies in controlled environments’,‘Has measurable, observable components’,‘Was disproved in recent research’,‘Unrelated to real-world applications’],correct:1,difficulty:‘Easy’},{q:`Which scenario best demonstrates ${t}?`,opts:[‘A random event with no pattern’,‘A repeating cycle driven by internal mechanisms’,‘A one-time occurrence’,‘An external force with no internal cause’],correct:1,difficulty:‘Hard’},{q:`What mistake should you avoid when studying ${t}?`,opts:[‘Memorizing the mechanism’,‘Confusing the outcome with the cause’,‘Using examples’,‘Connecting it to related topics’],correct:1,difficulty:‘Medium’}];quizCurrent=0;quizScore=0;return`${resultHeader('quiz',t,[{text:'📝 4 Questions',accent:true},{text:'Multiple Choice'}])}<div id="quizBody">${renderQuizQuestion()}</div>`}
+function renderQuizHTML(input){const t=topicFromInput(input);quizData=[{q:`Which best describes ${t}?`,opts:['A process involving energy transformation','The study of ancient structures',`A fundamental mechanism in ${t}'s domain`,'A statistical method'],correct:2,difficulty:'Medium'},{q:`What is a key characteristic of ${t}?`,opts:['Only applies in controlled environments','Has measurable, observable components','Was disproved in recent research','Unrelated to real-world applications'],correct:1,difficulty:'Easy'},{q:`Which scenario best demonstrates ${t}?`,opts:['A random event with no pattern','A repeating cycle driven by internal mechanisms','A one-time occurrence','An external force with no internal cause'],correct:1,difficulty:'Hard'},{q:`What mistake should you avoid when studying ${t}?`,opts:['Memorizing the mechanism','Confusing the outcome with the cause','Using examples','Connecting it to related topics'],correct:1,difficulty:'Medium'}];quizCurrent=0;quizScore=0;return`${resultHeader('quiz',t,[{text:'📝 4 Questions',accent:true},{text:'Multiple Choice'}])}<div id="quizBody">${renderQuizQuestion()}</div>`}
 
 function renderSummaryHTML(input){const t=topicFromInput(input);return`${resultHeader('summary',t,[{text:'📋 Summary',accent:true},{text:'Exam-Ready'}])}<div class="content-card"><div class="card-label">Overview</div><div class="card-body"><strong>${escHtml(t)}</strong> is a foundational concept describing a relationship between inputs and outcomes following consistent, observable rules.</div></div><div class="content-card"><div class="card-label">Key Takeaways</div><div class="card-body"><ul><li>The core mechanism involves multiple interdependent steps</li><li>Context determines how it applies in different scenarios</li><li>It connects to several adjacent topics</li><li>Real-world applications are broad</li></ul></div></div><div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.06));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Must Remember</div><div class="card-body" style="font-size:15px;font-weight:500"><strong>Cause precedes effect.</strong> Trace the sequence from trigger to outcome.</div></div><div class="content-card"><div class="card-label">💡 Exam Tip</div><div class="card-body">Look for keywords like "explain," "describe the process," or "give an example." Definition alone won't score full marks.</div></div>`}
 
@@ -1420,123 +1355,119 @@ function renderTutorHTML(input){const t=topicFromInput(input);const msgs=[`Hey! 
 
 function renderPracticeTestHTML(input){const t=topicFromInput(input);return`${resultHeader('practicetest',t,[{text:'🎯 Practice Test',accent:true},{text:'4 Questions'}])}<div class="test-header-strip"><div class="test-header-title">📋 ${escHtml(t)} — Practice Assessment</div><div class="test-timer-badge">⏱ ~10 min</div></div><div class="content-card"><div class="card-label">Section 1 — Short Answer</div><div class="card-body"><strong>Q1.</strong> Define <strong>${escHtml(t)}</strong> in your own words and identify its two most important components.<div class="highlight-block">Check: Does your answer include a definition AND two components?</div></div></div><div class="content-card"><div class="card-label">Section 2 — Analysis</div><div class="card-body"><strong>Q2.</strong> Explain why <strong>${escHtml(t)}</strong> is important. Include at least one real-world example.<br><br><strong>Q3.</strong> What conditions are required for ${escHtml(t)} to occur?</div></div><div class="content-card"><div class="card-label">Section 3 — Application</div><div class="card-body"><strong>Q4.</strong> A student claims ${escHtml(t)} and a closely related process are identical. Do you agree? Justify your reasoning.</div></div><div class="content-card" style="background:linear-gradient(135deg,rgba(74,222,128,0.06),rgba(74,222,128,0.03));border-color:rgba(74,222,128,0.2)"><div class="card-label" style="color:#4ade80">✅ Scoring Guide</div><div class="card-body"><ul><li>Q1 — 2 pts: definition + components</li><li>Q2 — 2 pts: importance + example</li><li>Q3 — 2 pts: conditions + consequence</li><li>Q4 — 4 pts: depth, accuracy, evidence</li></ul></div></div>`}
 
-function renderFITBHTML(input){const t=topicFromInput(input);fitbData=[{before:`${t} is a process that involves the conversion of `,blank:‘energy’,after:’ from one form to another.’},{before:‘The key inputs required are ‘,blank:‘specific substrates’,after:’ that initiate the cycle.’},{before:‘The main output of the process is a ‘,blank:‘measurable product’,after:’ used by the system.’},{before:‘When conditions are disrupted, the process enters a state of ‘,blank:‘inhibition’,after:’, slowing or stopping.’},{before:`A real-world example of ${t} can be seen in `,blank:‘everyday biological systems’,after:’ all around us.’}];const cards=fitbData.map((item,i)=>`<div class="content-card" style="animation-delay:${i*.05}s"><div class="card-label">Sentence ${i+1} of ${fitbData.length}</div><div class="fitb-sentence">${escHtml(item.before)}<span class="fitb-blank" id="fitb-${i}" onclick="revealFITB(${i},'${escHtml(item.blank)}')">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>${escHtml(item.after)}</div><div style="font-size:12px;color:var(--text-3)">Tap the blank to reveal</div></div>`).join(’’);return`${resultHeader('fitb',t,[{text:'✏️ Fill in the Blanks',accent:true},{text:'5 Sentences'}])}${cards}`}
+function renderFITBHTML(input){const t=topicFromInput(input);fitbData=[{before:`${t} is a process that involves the conversion of `,blank:'energy',after:' from one form to another.'},{before:'The key inputs required are ',blank:'specific substrates',after:' that initiate the cycle.'},{before:'The main output of the process is a ',blank:'measurable product',after:' used by the system.'},{before:'When conditions are disrupted, the process enters a state of ',blank:'inhibition',after:', slowing or stopping.'},{before:`A real-world example of ${t} can be seen in `,blank:'everyday biological systems',after:' all around us.'}];const cards=fitbData.map((item,i)=>`<div class="content-card" style="animation-delay:${i*.05}s"><div class="card-label">Sentence ${i+1} of ${fitbData.length}</div><div class="fitb-sentence">${escHtml(item.before)}<span class="fitb-blank" id="fitb-${i}" onclick="revealFITB(${i},'${escHtml(item.blank)}')">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>${escHtml(item.after)}</div><div style="font-size:12px;color:var(--text-3)">Tap the blank to reveal</div></div>`).join('');return`${resultHeader('fitb',t,[{text:'✏️ Fill in the Blanks',accent:true},{text:'5 Sentences'}])}${cards}`}
 
-function renderKeyConceptsHTML(input){const t=topicFromInput(input);const concepts=[{term:t,def:‘The central subject — a well-defined process with observable inputs, mechanisms, and outputs.’,importance:‘high’},{term:‘Mechanism’,def:‘The internal “how” — the sequence of steps that produces the result.’,importance:‘high’},{term:‘Substrate / Reactant’,def:‘The raw material or input that the mechanism acts upon.’,importance:‘med’},{term:‘Product / Output’,def:‘The measurable result or transformation at the end of the process.’,importance:‘high’},{term:‘Catalyst’,def:‘An agent that speeds up or enables the process without being consumed.’,importance:‘med’},{term:‘Regulation’,def:‘Feedback loops or conditions that control the rate and scale.’,importance:‘med’},{term:‘Inhibition’,def:‘Factors that slow down or stop the process under specific conditions.’,importance:‘low’}];const items=concepts.map(c=>`<div class="concept-item"><div class="concept-term"><div class="concept-importance importance-${c.importance}"></div>${escHtml(c.term)}</div><div class="concept-def">${escHtml(c.def)}</div></div>`).join(’’);return`${resultHeader('keyconcepts',t,[{text:'🔑 Key Concepts',accent:true},{text:'7 Terms'}])}<div class="content-card"><div class="card-label">Importance <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);margin-left:12px"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#f87171"></span>Core <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#fbbf24;margin-left:8px"></span>Supporting <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#4ade80;margin-left:8px"></span>Contextual</span></div>${items}</div>`}
+function renderKeyConceptsHTML(input){const t=topicFromInput(input);const concepts=[{term:t,def:'The central subject — a well-defined process with observable inputs, mechanisms, and outputs.',importance:'high'},{term:'Mechanism',def:'The internal "how" — the sequence of steps that produces the result.',importance:'high'},{term:'Substrate / Reactant',def:'The raw material or input that the mechanism acts upon.',importance:'med'},{term:'Product / Output',def:'The measurable result or transformation at the end of the process.',importance:'high'},{term:'Catalyst',def:'An agent that speeds up or enables the process without being consumed.',importance:'med'},{term:'Regulation',def:'Feedback loops or conditions that control the rate and scale.',importance:'med'},{term:'Inhibition',def:'Factors that slow down or stop the process under specific conditions.',importance:'low'}];const items=concepts.map(c=>`<div class="concept-item"><div class="concept-term"><div class="concept-importance importance-${c.importance}"></div>${escHtml(c.term)}</div><div class="concept-def">${escHtml(c.def)}</div></div>`).join('');return`${resultHeader('keyconcepts',t,[{text:'🔑 Key Concepts',accent:true},{text:'7 Terms'}])}<div class="content-card"><div class="card-label">Importance <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);margin-left:12px"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#f87171"></span>Core <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#fbbf24;margin-left:8px"></span>Supporting <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#4ade80;margin-left:8px"></span>Contextual</span></div>${items}</div>`}
 
-function renderStudyPlanHTML(input){const t=topicFromInput(input);const steps=[{num:1,title:‘Get the overview’,desc:`Skim your notes on ${t} once. Goal: understand the big picture.`,time:‘15 min’,mode:‘Summary’},{num:2,title:‘Learn the mechanism’,desc:‘Use Solve or Tutor Mode. Ask yourself: “can I explain this without looking?”’,time:‘20 min’,mode:‘Tutor Mode’},{num:3,title:‘Test with flashcards’,desc:‘Go through the deck twice. Sort into Easy / Review / Hard.’,time:‘15 min’,mode:‘Flashcards’},{num:4,title:‘Reinforce with a quiz’,desc:‘Take the Quiz. Under 75%? Go back to Step 2.’,time:‘10 min’,mode:‘Quiz’},{num:5,title:‘Simulate the exam’,desc:‘Run through Practice Test with fully written answers.’,time:‘20 min’,mode:‘Practice Test’}];const roadmap=steps.map((s,i)=>`<div class="roadmap-step" style="animation-delay:${i*.07}s"><div class="step-num">${s.num}</div><div class="step-content"><div class="step-title">${s.title}</div><div class="step-desc">${s.desc}</div><div class="step-meta"><span class="step-tag">⏱ ${s.time}</span><span class="step-tag">→ ${s.mode}</span></div></div></div>`).join(’’);return`${resultHeader('studyplan',t,[{text:'📊 Study Plan',accent:true},{text:'5 Steps'}])}<div class="content-card" style="padding-bottom:8px"><div class="card-label">Your Roadmap for ${escHtml(t)}</div>${roadmap}</div><div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.07));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Pro Tip</div><div class="card-body">Don't do all 5 steps in one sitting. Spread them over 3 days. Spacing makes the difference.</div></div>`}
+function renderStudyPlanHTML(input){const t=topicFromInput(input);const steps=[{num:1,title:'Get the overview',desc:`Skim your notes on ${t} once. Goal: understand the big picture.`,time:'15 min',mode:'Summary'},{num:2,title:'Learn the mechanism',desc:'Use Solve or Tutor Mode. Ask yourself: "can I explain this without looking?"',time:'20 min',mode:'Tutor Mode'},{num:3,title:'Test with flashcards',desc:'Go through the deck twice. Sort into Easy / Review / Hard.',time:'15 min',mode:'Flashcards'},{num:4,title:'Reinforce with a quiz',desc:'Take the Quiz. Under 75%? Go back to Step 2.',time:'10 min',mode:'Quiz'},{num:5,title:'Simulate the exam',desc:'Run through Practice Test with fully written answers.',time:'20 min',mode:'Practice Test'}];const roadmap=steps.map((s,i)=>`<div class="roadmap-step" style="animation-delay:${i*.07}s"><div class="step-num">${s.num}</div><div class="step-content"><div class="step-title">${s.title}</div><div class="step-desc">${s.desc}</div><div class="step-meta"><span class="step-tag">⏱ ${s.time}</span><span class="step-tag">→ ${s.mode}</span></div></div></div>`).join('');return`${resultHeader('studyplan',t,[{text:'📊 Study Plan',accent:true},{text:'5 Steps'}])}<div class="content-card" style="padding-bottom:8px"><div class="card-label">Your Roadmap for ${escHtml(t)}</div>${roadmap}</div><div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.07));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Pro Tip</div><div class="card-body">Don't do all 5 steps in one sitting. Spread them over 3 days. Spacing makes the difference.</div></div>`}
 
-function fcFlip(){fcFlipped=!fcFlipped;document.getElementById(‘flashcard’).classList.toggle(‘flipped’,fcFlipped)}
-function fcUpdateCard(){const c=fcCards[fcIndex];document.getElementById(‘fcFrontText’).textContent=c.q;document.getElementById(‘fcBackText’).textContent=c.a;document.getElementById(‘fcCount’).textContent=`Card ${fcIndex+1} of ${fcCards.length}`;document.getElementById(‘fcBar’).style.width=`${(fcIndex+1)/fcCards.length*100}%`;fcFlipped=false;document.getElementById(‘flashcard’).classList.remove(‘flipped’)}
+function fcFlip(){fcFlipped=!fcFlipped;document.getElementById('flashcard').classList.toggle('flipped',fcFlipped)}
+function fcUpdateCard(){const c=fcCards[fcIndex];document.getElementById('fcFrontText').textContent=c.q;document.getElementById('fcBackText').textContent=c.a;document.getElementById('fcCount').textContent=`Card ${fcIndex+1} of ${fcCards.length}`;document.getElementById('fcBar').style.width=`${(fcIndex+1)/fcCards.length*100}%`;fcFlipped=false;document.getElementById('flashcard').classList.remove('flipped')}
 function fcNext(){fcIndex=(fcIndex+1)%fcCards.length;fcUpdateCard()}
 function fcPrev(){fcIndex=(fcIndex-1+fcCards.length)%fcCards.length;fcUpdateCard()}
-function fcConfidence(level){const map={easy:’#4ade80’,review:’#fbbf24’,hard:’#f87171’};const card=document.getElementById(‘flashcard’);card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;setTimeout(()=>{card.style.boxShadow=’’;fcNext()},400)}
+function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
 
-function renderQuizQuestion(){if(quizCurrent>=quizData.length)return renderQuizScore();const q=quizData[quizCurrent];const letters=[‘A’,‘B’,‘C’,‘D’];return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div class="quiz-difficulty">${q.difficulty}</div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`}
-function quizSelect(el,picked,correct){document.querySelectorAll(’.quiz-option’).forEach(o=>{o.onclick=null});const fb=document.getElementById(‘quizFeedback’);if(picked===correct){el.classList.add(‘correct’);quizScore++;fb.textContent=‘✅ Correct!’;fb.className=‘quiz-feedback correct’}else{el.classList.add(‘wrong’);document.querySelectorAll(’.quiz-option’)[correct].classList.add(‘correct’);fb.textContent=`✗ Correct: "${quizData[quizCurrent].opts[correct]}"`;fb.className=‘quiz-feedback wrong’}setTimeout(()=>{quizCurrent++;document.getElementById(‘quizBody’).innerHTML=renderQuizQuestion()},1600)}
-function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);const msg=pct>=75?‘🎉 Great work!’:pct>=50?‘👍 Solid effort!’:‘📚 Keep studying!’;return`<div class="quiz-score-section"><div class="quiz-score-ring" style="--pct:${pct}%"><div class="quiz-score-num">${pct}%</div></div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px">${msg}</div><div style="font-size:14px;color:var(--text-3);margin-bottom:24px">You got ${quizScore} of ${quizData.length} correct</div><button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="generate()">Retake Quiz</button></div>`}
+function renderQuizQuestion(){if(quizCurrent>=quizData.length)return renderQuizScore();const q=quizData[quizCurrent];const letters=['A','B','C','D'];return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div class="quiz-difficulty">${q.difficulty}</div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`}
+function quizSelect(el,picked,correct){document.querySelectorAll('.quiz-option').forEach(o=>{o.onclick=null});const fb=document.getElementById('quizFeedback');if(picked===correct){el.classList.add('correct');quizScore++;fb.textContent='✅ Correct!';fb.className='quiz-feedback correct'}else{el.classList.add('wrong');document.querySelectorAll('.quiz-option')[correct].classList.add('correct');fb.textContent=`✗ Correct: "${quizData[quizCurrent].opts[correct]}"`;fb.className='quiz-feedback wrong'}setTimeout(()=>{quizCurrent++;document.getElementById('quizBody').innerHTML=renderQuizQuestion()},1600)}
+function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);const msg=pct>=75?'🎉 Great work!':pct>=50?'👍 Solid effort!':'📚 Keep studying!';return`<div class="quiz-score-section"><div class="quiz-score-ring" style="--pct:${pct}%"><div class="quiz-score-num">${pct}%</div></div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px">${msg}</div><div style="font-size:14px;color:var(--text-3);margin-bottom:24px">You got ${quizScore} of ${quizData.length} correct</div><button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="generate()">Retake Quiz</button></div>`}
 
-function revealFITB(i,answer){const el=document.getElementById(`fitb-${i}`);if(!el.classList.contains(‘revealed’)){el.textContent=answer;el.classList.add(‘revealed’)}}
+function revealFITB(i,answer){const el=document.getElementById(`fitb-${i}`);if(!el.classList.contains('revealed')){el.textContent=answer;el.classList.add('revealed')}}
 
-function handleFileUpload(input){const file=input.files[0];if(!file)return;const iconMap={‘video/’:‘🎬’,‘image/’:‘🖼️’,‘application/pdf’:‘📄’,‘text/’:‘📝’};let icon=‘📎’;for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}const typeLabel=file.type.startsWith(‘video/’)?‘Video’:file.type.startsWith(‘image/’)?‘Image’:file.type===‘application/pdf’?‘PDF’:‘File’;const reader=new FileReader();reader.onload=()=>{uploadedFiles.push({name:file.name,type:typeLabel,icon,data:reader.result,mimeType:file.type});renderFileList();if(!document.getElementById(‘studyInput’).value){document.getElementById(‘studyInput’).value=`Lesson from: ${file.name}`;updateCharCount()}};if(file.type.startsWith(‘text/’))reader.readAsText(file);else reader.readAsDataURL(file);input.value=’’}
-function addUrlLesson(){const input=document.getElementById(‘lessonUrlInput’);const url=input.value.trim();if(!url)return;let icon=‘🔗’;if(url.includes(‘youtube.com’)||url.includes(‘youtu.be’))icon=‘▶️’;uploadedFiles.push({name:url,type:‘URL’,icon,data:null});if(!document.getElementById(‘studyInput’).value){document.getElementById(‘studyInput’).value=`Lesson from URL: ${url}`;updateCharCount()}input.value=’’;renderFileList()}
+function handleFileUpload(input){const file=input.files[0];if(!file)return;const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};let icon='📎';for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':file.type==='application/pdf'?'PDF':'File';const reader=new FileReader();reader.onload=()=>{uploadedFiles.push({name:file.name,type:typeLabel,icon,data:reader.result,mimeType:file.type});renderFileList();if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from: ${file.name}`;updateCharCount()}};if(file.type.startsWith('text/'))reader.readAsText(file);else reader.readAsDataURL(file);input.value=''}
+function addUrlLesson(){const input=document.getElementById('lessonUrlInput');const url=input.value.trim();if(!url)return;let icon='🔗';if(url.includes('youtube.com')||url.includes('youtu.be'))icon='▶️';uploadedFiles.push({name:url,type:'URL',icon,data:null});if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from URL: ${url}`;updateCharCount()}input.value='';renderFileList()}
 function removeFile(i){uploadedFiles.splice(i,1);renderFileList()}
-function renderFileList(){const list=document.getElementById(‘uploadFileList’);if(!uploadedFiles.length){list.innerHTML=’’;return}list.innerHTML=uploadedFiles.map((f,i)=>`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`).join(’’)}
-function uploadDragOver(e){e.preventDefault();document.getElementById(‘uploadZone’).classList.add(‘drag-over’)}
-function uploadDragLeave(){document.getElementById(‘uploadZone’).classList.remove(‘drag-over’)}
-function uploadDrop(e){e.preventDefault();document.getElementById(‘uploadZone’).classList.remove(‘drag-over’);const file=e.dataTransfer.files[0];if(!file)return;const dt=new DataTransfer();dt.items.add(file);const inp=document.getElementById(‘fileInputMain’);inp.files=dt.files;handleFileUpload(inp)}
+function renderFileList(){const list=document.getElementById('uploadFileList');if(!uploadedFiles.length){list.innerHTML='';return}list.innerHTML=uploadedFiles.map((f,i)=>`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`).join('')}
+function uploadDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over')}
+function uploadDragLeave(){document.getElementById('uploadZone').classList.remove('drag-over')}
+function uploadDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');const file=e.dataTransfer.files[0];if(!file)return;const dt=new DataTransfer();dt.items.add(file);const inp=document.getElementById('fileInputMain');inp.files=dt.files;handleFileUpload(inp)}
 
 async function generatePodcast() {
-const input = getInput();
-if (!input && !uploadedFiles.length) { document.getElementById(‘studyInput’)?.focus(); return; }
-showLoading(‘Generating podcast script…’);
-const fileCtx = uploadedFiles.filter(f => f.textContent).map(f => f.textContent).join(’\n\n’);
-try {
-const res = await fetch(’/.netlify/functions/podcast’, {
-method: ‘POST’, headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ topic: input || uploadedFiles[0]?.name.replace(/.[^.]+$/, ‘’) || ‘your lesson’, context: fileCtx })
-});
-const data = await res.json();
-if (!res.ok || data.error) { showErrorCard(data.error || ‘Podcast generation failed.’); return; }
-podcastScript = data.script || ‘’;
-podcastPlaying = false;
-const topic = input || ‘Your Lesson’;
-const wordCount = podcastScript.split(/\s+/).length;
-const minEst = Math.ceil(wordCount / 130);
-const podHtml = `<div class="podcast-bar" id="podcastBar"> <div class="podcast-header"><div class="podcast-art">🎙️</div><div class="podcast-info"><div class="podcast-title">StudLit Podcast: ${escHtml(topic)}</div><div class="podcast-subtitle">AI-narrated lesson · ~${minEst} min</div></div><div class="podcast-badge">🎧 Live</div></div> <div class="podcast-progress-wrap"><div class="podcast-progress-bar-bg" onclick="podSeek(event)"><div class="podcast-progress-bar-fill" id="podProgress" style="width:0%"></div></div><div class="podcast-times"><span id="podTimeCur">0:00</span><span id="podTimeTotal">${minEst}:00</span></div></div> <div class="podcast-controls"><button class="pod-ctrl-btn" onclick="podRewind()">⏮</button><button class="pod-play-btn" id="podPlayBtn" onclick="podToggle()">▶</button><button class="pod-ctrl-btn" onclick="podFastForward()">⏭</button><button class="pod-speed-btn" id="podSpeedBtn" onclick="podCycleSpeed()">${podcastSpeed}x</button></div> <div class="podcast-script">${escHtml(podcastScript.slice(0, 300))}...</div> </div>`;
-lastResult = { topic, modes: ‘Podcast’, html: podHtml };
-showResult(podHtml);
-if (studySets.length > 0) { updateSaveSelect(); }
-} catch(err) { showErrorCard(’Network error: ’ + err.message); }
+  const input = getInput();
+  if(!input&&!uploadedFiles.length){document.getElementById('studyInput')?.focus();return;}
+  showLoading('Generating podcast script…');
+  const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent).join('\n\n');
+  try{
+    const res=await fetch('/.netlify/functions/podcast',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({topic:input||uploadedFiles[0]?.name||'lesson',context:fileCtx})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>');return;}
+    podcastScript=data.script||'';
+    podcastPlaying=false;
+    const topic=input||'Your Lesson';
+    const wordCount=podcastScript.split(/\s+/).length;
+    const minEst=Math.ceil(wordCount/130);
+    const podHtml=`<div class="podcast-bar" id="podcastBar"><div class="podcast-header"><div class="podcast-art">🎙️</div><div class="podcast-info"><div class="podcast-title">StudLit Podcast: ${escHtml(topic)}</div><div class="podcast-subtitle">AI-narrated · ~${minEst} min</div></div></div><div class="podcast-controls"><button class="pod-play-btn" id="podPlayBtn" onclick="podToggle()">▶</button><button class="pod-speed-btn" id="podSpeedBtn" onclick="podCycleSpeed()">${podcastSpeed}x</button></div><div class="podcast-script">${escHtml(podcastScript.slice(0,300))}...</div></div>`;
+    lastResult={topic,modes:'Podcast',html:podHtml};
+    showResult(podHtml);
+  }catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
 }
 
-function podToggle(){if(!(‘speechSynthesis’in window)){alert(‘Your browser does not support text-to-speech. Try Chrome or Edge.’);return}if(podcastPlaying){speechSynthesis.pause();podcastPlaying=false;const b=document.getElementById(‘podPlayBtn’);if(b)b.textContent=‘▶’}else{if(speechSynthesis.paused){speechSynthesis.resume()}else{speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(podcastScript);podcastUtterance.rate=podcastSpeed;podcastUtterance.lang=‘en-US’;const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes(‘Google’)&&v.lang===‘en-US’)||voices.find(v=>v.lang===‘en-US’);if(pref)podcastUtterance.voice=pref;podcastUtterance.onboundary=(e)=>{if(e.name===‘word’){const pct=(e.charIndex/podcastScript.length)*100;const p=document.getElementById(‘podProgress’);if(p)p.style.width=pct+’%’}};podcastUtterance.onend=()=>{podcastPlaying=false;const b=document.getElementById(‘podPlayBtn’);if(b)b.textContent=‘▶’};speechSynthesis.speak(podcastUtterance)}podcastPlaying=true;const b=document.getElementById(‘podPlayBtn’);if(b)b.textContent=‘⏸’}}
-function podRewind(){speechSynthesis.cancel();podcastPlaying=false;const b=document.getElementById(‘podPlayBtn’);if(b)b.textContent=‘▶’;const p=document.getElementById(‘podProgress’);if(p)p.style.width=‘0%’}
+function podToggle(){if(!('speechSynthesis'in window)){alert('Your browser does not support text-to-speech. Try Chrome or Edge.');return}if(podcastPlaying){speechSynthesis.pause();podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'}else{if(speechSynthesis.paused){speechSynthesis.resume()}else{speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(podcastScript);podcastUtterance.rate=podcastSpeed;podcastUtterance.lang='en-US';const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes('Google')&&v.lang==='en-US')||voices.find(v=>v.lang==='en-US');if(pref)podcastUtterance.voice=pref;podcastUtterance.onboundary=(e)=>{if(e.name==='word'){const pct=(e.charIndex/podcastScript.length)*100;const p=document.getElementById('podProgress');if(p)p.style.width=pct+'%'}};podcastUtterance.onend=()=>{podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'};speechSynthesis.speak(podcastUtterance)}podcastPlaying=true;const b=document.getElementById('podPlayBtn');if(b)b.textContent='⏸'}}
+function podRewind(){speechSynthesis.cancel();podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶';const p=document.getElementById('podProgress');if(p)p.style.width='0%'}
 function podFastForward(){podToggle();podToggle()}
-function podCycleSpeed(){const speeds=[0.75,1,1.25,1.5,2];const idx=speeds.indexOf(podcastSpeed);podcastSpeed=speeds[(idx+1)%speeds.length];const b=document.getElementById(‘podSpeedBtn’);if(b)b.textContent=podcastSpeed+‘x’;if(podcastPlaying){speechSynthesis.cancel();podcastPlaying=false;podToggle()}}
-function podSeek(e){const pct=e.offsetX/e.currentTarget.offsetWidth;const remaining=podcastScript.slice(Math.floor(pct*podcastScript.length));speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(remaining);podcastUtterance.rate=podcastSpeed;const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes(‘Google’)&&v.lang===‘en-US’)||voices.find(v=>v.lang===‘en-US’);if(pref)podcastUtterance.voice=pref;speechSynthesis.speak(podcastUtterance);podcastPlaying=true;const b=document.getElementById(‘podPlayBtn’);if(b)b.textContent=‘⏸’;const p=document.getElementById(‘podProgress’);if(p)p.style.width=(pct*100)+’%’}
+function podCycleSpeed(){const speeds=[0.75,1,1.25,1.5,2];const idx=speeds.indexOf(podcastSpeed);podcastSpeed=speeds[(idx+1)%speeds.length];const b=document.getElementById('podSpeedBtn');if(b)b.textContent=podcastSpeed+'x';if(podcastPlaying){speechSynthesis.cancel();podcastPlaying=false;podToggle()}}
+function podSeek(e){const pct=e.offsetX/e.currentTarget.offsetWidth;const remaining=podcastScript.slice(Math.floor(pct*podcastScript.length));speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(remaining);podcastUtterance.rate=podcastSpeed;const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes('Google')&&v.lang==='en-US')||voices.find(v=>v.lang==='en-US');if(pref)podcastUtterance.voice=pref;speechSynthesis.speak(podcastUtterance);podcastPlaying=true;const b=document.getElementById('podPlayBtn');if(b)b.textContent='⏸';const p=document.getElementById('podProgress');if(p)p.style.width=(pct*100)+'%'}
 
-function switchAITab(tab){document.querySelectorAll(’.ai-sub-tab’).forEach(t=>t.classList.remove(‘active’));document.getElementById(‘subtab-’+tab).classList.add(‘active’);document.querySelectorAll(’.ai-panel’).forEach(p=>p.classList.remove(‘active’));document.getElementById(‘panel-’+tab).classList.add(‘active’)}
-function updateAIWordCount(){const w=document.getElementById(‘checkerInput’).value.trim().split(/\s+/).filter(x=>x).length;document.getElementById(‘aiWordCount’).textContent=w+’ words’}
-function updateHumanizerWordCount(){const w=document.getElementById(‘humanizerInput’).value.trim().split(/\s+/).filter(x=>x).length;document.getElementById(‘humanizerWordCount’).textContent=w+’ words’}
-function clearChecker(){document.getElementById(‘checkerInput’).value=’’;document.getElementById(‘checkerResults’).innerHTML=’’;updateAIWordCount()}
-function clearHumanizer(){document.getElementById(‘humanizerInput’).value=’’;document.getElementById(‘humanizerResults’).innerHTML=’’;updateHumanizerWordCount()}
+function switchAITab(tab){document.querySelectorAll('.ai-sub-tab').forEach(t=>t.classList.remove('active'));document.getElementById('subtab-'+tab).classList.add('active');document.querySelectorAll('.ai-panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+tab).classList.add('active')}
+function updateAIWordCount(){const w=document.getElementById('checkerInput').value.trim().split(/\s+/).filter(x=>x).length;document.getElementById('aiWordCount').textContent=w+' words'}
+function updateHumanizerWordCount(){const w=document.getElementById('humanizerInput').value.trim().split(/\s+/).filter(x=>x).length;document.getElementById('humanizerWordCount').textContent=w+' words'}
+function clearChecker(){document.getElementById('checkerInput').value='';document.getElementById('checkerResults').innerHTML='';updateAIWordCount()}
+function clearHumanizer(){document.getElementById('humanizerInput').value='';document.getElementById('humanizerResults').innerHTML='';updateHumanizerWordCount()}
 
 async function runAICheck() {
-const text = document.getElementById(‘checkerInput’).value.trim();
-if (!text || text.split(/\s+/).length < 15) {
-document.getElementById(‘checkerInput’).style.borderColor = ‘#f87171’;
-setTimeout(() => { document.getElementById(‘checkerInput’).style.borderColor = ‘’; }, 1800); return;
-}
-const btn = document.getElementById(‘checkBtn’);
-if (btn) { btn.disabled = true; btn.textContent = ‘⏳ Analyzing…’; }
-document.getElementById(‘checkerResults’).innerHTML = ‘<div class="shimmer-container"><div class="shimmer-block" style="height:200px"></div><div class="shimmer-block" style="height:120px"></div></div>’;
-try {
-const res = await fetch(’/.netlify/functions/ai-check’, {
-method: ‘POST’, headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ text })
-});
-const data = await res.json();
-if (!res.ok || data.error) {
-document.getElementById(‘checkerResults’).innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data.error || 'Check failed.')}</div></div>`; return;
-}
-const clamped = Math.min(98, Math.max(2, data.score || 0));
-const ringColor = clamped >= 70 ? ‘#f87171’ : clamped >= 40 ? ‘#fbbf24’ : ‘#4ade80’;
-const circ = 2 * Math.PI * 45;
-const dashOffset = circ - (clamped / 100) * circ;
-document.getElementById(‘checkerResults’).innerHTML = `<div class="ai-results"> <div class="ai-meter"> <div class="ai-meter-label">AI Probability Score</div> <div class="ai-meter-ring-wrap"> <svg class="ai-meter-svg" width="120" height="120" viewBox="0 0 120 120"> <circle class="ai-meter-track" cx="60" cy="60" r="45"/> <circle class="ai-meter-fill" cx="60" cy="60" r="45" stroke="${ringColor}" stroke-dasharray="${circ}" stroke-dashoffset="${dashOffset}"/> </svg> <div class="ai-meter-val"><div class="ai-meter-pct" style="color:${ringColor}">${clamped}%</div><div class="ai-meter-sublabel">AI</div></div> </div> <div class="ai-verdict" style="color:${ringColor}">${escHtml(data.verdict || '')}</div> <div class="ai-verdict-sub">${escHtml(data.verdictSub || '')}</div> </div> <div class="ai-breakdown"> <div class="ai-break-card"><div class="ai-break-val" style="color:${(data.aiPhrases?.length||0)>3?'#f87171':(data.aiPhrases?.length||0)>0?'#fbbf24':'#4ade80'}">${data.aiPhrases?.length||0}</div><div class="ai-break-label">AI Phrases</div></div> <div class="ai-break-card"><div class="ai-break-val" style="color:${(data.variety||100)<50?'#f87171':(data.variety||100)<70?'#fbbf24':'#4ade80'}">${data.variety||0}%</div><div class="ai-break-label">Variety</div></div> <div class="ai-break-card"><div class="ai-break-val" style="color:${(data.passive||0)>5?'#f87171':(data.passive||0)>2?'#fbbf24':'#4ade80'}">${data.passive||0}</div><div class="ai-break-label">Passive Voice</div></div> </div> ${data.flaggedHtml ?`<div class="ai-flagged-section"><div class="ai-flagged-title">🚩 Flagged Patterns</div><div class="ai-flagged-text">${data.flaggedHtml}</div></div>` : ''} <div style="text-align:center;margin-top:14px"> <button class="btn-ai-check" onclick="document.getElementById('humanizerInput').value=document.getElementById('checkerInput').value;switchAITab('humanizer');updateHumanizerWordCount()">✍️ Send to Humanizer →</button> </div> </div>`;
-} catch(err) {
-document.getElementById(‘checkerResults’).innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;
-} finally { if (btn) { btn.disabled = false; btn.textContent = ‘🔍 Check for AI’; } }
+  const text=document.getElementById('checkerInput').value.trim();
+  if(!text||text.split(/\s+/).length<15){
+    const el=document.getElementById('checkerInput');
+    if(el){el.style.borderColor='#f87171';setTimeout(()=>{el.style.borderColor='';},1800);}return;
+  }
+  const btn=document.getElementById('checkBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Analyzing…';}
+  const results=document.getElementById('checkerResults');
+  if(results)results.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3)">Analyzing…</div>';
+  try{
+    const res=await fetch('/.netlify/functions/ai-check',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error){if(results)results.innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>';return;}
+    const clamped=Math.min(98,Math.max(2,data.score||0));
+    const ringColor=clamped>=70?'#f87171':clamped>=40?'#fbbf24':'#4ade80';
+    const circ=2*Math.PI*45;
+    const dashOffset=circ-(clamped/100)*circ;
+    if(results)results.innerHTML=`<div class="ai-results"><div class="ai-meter"><div class="ai-meter-label">AI Probability</div><div class="ai-meter-ring-wrap"><svg width="120" height="120" viewBox="0 0 120 120"><circle class="ai-meter-track" cx="60" cy="60" r="45"/><circle class="ai-meter-fill" cx="60" cy="60" r="45" stroke="${ringColor}" stroke-dasharray="${circ}" stroke-dashoffset="${dashOffset}"/></svg><div class="ai-meter-val"><div class="ai-meter-pct" style="color:${ringColor}">${clamped}%</div></div></div><div class="ai-verdict" style="color:${ringColor}">${escHtml(data.verdict||'')}</div><div class="ai-verdict-sub">${escHtml(data.verdictSub||'')}</div></div></div>`;
+  }catch(err){if(results)results.innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>';}
+  finally{if(btn){btn.disabled=false;btn.textContent='🔍 Check for AI';}}
 }
 
 async function runHumanizer() {
-const text = document.getElementById(‘humanizerInput’).value.trim();
-if (!text || text.split(/\s+/).length < 10) {
-document.getElementById(‘humanizerInput’).style.borderColor = ‘#f87171’;
-setTimeout(() => { document.getElementById(‘humanizerInput’).style.borderColor = ‘’; }, 1800); return;
-}
-const btn = document.getElementById(‘humanizeBtn’);
-if (btn) { btn.disabled = true; btn.textContent = ‘⏳ Humanizing…’; }
-document.getElementById(‘humanizerResults’).innerHTML = ‘<div class="shimmer-container"><div class="shimmer-block" style="height:180px"></div></div>’;
-try {
-const res = await fetch(’/.netlify/functions/humanize’, {
-method: ‘POST’, headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ text })
-});
-const data = await res.json();
-if (!res.ok || data.error) {
-document.getElementById(‘humanizerResults’).innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data.error || 'Humanizer failed.')}</div></div>`; return;
-}
-document.getElementById(‘humanizerResults’).innerHTML = ` <div class="humanizer-output"> <div class="humanizer-output-label">✦ Humanized Version</div> <div class="humanizer-text" id="humanizedText">${escHtml(data.result)}</div> <div class="humanizer-actions"> <button class="btn-copy" onclick="copyHumanized()">📋 Copy Text</button> <button class="btn-ai-check" style="padding:8px 20px;font-size:13px" onclick="document.getElementById('checkerInput').value=document.getElementById('humanizedText').textContent;switchAITab('checker');updateAIWordCount();runAICheck()">🔍 Re-check Score</button> <span class="copy-confirm" id="copyConfirm">✓ Copied!</span> </div> </div>`;
-} catch(err) {
-document.getElementById(‘humanizerResults’).innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;
-} finally { if (btn) { btn.disabled = false; btn.textContent = ‘✍️ Humanize Text’; } }
+  const text=document.getElementById('humanizerInput').value.trim();
+  if(!text||text.split(/\s+/).length<10){
+    const el=document.getElementById('humanizerInput');
+    if(el){el.style.borderColor='#f87171';setTimeout(()=>{el.style.borderColor='';},1800);}return;
+  }
+  const btn=document.getElementById('humanizeBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Humanizing…';}
+  const results=document.getElementById('humanizerResults');
+  if(results)results.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3)">Humanizing…</div>';
+  try{
+    const res=await fetch('/.netlify/functions/humanize',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error){if(results)results.innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>';return;}
+    if(results)results.innerHTML=`<div class="humanizer-output"><div class="humanizer-output-label">✦ Humanized Version</div><div class="humanizer-text" id="humanizedText">${escHtml(data.result)}</div><div class="humanizer-actions"><button class="btn-copy" onclick="copyHumanized()">📋 Copy</button><span class="copy-confirm" id="copyConfirm">✓ Copied!</span></div></div>`;
+  }catch(err){if(results)results.innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>';}
+  finally{if(btn){btn.disabled=false;btn.textContent='✍️ Humanize Text';}}
 }
 
-function humanizeText(text){let r=text;const reps=[[/\bit is worth noting that\b/gi,‘worth pointing out —’],[/\bfurthermore,?\b/gi,‘on top of that,’],[/\bmoreover,?\b/gi,‘also,’],[/\bin conclusion,?\b/gi,‘to wrap up,’],[/\bin summary,?\b/gi,‘in short,’],[/\bit is important to\b/gi,‘you need to’],[/\bplays a crucial role\b/gi,‘matters a lot’],[/\bsignificantly\b/gi,‘a lot’],[/\bit can be seen that\b/gi,‘clearly’],[/\bas mentioned (above|previously|earlier)?\b/gi,‘as noted’],[/\bin addition,?\b/gi,‘also,’],[/\boverall,?\b/gi,‘all in all,’],[/\bto summarize,?\b/gi,‘in short,’],[/\bdelve into\b/gi,‘dig into’],[/\bit goes without saying\b/gi,‘obviously’],[/\bneedless to say,?\b/gi,’’],[/\bfirst and foremost,?\b/gi,‘first off,’],[/\bin today’s (world|society|age)\b/gi,‘nowadays’],[/\bit is essential to\b/gi,‘you should’],[/\bone must consider\b/gi,‘think about’],[/\bit should be noted that\b/gi,‘note that’],[/\bin order to\b/gi,‘to’],[/\bdue to the fact that\b/gi,‘because’],[/\bit is clear that\b/gi,‘clearly,’],[/\bas a result,?\b/gi,‘so,’],[/\bwith regard to\b/gi,‘about’],[/\butilize\b/gi,‘use’],[/\bfacilitate\b/gi,‘help’],[/\bnevertheless,?\b/gi,‘still,’],[/\bconsequently,?\b/gi,‘so,’],[/\bthus,?\b/gi,‘so,’],[/\bhence,?\b/gi,“that’s why”]];reps.forEach(([p,rep])=>{r=r.replace(p,rep)});r=r.replace(/\bdo not\b/g,“don’t”).replace(/\bcannot\b/g,“can’t”).replace(/\bwill not\b/g,“won’t”).replace(/\bwould not\b/g,“wouldn’t”).replace(/\bshould not\b/g,“shouldn’t”).replace(/\bdoes not\b/g,“doesn’t”).replace(/\bdid not\b/g,“didn’t”).replace(/\bis not\b/g,“isn’t”).replace(/\bare not\b/g,“aren’t”).replace(/\bI am\b/g,“I’m”).replace(/\bthey are\b/g,“they’re”).replace(/\bwe are\b/g,“we’re”).replace(/\bit is\b/g,“it’s”).replace(/\bthat is\b/g,“that’s”);r=r.replace(/([^.!?]{120,}?),\s+(and|but|so|because|which|while)\s+/g,(m,p1,conj)=>`${p1}. ${conj.charAt(0).toUpperCase()+conj.slice(1)} `);return r.replace(/\s{2,}/g,’ ‘).replace(/,\s*,/g,’,’).trim()}
+function humanizeText(text){let r=text;const reps=[[/\bit is worth noting that\b/gi,'worth pointing out —'],[/\bfurthermore,?\b/gi,'on top of that,'],[/\bmoreover,?\b/gi,'also,'],[/\bin conclusion,?\b/gi,'to wrap up,'],[/\bin summary,?\b/gi,'in short,'],[/\bit is important to\b/gi,'you need to'],[/\bplays a crucial role\b/gi,'matters a lot'],[/\bsignificantly\b/gi,'a lot'],[/\bit can be seen that\b/gi,'clearly'],[/\bas mentioned (above|previously|earlier)?\b/gi,'as noted'],[/\bin addition,?\b/gi,'also,'],[/\boverall,?\b/gi,'all in all,'],[/\bto summarize,?\b/gi,'in short,'],[/\bdelve into\b/gi,'dig into'],[/\bit goes without saying\b/gi,'obviously'],[/\bneedless to say,?\b/gi,''],[/\bfirst and foremost,?\b/gi,'first off,'],[/\bin today's (world|society|age)\b/gi,'nowadays'],[/\bit is essential to\b/gi,'you should'],[/\bone must consider\b/gi,'think about'],[/\bit should be noted that\b/gi,'note that'],[/\bin order to\b/gi,'to'],[/\bdue to the fact that\b/gi,'because'],[/\bit is clear that\b/gi,'clearly,'],[/\bas a result,?\b/gi,'so,'],[/\bwith regard to\b/gi,'about'],[/\butilize\b/gi,'use'],[/\bfacilitate\b/gi,'help'],[/\bnevertheless,?\b/gi,'still,'],[/\bconsequently,?\b/gi,'so,'],[/\bthus,?\b/gi,'so,'],[/\bhence,?\b/gi,"that's why"]];reps.forEach(([p,rep])=>{r=r.replace(p,rep)});r=r.replace(/\bdo not\b/g,"don't").replace(/\bcannot\b/g,"can't").replace(/\bwill not\b/g,"won't").replace(/\bwould not\b/g,"wouldn't").replace(/\bshould not\b/g,"shouldn't").replace(/\bdoes not\b/g,"doesn't").replace(/\bdid not\b/g,"didn't").replace(/\bis not\b/g,"isn't").replace(/\bare not\b/g,"aren't").replace(/\bI am\b/g,"I'm").replace(/\bthey are\b/g,"they're").replace(/\bwe are\b/g,"we're").replace(/\bit is\b/g,"it's").replace(/\bthat is\b/g,"that's");r=r.replace(/([^.!?]{120,}?),\s+(and|but|so|because|which|while)\s+/g,(m,p1,conj)=>`${p1}. ${conj.charAt(0).toUpperCase()+conj.slice(1)} `);return r.replace(/\s{2,}/g,' ').replace(/,\s*,/g,',').trim()}
 
-function copyHumanized(){const text=document.getElementById(‘humanizedText’)?.textContent||’’;navigator.clipboard.writeText(text).then(()=>{const c=document.getElementById(‘copyConfirm’);c.classList.add(‘show’);setTimeout(()=>c.classList.remove(‘show’),2000)})}
+function copyHumanized(){const text=document.getElementById('humanizedText')?.textContent||'';navigator.clipboard.writeText(text).then(()=>{const c=document.getElementById('copyConfirm');c.classList.add('show');setTimeout(()=>c.classList.remove('show'),2000)})}
+
 
 // ============================================================
 // STUDLEY-STYLE WORKSPACE LOGIC
@@ -1546,348 +1477,328 @@ function copyHumanized(){const text=document.getElementById(‘humanizedText’)
 let activePanel = null;
 
 function slOpenPanel(name) {
-// Close if same panel clicked
-if (activePanel === name) {
-document.getElementById(‘panel’ + name.charAt(0).toUpperCase() + name.slice(1)).classList.remove(‘open’);
-document.getElementById(‘card’ + name.charAt(0).toUpperCase() + name.slice(1))?.classList.remove(‘active-card’);
-activePanel = null; return;
-}
-// Close all panels
-[‘Upload’,‘Paste’].forEach(p => {
-document.getElementById(‘panel’+p)?.classList.remove(‘open’);
-});
-document.querySelectorAll(’.sl-input-card’).forEach(c => c.classList.remove(‘active-card’));
-// Open target
-const panel = document.getElementById(‘panel’ + name.charAt(0).toUpperCase() + name.slice(1));
-const card = document.getElementById(‘card’ + name.charAt(0).toUpperCase() + name.slice(1));
-if (panel) panel.classList.add(‘open’);
-if (card) card.classList.add(‘active-card’);
-activePanel = name;
+  // Close if same panel clicked
+  if (activePanel === name) {
+    document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1)).classList.remove('open');
+    document.getElementById('card' + name.charAt(0).toUpperCase() + name.slice(1))?.classList.remove('active-card');
+    activePanel = null; return;
+  }
+  // Close all panels
+  ['Upload','Paste'].forEach(p => {
+    document.getElementById('panel'+p)?.classList.remove('open');
+  });
+  document.querySelectorAll('.sl-input-card').forEach(c => c.classList.remove('active-card'));
+  // Open target
+  const panel = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+  const card = document.getElementById('card' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (panel) panel.classList.add('open');
+  if (card) card.classList.add('active-card');
+  activePanel = name;
 }
 
 function slShowHome() {
-document.getElementById(‘slHomeView’).style.display = ‘block’;
-document.getElementById(‘slResultView’).style.display = ‘none’;
-// Update sidebar active state
-document.querySelectorAll(’.sl-nav-item’).forEach(n => n.classList.remove(‘active’));
-document.querySelector(’.sl-nav-item’).classList.add(‘active’);
-renderSlSets();
+  document.getElementById('slHomeView').style.display = 'block';
+  document.getElementById('slResultView').style.display = 'none';
+  // Update sidebar active state
+  document.querySelectorAll('.sl-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('.sl-nav-item').classList.add('active');
+  renderSlSets();
 }
 
 function slShowSolve() {
-slOpenPanel(‘paste’);
-selectSingleMode(‘solve’);
-document.getElementById(‘studyInput’).focus();
+  slOpenPanel('paste');
+  selectSingleMode('solve');
+  document.getElementById('studyInput').focus();
 }
 
 function slQuickMode(mode) {
-slOpenPanel(‘paste’);
-selectSingleMode(mode);
-document.getElementById(‘studyInput’).focus();
+  slOpenPanel('paste');
+  selectSingleMode(mode);
+  document.getElementById('studyInput').focus();
 }
 
 // Override showResult to show result view
-function showResult(html) {
-document.getElementById(‘slHomeView’).style.display = ‘none’;
-document.getElementById(‘slResultView’).style.display = ‘block’;
-document.getElementById(‘resultArea’).innerHTML = html;
-if (studySets.length > 0) updateSaveSelect();
-}
 
 // Override showEmpty
-function showEmpty() {
-slShowHome();
-}
 
 // Override clearInput
-function clearInput() {
-document.getElementById(‘studyInput’).value = ‘’;
-updateCharCount();
-uploadedFiles = []; uploadedUrls = [];
-renderFileList();
-slShowHome();
-}
 
 // Render file list with sl- classes
-function renderFileList() {
-const list = document.getElementById(‘uploadFileList’);
-if (!list) return;
-if (!uploadedFiles.length) { list.innerHTML = ‘’; return; }
-list.innerHTML = uploadedFiles.map((f, i) => ` <div class="sl-file-item"> <span class="sl-file-icon">${f.icon}</span> <span class="sl-file-name">${escHtml(f.name)}</span> <span class="sl-file-type">${f.type}</span> <button class="sl-file-rm" onclick="removeFile(${i})">✕</button> </div>`).join(’’);
-}
 
 // Render sets as Studley-style cards
-function renderSlSets(filter = ‘’) {
-const grid = document.getElementById(‘slSetsGrid’);
-if (!grid) return;
-const f = studySets.filter(s => s.name.toLowerCase().includes((filter||’’).toLowerCase()));
-if (!f.length) {
-grid.innerHTML = ‘<div class="sl-sets-empty"><div class="sl-sets-empty-icon">📚</div><div class="sl-sets-empty-text">No study sets yet.<br>Generate your first one above!</div></div>’;
-return;
-}
-grid.innerHTML = f.map(set => {
-const sess = set.sessions || [];
-const total = Math.max(sess.length * 20, 10);
-return `<div class="sl-set-card" onclick="slOpenSet('${set.id}')"> <div class="sl-set-card-header"> <div class="sl-set-card-title">${escHtml(set.name)}</div> <button class="sl-set-card-menu" onclick="event.stopPropagation();deleteSet('${set.id}')">···</button> </div> <div class="sl-set-stat-row"> <div class="sl-set-stat"> <div class="sl-set-stat-num">${total}</div> <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-unfamiliar" style="width:100%"></div></div> <div class="sl-set-stat-label stat-unfamiliar-label">Unfamiliar</div> </div> <div class="sl-set-stat"> <div class="sl-set-stat-num">0</div> <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-learning" style="width:0%"></div></div> <div class="sl-set-stat-label stat-learning-label">Learning</div> </div> <div class="sl-set-stat"> <div class="sl-set-stat-num">0</div> <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-familiar" style="width:0%"></div></div> <div class="sl-set-stat-label stat-familiar-label">Familiar</div> </div> <div class="sl-set-stat"> <div class="sl-set-stat-num">0</div> <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-mastered" style="width:0%"></div></div> <div class="sl-set-stat-label stat-mastered-label">Mastered</div> </div> </div> <div class="sl-set-path-label">Your path to mastery</div> <div class="sl-set-progress-bar"><div class="sl-set-progress-fill" style="width:0%"></div></div> <div style="display:flex;align-items:center;justify-content:space-between"> <div style="font-size:11.5px;color:var(--text-3)">0%</div> <div class="sl-set-mode-icons"> <div class="sl-set-mode-icon">🃏</div> <div class="sl-set-mode-icon">📝</div> <div class="sl-set-mode-icon">🎯</div> <div class="sl-set-mode-icon">📋</div> <div class="sl-set-mode-icon">🎙️</div> </div> </div> </div>`;
-}).join(’’);
+function renderSlSets(filter = '') {
+  const grid = document.getElementById('slSetsGrid');
+  if (!grid) return;
+  const f = studySets.filter(s => s.name.toLowerCase().includes((filter||'').toLowerCase()));
+  if (!f.length) {
+    grid.innerHTML = '<div class="sl-sets-empty"><div class="sl-sets-empty-icon">📚</div><div class="sl-sets-empty-text">No study sets yet.<br>Generate your first one above!</div></div>';
+    return;
+  }
+  grid.innerHTML = f.map(set => {
+    const sess = set.sessions || [];
+    const total = Math.max(sess.length * 20, 10);
+    return `<div class="sl-set-card" onclick="slOpenSet('${set.id}')">
+      <div class="sl-set-card-header">
+        <div class="sl-set-card-title">${escHtml(set.name)}</div>
+        <button class="sl-set-card-menu" onclick="event.stopPropagation();deleteSet('${set.id}')">···</button>
+      </div>
+      <div class="sl-set-stat-row">
+        <div class="sl-set-stat">
+          <div class="sl-set-stat-num">${total}</div>
+          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-unfamiliar" style="width:100%"></div></div>
+          <div class="sl-set-stat-label stat-unfamiliar-label">Unfamiliar</div>
+        </div>
+        <div class="sl-set-stat">
+          <div class="sl-set-stat-num">0</div>
+          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-learning" style="width:0%"></div></div>
+          <div class="sl-set-stat-label stat-learning-label">Learning</div>
+        </div>
+        <div class="sl-set-stat">
+          <div class="sl-set-stat-num">0</div>
+          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-familiar" style="width:0%"></div></div>
+          <div class="sl-set-stat-label stat-familiar-label">Familiar</div>
+        </div>
+        <div class="sl-set-stat">
+          <div class="sl-set-stat-num">0</div>
+          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-mastered" style="width:0%"></div></div>
+          <div class="sl-set-stat-label stat-mastered-label">Mastered</div>
+        </div>
+      </div>
+      <div class="sl-set-path-label">Your path to mastery</div>
+      <div class="sl-set-progress-bar"><div class="sl-set-progress-fill" style="width:0%"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:11.5px;color:var(--text-3)">0%</div>
+        <div class="sl-set-mode-icons">
+          <div class="sl-set-mode-icon">🃏</div>
+          <div class="sl-set-mode-icon">📝</div>
+          <div class="sl-set-mode-icon">🎯</div>
+          <div class="sl-set-mode-icon">📋</div>
+          <div class="sl-set-mode-icon">🎙️</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function slOpenSet(setId) {
-const set = studySets.find(s => s.id === setId);
-if (!set || !set.sessions?.length) return;
-const sess = set.sessions[0];
-showResult(sess.html);
-lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
-updateSaveSelect();
+  const set = studySets.find(s => s.id === setId);
+  if (!set || !set.sessions?.length) return;
+  const sess = set.sessions[0];
+  showResult(sess.html);
+  lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
+  updateSaveSelect();
 }
 
 // Override renderSets to also update sl grid
-function renderSets(filter) {
-renderSlSets(filter);
-// keep legacy hidden list in sync for saveSession
-updateSaveSelect();
-}
 
 // Override saveSession
-function saveSession() {
-const id = document.getElementById(‘saveSetSelect’).value;
-if (!id || !lastResult) return;
-const set = studySets.find(s => s.id === id);
-if (!set) return;
-set.sessions.unshift({ id: Date.now().toString(), topic: lastResult.topic, modes: lastResult.modes, html: lastResult.html, date: new Date().toLocaleDateString() });
-saveSets(); renderSlSets();
-const c = document.getElementById(‘saveConfirm’);
-c.classList.add(‘show’); setTimeout(() => c.classList.remove(‘show’), 2000);
-}
 
 // Override deleteSet
-function deleteSet(id) {
-if (!confirm(‘Delete this study set?’)) return;
-studySets = studySets.filter(s => s.id !== id);
-saveSets(); renderSlSets();
-}
 
 // Override toggleMode for sl-mode-btn
-function toggleMode(btn) {
-const m = btn.dataset.mode;
-if (selectedModes.has(m)) {
-if (selectedModes.size === 1) return;
-selectedModes.delete(m); btn.classList.remove(‘selected’);
-} else { selectedModes.add(m); btn.classList.add(‘selected’); }
-}
 
 function toggleMode2(btn) { toggleMode(btn); }
 
 // selectSingleMode for sl buttons
 function selectSingleMode(mode) {
-document.querySelectorAll(’.sl-mode-btn’).forEach(b => b.classList.remove(‘selected’));
-selectedModes = new Set([mode]);
-document.querySelectorAll(`[data-mode="${mode}"]`).forEach(b => b.classList.add(‘selected’));
+  document.querySelectorAll('.sl-mode-btn').forEach(b => b.classList.remove('selected'));
+  selectedModes = new Set([mode]);
+  document.querySelectorAll(`[data-mode="${mode}"]`).forEach(b => b.classList.add('selected'));
 }
 
 // updateModesBar — not needed in this layout
-function updateModesBar() {}
 
 // demoMode
-function demoMode() {
-document.getElementById(‘studyInput’).value = ‘Photosynthesis’;
-updateCharCount(); selectSingleMode(‘flashcards’);
-switchTab(‘workspace’); slOpenPanel(‘paste’); setTimeout(generate, 300);
-}
 
 // previewMode
-function previewMode(mode) {
-selectSingleMode(mode);
-const prompts = [‘The water cycle’,‘Photosynthesis’,‘World War II’,‘Newton's Laws’,‘DNA replication’];
-if (!getInput()) { document.getElementById(‘studyInput’).value = prompts[Math.floor(Math.random()*prompts.length)]; updateCharCount(); }
-switchTab(‘workspace’); slOpenPanel(‘paste’); generate();
-}
 
 // Init
 renderSlSets();
+
 
 // ============================================================
 // SETTINGS
 // ============================================================
 function openSettings() {
-document.getElementById(‘settingsOverlay’).classList.add(‘open’);
-loadSettingsFromStorage();
+  document.getElementById('settingsOverlay').classList.add('open');
+  loadSettingsFromStorage();
 }
 function closeSettings() {
-document.getElementById(‘settingsOverlay’).classList.remove(‘open’);
+  document.getElementById('settingsOverlay').classList.remove('open');
 }
 function closeSettingsOutside(e) {
-if (e.target === document.getElementById(‘settingsOverlay’)) closeSettings();
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
 }
 
 function switchSettingsPanel(panel, btn) {
-document.querySelectorAll(’.settings-panel’).forEach(p => p.classList.remove(‘active’));
-document.querySelectorAll(’.settings-nav-item’).forEach(b => b.classList.remove(‘active’));
-document.getElementById(‘sp-’ + panel).classList.add(‘active’);
-btn.classList.add(‘active’);
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('sp-' + panel).classList.add('active');
+  btn.classList.add('active');
 }
 
 function saveSettings() {
-// Save profile
-const name = document.getElementById(‘settingsName’)?.value || ‘Hussein Makki’;
-localStorage.setItem(‘sl-name’, name);
-const av = document.getElementById(‘settingsAvatar’);
-if (av) av.textContent = name.charAt(0).toUpperCase();
-const dn = document.getElementById(‘settingsDisplayName’);
-if (dn) dn.textContent = name;
-const slUserName = document.querySelector(’.sl-user-name’);
-if (slUserName) slUserName.textContent = name;
+  // Save profile
+  const name = document.getElementById('settingsName')?.value || 'Hussein Makki';
+  localStorage.setItem('sl-name', name);
+  const av = document.getElementById('settingsAvatar');
+  if (av) av.textContent = name.charAt(0).toUpperCase();
+  const dn = document.getElementById('settingsDisplayName');
+  if (dn) dn.textContent = name;
+  const slUserName = document.querySelector('.sl-user-name');
+  if (slUserName) slUserName.textContent = name;
 
-// Save appearance
-const dark = document.getElementById(‘darkModeToggle’)?.checked;
-document.documentElement.setAttribute(‘data-theme’, dark ? ‘dark’ : ‘light’);
-localStorage.setItem(‘sl-theme’, dark ? ‘dark’ : ‘light’);
+  // Save appearance
+  const dark = document.getElementById('darkModeToggle')?.checked;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  localStorage.setItem('sl-theme', dark ? 'dark' : 'light');
 
-const fontSize = document.getElementById(‘fontSizeSlider’)?.value || 14;
-document.documentElement.style.setProperty(’–content-font-size’, fontSize + ‘px’);
-localStorage.setItem(‘sl-font-size’, fontSize);
+  const fontSize = document.getElementById('fontSizeSlider')?.value || 14;
+  document.documentElement.style.setProperty('--content-font-size', fontSize + 'px');
+  localStorage.setItem('sl-font-size', fontSize);
 
-// Save all prefs to localStorage
-const prefs = {
-name: document.getElementById(‘settingsName’)?.value,
-username: document.getElementById(‘settingsUsername’)?.value,
-email: document.getElementById(‘settingsEmail’)?.value,
-school: document.getElementById(‘settingsSchool’)?.value,
-difficulty: document.getElementById(‘difficultySelect’)?.value,
-quizLength: document.getElementById(‘quizLengthSelect’)?.value,
-flashcardCount: document.getElementById(‘flashcardCountSelect’)?.value,
-podcastSpeed: document.getElementById(‘podcastSpeedSelect’)?.value,
-autoGen: document.getElementById(‘autoGenToggle’)?.checked,
-dailyReminder: document.getElementById(‘dailyReminderToggle’)?.checked,
-reminderTime: document.getElementById(‘reminderTime’)?.value,
-streak: document.getElementById(‘streakToggle’)?.checked,
-weeklyReport: document.getElementById(‘weeklyReportToggle’)?.checked,
-compact: document.getElementById(‘compactToggle’)?.checked,
-reduceMotion: document.getElementById(‘reduceMotionToggle’)?.checked,
-};
-localStorage.setItem(‘sl-prefs’, JSON.stringify(prefs));
+  // Save all prefs to localStorage
+  const prefs = {
+    name: document.getElementById('settingsName')?.value,
+    username: document.getElementById('settingsUsername')?.value,
+    email: document.getElementById('settingsEmail')?.value,
+    school: document.getElementById('settingsSchool')?.value,
+    difficulty: document.getElementById('difficultySelect')?.value,
+    quizLength: document.getElementById('quizLengthSelect')?.value,
+    flashcardCount: document.getElementById('flashcardCountSelect')?.value,
+    podcastSpeed: document.getElementById('podcastSpeedSelect')?.value,
+    autoGen: document.getElementById('autoGenToggle')?.checked,
+    dailyReminder: document.getElementById('dailyReminderToggle')?.checked,
+    reminderTime: document.getElementById('reminderTime')?.value,
+    streak: document.getElementById('streakToggle')?.checked,
+    weeklyReport: document.getElementById('weeklyReportToggle')?.checked,
+    compact: document.getElementById('compactToggle')?.checked,
+    reduceMotion: document.getElementById('reduceMotionToggle')?.checked,
+  };
+  localStorage.setItem('sl-prefs', JSON.stringify(prefs));
 
-// Flash all saved messages
-document.querySelectorAll(’.settings-saved-msg’).forEach(m => {
-m.classList.add(‘show’); setTimeout(() => m.classList.remove(‘show’), 2200);
-});
+  // Flash all saved messages
+  document.querySelectorAll('.settings-saved-msg').forEach(m => {
+    m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2200);
+  });
 }
 
 function loadSettingsFromStorage() {
-const prefs = JSON.parse(localStorage.getItem(‘sl-prefs’) || ‘{}’);
-if (prefs.name) document.getElementById(‘settingsName’).value = prefs.name;
-if (prefs.username) document.getElementById(‘settingsUsername’).value = prefs.username;
-if (prefs.email) document.getElementById(‘settingsEmail’).value = prefs.email;
-if (prefs.school) document.getElementById(‘settingsSchool’).value = prefs.school;
-if (prefs.difficulty) document.getElementById(‘difficultySelect’).value = prefs.difficulty;
-if (prefs.quizLength) document.getElementById(‘quizLengthSelect’).value = prefs.quizLength;
-if (prefs.flashcardCount) document.getElementById(‘flashcardCountSelect’).value = prefs.flashcardCount;
-if (prefs.podcastSpeed) document.getElementById(‘podcastSpeedSelect’).value = prefs.podcastSpeed;
-if (prefs.reminderTime) document.getElementById(‘reminderTime’).value = prefs.reminderTime;
-if (prefs.compact !== undefined) {
-document.getElementById(‘compactToggle’).checked = prefs.compact;
-if (prefs.compact) document.body.classList.add(‘compact-mode’);
-}
-if (prefs.reduceMotion !== undefined) {
-document.getElementById(‘reduceMotionToggle’).checked = prefs.reduceMotion;
-if (prefs.reduceMotion) document.body.classList.add(‘reduce-motion’);
-}
-// Restore accent colour
-const accent = localStorage.getItem(‘sl-accent’);
-const accent2 = localStorage.getItem(‘sl-accent2’);
-if (accent) {
-document.documentElement.style.setProperty(’–accent’, accent);
-document.documentElement.style.setProperty(’–accent-2’, accent2 || accent);
-document.querySelectorAll(’.color-swatch’).forEach(s => {
-s.classList.toggle(‘active’, s.dataset.accent === accent);
-});
-}
-// Dark mode toggle
-const theme = localStorage.getItem(‘sl-theme’) || ‘dark’;
-const darkToggle = document.getElementById(‘darkModeToggle’);
-if (darkToggle) darkToggle.checked = theme === ‘dark’;
-// Font size
-const fs = localStorage.getItem(‘sl-font-size’);
-if (fs) {
-document.getElementById(‘fontSizeSlider’).value = fs;
-document.documentElement.style.setProperty(’–content-font-size’, fs + ‘px’);
-}
+  const prefs = JSON.parse(localStorage.getItem('sl-prefs') || '{}');
+  if (prefs.name) document.getElementById('settingsName').value = prefs.name;
+  if (prefs.username) document.getElementById('settingsUsername').value = prefs.username;
+  if (prefs.email) document.getElementById('settingsEmail').value = prefs.email;
+  if (prefs.school) document.getElementById('settingsSchool').value = prefs.school;
+  if (prefs.difficulty) document.getElementById('difficultySelect').value = prefs.difficulty;
+  if (prefs.quizLength) document.getElementById('quizLengthSelect').value = prefs.quizLength;
+  if (prefs.flashcardCount) document.getElementById('flashcardCountSelect').value = prefs.flashcardCount;
+  if (prefs.podcastSpeed) document.getElementById('podcastSpeedSelect').value = prefs.podcastSpeed;
+  if (prefs.reminderTime) document.getElementById('reminderTime').value = prefs.reminderTime;
+  if (prefs.compact !== undefined) {
+    document.getElementById('compactToggle').checked = prefs.compact;
+    if (prefs.compact) document.body.classList.add('compact-mode');
+  }
+  if (prefs.reduceMotion !== undefined) {
+    document.getElementById('reduceMotionToggle').checked = prefs.reduceMotion;
+    if (prefs.reduceMotion) document.body.classList.add('reduce-motion');
+  }
+  // Restore accent colour
+  const accent = localStorage.getItem('sl-accent');
+  const accent2 = localStorage.getItem('sl-accent2');
+  if (accent) {
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--accent-2', accent2 || accent);
+    document.querySelectorAll('.color-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.accent === accent);
+    });
+  }
+  // Dark mode toggle
+  const theme = localStorage.getItem('sl-theme') || 'dark';
+  const darkToggle = document.getElementById('darkModeToggle');
+  if (darkToggle) darkToggle.checked = theme === 'dark';
+  // Font size
+  const fs = localStorage.getItem('sl-font-size');
+  if (fs) {
+    document.getElementById('fontSizeSlider').value = fs;
+    document.documentElement.style.setProperty('--content-font-size', fs + 'px');
+  }
 }
 
 function setAccentColor(swatch) {
-const accent = swatch.dataset.accent;
-const accent2 = swatch.dataset.accent2;
-document.documentElement.style.setProperty(’–accent’, accent);
-document.documentElement.style.setProperty(’–accent-2’, accent2);
-document.documentElement.style.setProperty(’–glow’, accent + ‘44’);
-document.documentElement.style.setProperty(’–glow-sm’, accent + ‘22’);
-localStorage.setItem(‘sl-accent’, accent);
-localStorage.setItem(‘sl-accent2’, accent2);
-document.querySelectorAll(’.color-swatch’).forEach(s => s.classList.remove(‘active’));
-swatch.classList.add(‘active’);
+  const accent = swatch.dataset.accent;
+  const accent2 = swatch.dataset.accent2;
+  document.documentElement.style.setProperty('--accent', accent);
+  document.documentElement.style.setProperty('--accent-2', accent2);
+  document.documentElement.style.setProperty('--glow', accent + '44');
+  document.documentElement.style.setProperty('--glow-sm', accent + '22');
+  localStorage.setItem('sl-accent', accent);
+  localStorage.setItem('sl-accent2', accent2);
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  swatch.classList.add('active');
 }
 
 function toggleDarkMode(input) {
-const theme = input.checked ? ‘dark’ : ‘light’;
-document.documentElement.setAttribute(‘data-theme’, theme);
-localStorage.setItem(‘sl-theme’, theme);
+  const theme = input.checked ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('sl-theme', theme);
 }
 
 function updateFontSize(val) {
-document.documentElement.style.setProperty(’–content-font-size’, val + ‘px’);
-document.querySelectorAll(’.card-body,.tutor-bubble,.concept-def,.step-desc’).forEach(el => {
-el.style.fontSize = val + ‘px’;
-});
+  document.documentElement.style.setProperty('--content-font-size', val + 'px');
+  document.querySelectorAll('.card-body,.tutor-bubble,.concept-def,.step-desc').forEach(el => {
+    el.style.fontSize = val + 'px';
+  });
 }
 
 function toggleCompact(input) {
-document.body.classList.toggle(‘compact-mode’, input.checked);
+  document.body.classList.toggle('compact-mode', input.checked);
 }
 
 function toggleReduceMotion(input) {
-document.body.classList.toggle(‘reduce-motion’, input.checked);
-if (input.checked) {
-const style = document.createElement(‘style’);
-style.id = ‘reduce-motion-style’;
-style.textContent = ‘*{animation-duration:.01ms!important;transition-duration:.01ms!important}’;
-document.head.appendChild(style);
-} else {
-document.getElementById(‘reduce-motion-style’)?.remove();
-}
+  document.body.classList.toggle('reduce-motion', input.checked);
+  if (input.checked) {
+    const style = document.createElement('style');
+    style.id = 'reduce-motion-style';
+    style.textContent = '*{animation-duration:.01ms!important;transition-duration:.01ms!important}';
+    document.head.appendChild(style);
+  } else {
+    document.getElementById('reduce-motion-style')?.remove();
+  }
 }
 
 function toggleDefaultMode(item) {
-item.classList.toggle(‘checked’);
+  item.classList.toggle('checked');
 }
 
 function exportData() {
-const data = { studySets, exportedAt: new Date().toISOString() };
-const blob = new Blob([JSON.stringify(data, null, 2)], { type: ‘application/json’ });
-const url = URL.createObjectURL(blob);
-const a = document.createElement(‘a’);
-a.href = url; a.download = ‘studlit-export.json’; a.click();
-URL.revokeObjectURL(url);
+  const data = { studySets, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'studlit-export.json'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function clearAllData() {
-if (!confirm(‘This will permanently delete all your study sets. Are you sure?’)) return;
-studySets = []; saveSets(); renderSlSets();
-alert(‘All study sets cleared.’);
+  if (!confirm('This will permanently delete all your study sets. Are you sure?')) return;
+  studySets = []; saveSets(); renderSlSets();
+  alert('All study sets cleared.');
 }
 
 // Load settings on page start
 (function() {
-const accent = localStorage.getItem(‘sl-accent’);
-const accent2 = localStorage.getItem(‘sl-accent2’);
-if (accent) {
-document.documentElement.style.setProperty(’–accent’, accent);
-document.documentElement.style.setProperty(’–accent-2’, accent2 || accent);
-document.documentElement.style.setProperty(’–glow’, accent + ‘44’);
-document.documentElement.style.setProperty(’–glow-sm’, accent + ‘22’);
-}
-const fs = localStorage.getItem(‘sl-font-size’);
-if (fs) document.documentElement.style.setProperty(’–content-font-size’, fs + ‘px’);
+  const accent = localStorage.getItem('sl-accent');
+  const accent2 = localStorage.getItem('sl-accent2');
+  if (accent) {
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--accent-2', accent2 || accent);
+    document.documentElement.style.setProperty('--glow', accent + '44');
+    document.documentElement.style.setProperty('--glow-sm', accent + '22');
+  }
+  const fs = localStorage.getItem('sl-font-size');
+  if (fs) document.documentElement.style.setProperty('--content-font-size', fs + 'px');
 })();
+
 
 // ============================================================
 // AI CHAT
@@ -1897,141 +1808,116 @@ let chatHistory = [];  // [{role, content}] — multi-turn memory
 let chatTyping = false;
 
 function toggleChat() {
-chatOpen = !chatOpen;
-const win = document.getElementById(‘chatWindow’);
-const fab = document.getElementById(‘chatFab’);
-win.classList.toggle(‘open’, chatOpen);
-fab.textContent = chatOpen ? ‘✕’ : ‘💬’;
-if (!fab.querySelector(’.chat-fab-badge’)) {
-const badge = document.createElement(‘div’);
-badge.className = ‘chat-fab-badge’;
-fab.appendChild(badge);
-}
-if (chatOpen) {
-setTimeout(() => document.getElementById(‘chatInput’)?.focus(), 300);
-}
+  chatOpen = !chatOpen;
+  const win = document.getElementById('chatWindow');
+  const fab = document.getElementById('chatFab');
+  win.classList.toggle('open', chatOpen);
+  fab.textContent = chatOpen ? '✕' : '💬';
+  if (!fab.querySelector('.chat-fab-badge')) {
+    const badge = document.createElement('div');
+    badge.className = 'chat-fab-badge';
+    fab.appendChild(badge);
+  }
+  if (chatOpen) {
+    setTimeout(() => document.getElementById('chatInput')?.focus(), 300);
+  }
 }
 
 function autoResizeChat(el) {
-el.style.height = ‘auto’;
-el.style.height = Math.min(el.scrollHeight, 100) + ‘px’;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
 function chatKeyDown(e) {
-if (e.key === ‘Enter’ && !e.shiftKey) {
-e.preventDefault();
-sendChatMessage();
-}
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
 }
 
 function sendSuggestion(el) {
-document.getElementById(‘chatInput’).value = el.textContent;
-sendChatMessage();
+  document.getElementById('chatInput').value = el.textContent;
+  sendChatMessage();
 }
 
 function appendChatMessage(role, content) {
-const msgs = document.getElementById(‘chatMessages’);
-// Remove welcome screen on first message
-const welcome = msgs.querySelector(’.chat-welcome’);
-if (welcome) welcome.remove();
+  const msgs = document.getElementById('chatMessages');
+  // Remove welcome screen on first message
+  const welcome = msgs.querySelector('.chat-welcome');
+  if (welcome) welcome.remove();
 
-const isUser = role === ‘user’;
-const nameInitial = isUser ? ‘H’ : ‘🧑‍🏫’;
-const div = document.createElement(‘div’);
-div.className = ’chat-msg ’ + role;
-div.innerHTML = `<div class="chat-msg-avatar">${nameInitial}</div> <div class="chat-bubble">${escHtml(content).replace(/\n/g, '<br>')}</div>`;
-msgs.appendChild(div);
-msgs.scrollTop = msgs.scrollHeight;
-return div;
+  const isUser = role === 'user';
+  const nameInitial = isUser ? 'H' : '🧑‍🏫';
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = `
+    <div class="chat-msg-avatar">${nameInitial}</div>
+    <div class="chat-bubble">${escHtml(content).replace(/\n/g, '<br>')}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
 }
 
 function showTypingIndicator() {
-const msgs = document.getElementById(‘chatMessages’);
-const div = document.createElement(‘div’);
-div.className = ‘chat-msg ai’;
-div.id = ‘chatTypingIndicator’;
-div.innerHTML = `<div class="chat-msg-avatar">🧑‍🏫</div> <div class="chat-typing"> <div class="chat-typing-dot"></div> <div class="chat-typing-dot"></div> <div class="chat-typing-dot"></div> </div>`;
-msgs.appendChild(div);
-msgs.scrollTop = msgs.scrollHeight;
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ai';
+  div.id = 'chatTypingIndicator';
+  div.innerHTML = `
+    <div class="chat-msg-avatar">🧑‍🏫</div>
+    <div class="chat-typing">
+      <div class="chat-typing-dot"></div>
+      <div class="chat-typing-dot"></div>
+      <div class="chat-typing-dot"></div>
+    </div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 function removeTypingIndicator() {
-document.getElementById(‘chatTypingIndicator’)?.remove();
+  document.getElementById('chatTypingIndicator')?.remove();
 }
 
 function showChatError(message) {
-const msgs = document.getElementById(‘chatMessages’);
-const div = document.createElement(‘div’);
-div.className = ‘chat-error’;
-div.textContent = ’⚠ ’ + message;
-msgs.appendChild(div);
-msgs.scrollTop = msgs.scrollHeight;
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-error';
+  div.textContent = '⚠ ' + message;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 async function sendChatMessage() {
-const input = document.getElementById(‘chatInput’);
-const sendBtn = document.getElementById(‘chatSendBtn’);
-const message = input.value.trim();
-
-if (!message || chatTyping) return;
-
-// Clear input
-input.value = ‘’;
-input.style.height = ‘auto’;
-
-// Show user message
-appendChatMessage(‘user’, message);
-
-// Add to history
-chatHistory.push({ role: ‘user’, content: message });
-
-// Disable send while waiting
-chatTyping = true;
-sendBtn.disabled = true;
-
-// Show typing indicator
-showTypingIndicator();
-
-// Get current study context (topic + any active result)
-let context = ‘’;
-const studyInput = document.getElementById(‘studyInput’);
-if (studyInput?.value) context = ’Current study topic: ’ + studyInput.value;
-const resultArea = document.getElementById(‘resultArea’);
-if (resultArea?.textContent) context += ’\n\nCurrent study content summary: ’ + resultArea.textContent.slice(0, 500);
-
-try {
-const res = await fetch(’/.netlify/functions/chat’, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({
-message,
-history: chatHistory.slice(-10), // last 10 messages for context
-context
-})
-});
-
-```
-const data = await res.json();
-removeTypingIndicator();
-
-if (!res.ok || data.error) {
-  showChatError(data.error || 'Something went wrong. Check your server and API key.');
-  chatHistory.pop(); // remove failed message from history
-} else {
-  appendChatMessage('ai', data.reply);
-  chatHistory.push({ role: 'assistant', content: data.reply });
-}
-```
-
-} catch (err) {
-removeTypingIndicator();
-showChatError(‘Cannot connect to server. Make sure node server.js is running.’);
-chatHistory.pop();
-} finally {
-chatTyping = false;
-sendBtn.disabled = false;
-input.focus();
-}
+  const input=document.getElementById('chatInput');
+  const sendBtn=document.getElementById('chatSendBtn');
+  const message=input?.value?.trim();
+  if(!message||chatTyping)return;
+  input.value='';
+  if(input.style)input.style.height='auto';
+  appendChatMessage('user',message);
+  chatHistory.push({role:'user',content:message});
+  chatTyping=true;
+  if(sendBtn)sendBtn.disabled=true;
+  showTypingIndicator();
+  let context='';
+  const si=document.getElementById('studyInput');
+  if(si?.value)context='Study topic: '+si.value;
+  try{
+    const res=await fetch('/.netlify/functions/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message,history:chatHistory.slice(-10),context})
+    });
+    const data=await res.json();
+    removeTypingIndicator();
+    if(!res.ok||data.error){showChatError(data.error||'Something went wrong.');chatHistory.pop();}
+    else{appendChatMessage('ai',data.reply);chatHistory.push({role:'assistant',content:data.reply});}
+  }catch(err){
+    removeTypingIndicator();
+    showChatError('Cannot connect. Make sure Netlify functions are deployed.');
+    chatHistory.pop();
+  }finally{chatTyping=false;if(sendBtn)sendBtn.disabled=false;if(input)input.focus();}
 }
 
 </script>
