@@ -384,8 +384,8 @@ STUDLEY-STYLE WORKSPACE
 
 /* LEFT NAV SIDEBAR */
 .sl-sidebar {
-width:220px; flex-shrink:0; background:var(–bg-3);
-border-right:1px solid var(–border-2);
+width:220px; flex-shrink:0; background:#0a0a18;
+border-right:2px solid var(–border-2);
 display:flex; flex-direction:column;
 padding:20px 12px 24px;
 min-height:calc(100vh - var(–nav-height));
@@ -450,11 +450,11 @@ font-weight:800; color:var(–text); letter-spacing:-2px; line-height:1.1; margi
 /* Input cards row */
 .sl-input-cards {
 display:grid; grid-template-columns:1fr 1fr 1fr;
-gap:12px; margin-bottom:10px;
+gap:16px; margin-bottom:32px;
 }
 .sl-input-card {
-background:var(–surface); border:1px solid var(–border-2);
-border-radius:var(–radius-lg); padding:28px 22px;
+background:var(–surface); border:1px solid var(–border);
+border-radius:var(–radius-lg); padding:36px 28px;
 cursor:pointer; transition:all .22s var(–ease);
 display:flex; flex-direction:column; gap:6px; text-align:left;
 }
@@ -463,7 +463,7 @@ background:var(–surface-2); border-color:var(–accent);
 transform:translateY(-3px); box-shadow:0 8px 28px var(–glow-sm);
 }
 .sl-input-card.active-card { border-color:var(–accent); background:rgba(124,92,252,0.07); }
-.sl-input-card-icon { font-size:22px; margin-bottom:4px; }
+.sl-input-card-icon { font-size:32px; margin-bottom:12px; }
 .sl-input-card-title { font-family:var(–font-display); font-size:15px; font-weight:700; color:var(–text); }
 .sl-input-card-sub { font-size:12px; color:var(–text-3); }
 
@@ -590,11 +590,11 @@ display:flex; align-items:center; justify-content:space-between;
 margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(–border);
 }
 .sl-sets-header-left { display:flex; align-items:center; gap:10px; }
-.sl-sets-divider { width:3px; height:20px; background:linear-gradient(180deg,var(–accent),var(–accent-2)); border-radius:999px; }
+.sl-sets-divider { width:4px; height:24px; background:linear-gradient(180deg,var(–accent),var(–accent-2)); border-radius:999px; }
 .sl-sets-heading { font-family:var(–font-display); font-size:18px; font-weight:800; color:var(–text); }
 .sl-btn-new-set {
 background:linear-gradient(135deg,var(–accent),var(–accent-2)); color:#fff;
-border:none; border-radius:9px; padding:8px 16px; font-family:var(–font-body);
+border:none; border-radius:10px; padding:10px 20px; font-family:var(–font-body);
 font-size:12.5px; font-weight:700; cursor:pointer; transition:all .2s;
 box-shadow:0 4px 14px var(–glow-sm);
 }
@@ -1015,7 +1015,7 @@ border-radius:10px;padding:10px 13px;font-size:12.5px;color:#f87171;margin:4px 0
         <input type="file" id="imgInputMain" style="display:none" accept="image/*" onchange="handleFileUpload(this)">
         <input type="file" id="cameraInputMain" style="display:none" accept="image/*" capture="environment" onchange="handleFileUpload(this)">
         <div class="sl-file-list" id="uploadFileList"></div>
-        <div style="margin-top:14px">
+        <div style="margin-top:14px" id="modesSection">
           <div class="sl-modes-label">Choose a mode <span class="sl-modes-hint">tap multiple to combine</span></div>
           <div class="sl-modes-grid" id="modesGrid">
             <button class="sl-mode-btn selected" data-mode="solve" onclick="toggleMode(this)"><span class="sl-mode-icon">🔍</span><span class="sl-mode-name">Solve</span></button>
