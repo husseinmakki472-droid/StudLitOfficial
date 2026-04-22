@@ -384,7 +384,7 @@ STUDLEY-STYLE WORKSPACE — PIXEL PERFECT
 /* ── SIDEBAR ── */
 .sl-sidebar{
 width:210px;flex-shrink:0;
-background:#0d0d1f;
+background:var(–bg-3);
 border-right:1px solid rgba(255,255,255,0.08);
 display:flex;flex-direction:column;
 padding:20px 10px 24px;
@@ -394,25 +394,25 @@ overflow-y:auto;
 }
 .sl-sidebar-logo{
 font-family:var(–font-display);font-weight:800;font-size:22px;
-color:#fff;margin-bottom:24px;padding:4px 10px;
+color:var(–text);margin-bottom:24px;padding:4px 10px;
 display:flex;align-items:center;gap:8px;letter-spacing:-.5px;
 }
 .sl-sidebar-logo span{color:var(–accent)}
 .sl-nav-item{
 display:flex;align-items:center;gap:10px;
 padding:9px 12px;border-radius:10px;
-font-size:13.5px;font-weight:500;color:rgba(255,255,255,0.55);
+font-size:13.5px;font-weight:500;color:var(–text-2);
 cursor:pointer;transition:all .15s;border:none;
 background:transparent;width:100%;text-align:left;
 font-family:var(–font-body);margin-bottom:1px;
 }
-.sl-nav-item:hover{background:rgba(255,255,255,0.06);color:#fff}
-.sl-nav-item.active{background:rgba(124,92,252,0.18);color:#fff;font-weight:600}
+.sl-nav-item:hover{background:var(–surface);color:var(–text)}
+.sl-nav-item.active{background:rgba(124,92,252,0.18);color:var(–text);font-weight:600}
 .sl-nav-item-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
-.sl-nav-divider{height:1px;background:rgba(255,255,255,0.07);margin:10px 4px}
+.sl-nav-divider{height:1px;background:var(–surface);margin:10px 4px}
 .sl-nav-section-label{
 font-size:10px;font-weight:700;text-transform:uppercase;
-letter-spacing:1px;color:rgba(255,255,255,0.3);
+letter-spacing:1px;color:var(–text-3);
 padding:0 12px;margin:8px 0 6px;
 }
 .sl-sidebar-bottom{
@@ -424,10 +424,10 @@ display:flex;align-items:center;gap:10px;
 width:32px;height:32px;border-radius:50%;
 background:linear-gradient(135deg,var(–accent),var(–accent-2));
 display:flex;align-items:center;justify-content:center;
-font-family:var(–font-display);font-weight:800;font-size:13px;color:#fff;flex-shrink:0;
+font-family:var(–font-display);font-weight:800;font-size:13px;color:var(–text);flex-shrink:0;
 }
-.sl-user-name{font-size:13px;font-weight:600;color:#fff}
-.sl-user-plan{font-size:11px;color:rgba(255,255,255,0.4)}
+.sl-user-name{font-size:13px;font-weight:600;color:var(–text)}
+.sl-user-plan{font-size:11px;color:var(–text-3)}
 
 /* ── MAIN ── */
 .sl-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;max-height:calc(100vh - var(–nav-height))}
@@ -437,16 +437,16 @@ font-family:var(–font-display);font-weight:800;font-size:13px;color:#fff;flex-
 .sl-hero-greeting{
 font-family:var(–font-display);
 font-size:clamp(38px,5vw,60px);
-font-weight:800;color:#fff;
+font-weight:800;color:var(–text);
 letter-spacing:-2px;margin-bottom:14px;line-height:1.08;
 }
-.sl-hero-sub{font-size:16px;color:rgba(255,255,255,0.45);margin-bottom:36px;line-height:1.6}
+.sl-hero-sub{font-size:16px;color:var(–text-2);margin-bottom:36px;line-height:1.6}
 
 /* ── INPUT CARDS ── */
 .sl-input-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:10px}
 .sl-input-card{
-background:rgba(255,255,255,0.05);
-border:1px solid rgba(255,255,255,0.1);
+background:var(–surface);
+border:1px solid var(–border);
 border-radius:16px;padding:32px 24px;
 cursor:pointer;transition:all .22s;
 display:flex;flex-direction:column;gap:8px;text-align:left;
@@ -459,84 +459,84 @@ box-shadow:0 8px 28px rgba(124,92,252,0.15);
 }
 .sl-input-card.active-card{border-color:var(–accent);background:rgba(124,92,252,0.08)}
 .sl-input-card-icon{font-size:26px;margin-bottom:6px}
-.sl-input-card-title{font-family:var(–font-display);font-size:17px;font-weight:700;color:#fff}
-.sl-input-card-sub{font-size:13px;color:rgba(255,255,255,0.4)}
+.sl-input-card-title{font-family:var(–font-display);font-size:17px;font-weight:700;color:var(–text)}
+.sl-input-card-sub{font-size:13px;color:var(–text-3)}
 
 /* ── INPUT PANELS ── */
 .sl-input-panel{display:none;animation:fadeUp .3s var(–ease) both}
 .sl-input-panel.open{display:block}
 .sl-panel-card{
-background:rgba(255,255,255,0.04);
-border:1px solid rgba(255,255,255,0.09);
+background:var(–card-bg);
+border:1px solid var(–border);
 border-radius:16px;padding:24px;margin-bottom:12px;
 }
 .sl-topic-textarea{
 width:100%;min-height:120px;resize:none;
 padding:14px 16px;border-radius:12px;
-border:1px solid rgba(255,255,255,0.1);
-background:rgba(255,255,255,0.05);
-color:#fff;font-family:var(–font-body);font-size:14.5px;
+border:1px solid var(–border);
+background:var(–surface);
+color:var(–text);font-family:var(–font-body);font-size:14.5px;
 line-height:1.65;outline:none;transition:border-color .2s;margin-bottom:12px;
 }
-.sl-topic-textarea::placeholder{color:rgba(255,255,255,0.25)}
+.sl-topic-textarea::placeholder{color:var(–text-3)}
 .sl-topic-textarea:focus{border-color:var(–accent);box-shadow:0 0 0 3px rgba(124,92,252,0.15)}
 .sl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .sl-chip{
-background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+background:var(–surface);border:1px solid var(–border);
 border-radius:8px;padding:5px 11px;font-size:12px;font-weight:500;
-color:rgba(255,255,255,0.5);cursor:pointer;transition:all .18s;white-space:nowrap;
+color:var(–text-2);cursor:pointer;transition:all .18s;white-space:nowrap;
 }
-.sl-chip:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:#fff}
+.sl-chip:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:var(–text)}
 .sl-upload-zone{
 border:2px dashed rgba(255,255,255,0.15);border-radius:14px;
 padding:24px 20px;text-align:center;cursor:pointer;
-transition:all .2s;background:rgba(255,255,255,0.03);margin-bottom:12px;
+transition:all .2s;background:var(–surface);margin-bottom:12px;
 }
 .sl-upload-zone:hover,.sl-upload-zone.drag-over{
 border-color:var(–accent);background:rgba(124,92,252,0.06);
 }
 .sl-upload-zone-icon{font-size:28px;margin-bottom:8px}
-.sl-upload-zone-title{font-family:var(–font-display);font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
-.sl-upload-zone-sub{font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:12px}
+.sl-upload-zone-title{font-family:var(–font-display);font-size:14px;font-weight:700;color:var(–text);margin-bottom:4px}
+.sl-upload-zone-sub{font-size:12px;color:var(–text-3);margin-bottom:12px}
 .sl-upload-btns{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
 .sl-upload-btn{
-background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
+background:var(–surface);border:1px solid var(–border-2);
 border-radius:8px;padding:7px 14px;font-family:var(–font-body);
-font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;transition:all .18s;
+font-size:12px;font-weight:600;color:var(–text-2);cursor:pointer;transition:all .18s;
 }
-.sl-upload-btn:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:#fff}
+.sl-upload-btn:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:var(–text)}
 .sl-url-row{display:flex;gap:8px;margin-bottom:10px}
 .sl-url-input{
-flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+flex:1;background:var(–surface);border:1px solid var(–border);
 border-radius:10px;padding:9px 13px;font-family:var(–font-body);
-font-size:13px;color:#fff;outline:none;transition:border-color .2s;
+font-size:13px;color:var(–text);outline:none;transition:border-color .2s;
 }
 .sl-url-input:focus{border-color:var(–accent)}
-.sl-url-input::placeholder{color:rgba(255,255,255,0.25)}
+.sl-url-input::placeholder{color:var(–text-3)}
 .sl-url-add{
-background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
+background:var(–surface);border:1px solid var(–border-2);
 border-radius:10px;padding:9px 14px;font-family:var(–font-body);
-font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;white-space:nowrap;transition:all .18s;
+font-size:12px;font-weight:600;color:var(–text-2);cursor:pointer;white-space:nowrap;transition:all .18s;
 }
-.sl-url-add:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:#fff}
+.sl-url-add:hover{background:rgba(124,92,252,0.15);border-color:var(–accent);color:var(–text)}
 .sl-file-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .sl-file-item{
-background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
+background:var(–surface);border:1px solid var(–border);
 border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;
 }
 .sl-file-icon{font-size:16px;flex-shrink:0}
-.sl-file-name{flex:1;font-size:12px;color:rgba(255,255,255,0.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sl-file-type{font-size:9px;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,0.3);flex-shrink:0}
-.sl-file-rm{background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;transition:all .15s}
+.sl-file-name{flex:1;font-size:12px;color:var(–text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-file-type{font-size:9px;font-weight:700;text-transform:uppercase;color:var(–text-3);flex-shrink:0}
+.sl-file-rm{background:none;border:none;color:var(–text-3);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;transition:all .15s}
 .sl-file-rm:hover{color:#f87171;background:rgba(248,113,113,0.1)}
 
 /* ── MODES ── */
-.sl-modes-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,0.3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.sl-modes-hint{font-size:10px;color:rgba(255,255,255,0.25);font-weight:400;text-transform:none;letter-spacing:0}
+.sl-modes-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(–text-3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.sl-modes-hint{font-size:10px;color:var(–text-3);font-weight:400;text-transform:none;letter-spacing:0}
 .sl-modes-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
 .sl-mode-btn{
 display:flex;flex-direction:column;align-items:center;gap:5px;
-background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+background:var(–surface);border:1px solid var(–border);
 border-radius:12px;padding:12px 8px;cursor:pointer;
 transition:all .2s;text-align:center;position:relative;
 }
@@ -548,7 +548,7 @@ box-shadow:0 0 0 1px var(–accent);
 }
 .sl-mode-btn.selected .sl-mode-name{color:var(–accent)}
 .sl-mode-icon{font-size:20px;line-height:1}
-.sl-mode-name{font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);font-family:var(–font-body);transition:color .18s}
+.sl-mode-name{font-size:11px;font-weight:600;color:var(–text-2);font-family:var(–font-body);transition:color .18s}
 .sl-mode-badge{position:absolute;top:4px;right:5px;font-size:8px;font-weight:700;text-transform:uppercase;padding:1px 5px;border-radius:999px}
 .sl-mode-badge.pop{background:rgba(124,92,252,0.2);color:var(–accent)}
 .sl-mode-badge.rec{background:rgba(74,222,128,0.15);color:#4ade80}
@@ -556,7 +556,7 @@ box-shadow:0 0 0 1px var(–accent);
 /* ── ACTION BUTTONS ── */
 .sl-action-row{display:flex;gap:9px}
 .sl-btn-generate{
-background:linear-gradient(135deg,var(–accent),var(–accent-2));color:#fff;
+background:linear-gradient(135deg,var(–accent),var(–accent-2));color:var(–text);
 border:none;border-radius:12px;padding:13px 28px;
 font-family:var(–font-display);font-size:14.5px;font-weight:700;
 cursor:pointer;transition:all .2s;box-shadow:0 6px 22px rgba(124,92,252,0.35);flex:1;
@@ -564,12 +564,12 @@ cursor:pointer;transition:all .2s;box-shadow:0 6px 22px rgba(124,92,252,0.35);fl
 .sl-btn-generate:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 10px 30px rgba(124,92,252,0.4)}
 .sl-btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .sl-btn-sec{
-background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.55);
-border:1px solid rgba(255,255,255,0.1);
+background:var(–surface);color:var(–text-2);
+border:1px solid var(–border);
 border-radius:12px;padding:13px 18px;font-family:var(–font-body);
 font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;white-space:nowrap;
 }
-.sl-btn-sec:hover{background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)}
+.sl-btn-sec:hover{background:var(–surface-2);color:var(–text);border-color:rgba(255,255,255,0.2)}
 
 /* ── STUDY SETS SECTION ── */
 .sl-sets-section{padding:20px 48px 60px;max-width:900px;margin:0 auto;width:100%}
@@ -580,9 +580,9 @@ border-bottom:1px solid rgba(255,255,255,0.07);
 }
 .sl-sets-header-left{display:flex;align-items:center;gap:12px}
 .sl-sets-divider{width:4px;height:22px;background:linear-gradient(180deg,var(–accent),var(–accent-2));border-radius:999px}
-.sl-sets-heading{font-family:var(–font-display);font-size:20px;font-weight:800;color:#fff;letter-spacing:-.4px}
+.sl-sets-heading{font-family:var(–font-display);font-size:20px;font-weight:800;color:var(–text);letter-spacing:-.4px}
 .sl-btn-new-set{
-background:linear-gradient(135deg,var(–accent),var(–accent-2));color:#fff;
+background:linear-gradient(135deg,var(–accent),var(–accent-2));color:var(–text);
 border:none;border-radius:10px;padding:10px 20px;
 font-family:var(–font-body);font-size:13px;font-weight:700;
 cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(124,92,252,0.3);
@@ -590,29 +590,29 @@ cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(124,92,252,0.3);
 .sl-btn-new-set:hover{opacity:.85;transform:translateY(-1px)}
 .sl-sets-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .sl-set-card{
-background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);
+background:var(–card-bg);border:1px solid var(–border);
 border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;
 }
 .sl-set-card:hover{border-color:rgba(124,92,252,0.4);box-shadow:0 4px 20px rgba(124,92,252,0.12);transform:translateY(-2px)}
 .sl-set-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
-.sl-set-card-title{font-family:var(–font-display);font-size:15px;font-weight:700;color:#fff;flex:1;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sl-set-card-menu{background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:16px;padding:0 4px}
+.sl-set-card-title{font-family:var(–font-display);font-size:15px;font-weight:700;color:var(–text);flex:1;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-set-card-menu{background:none;border:none;color:var(–text-3);cursor:pointer;font-size:16px;padding:0 4px}
 .sl-set-stat-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .sl-set-stat{display:flex;align-items:center;gap:10px}
-.sl-set-stat-num{font-family:var(–font-display);font-size:15px;font-weight:700;color:#fff;width:32px;text-align:right;flex-shrink:0}
-.sl-set-stat-bar-wrap{flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden}
+.sl-set-stat-num{font-family:var(–font-display);font-size:15px;font-weight:700;color:var(–text);width:32px;text-align:right;flex-shrink:0}
+.sl-set-stat-bar-wrap{flex:1;height:8px;background:var(–surface-2);border-radius:999px;overflow:hidden}
 .sl-set-stat-bar{height:100%;border-radius:999px}
 .sl-set-stat-label{font-size:11px;font-weight:600;width:68px;flex-shrink:0}
 .stat-unfamiliar{background:#f87171}.stat-unfamiliar-label{color:#f87171}
 .stat-learning{background:#fbbf24}.stat-learning-label{color:#fbbf24}
 .stat-familiar{background:#60a5fa}.stat-familiar-label{color:#60a5fa}
 .stat-mastered{background:#4ade80}.stat-mastered-label{color:#4ade80}
-.sl-set-path-label{font-size:11.5px;font-weight:600;color:rgba(255,255,255,0.4);margin-bottom:6px}
-.sl-set-progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;margin-bottom:10px}
+.sl-set-path-label{font-size:11.5px;font-weight:600;color:var(–text-3);margin-bottom:6px}
+.sl-set-progress-bar{height:4px;background:var(–surface-2);border-radius:999px;overflow:hidden;margin-bottom:10px}
 .sl-set-progress-fill{height:100%;background:linear-gradient(90deg,var(–accent),var(–accent-2));border-radius:999px}
 .sl-set-mode-icons{display:flex;gap:6px}
-.sl-set-mode-icon{width:26px;height:26px;background:rgba(255,255,255,0.07);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
-.sl-sets-empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3)}
+.sl-set-mode-icon{width:26px;height:26px;background:var(–surface);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.sl-sets-empty{text-align:center;padding:40px 20px;color:var(–text-3)}
 .sl-sets-empty-icon{font-size:40px;margin-bottom:14px}
 .sl-sets-empty-text{font-size:14px;line-height:1.7}
 
@@ -620,12 +620,12 @@ border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;
 .sl-result-view{padding:0 48px 60px;max-width:960px;margin:0 auto;width:100%}
 .sl-result-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;gap:10px}
 .sl-result-topbar-left{display:flex;align-items:center;gap:10px}
-.sl-result-back-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:7px 14px;font-family:var(–font-body);font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
-.sl-result-back-btn:hover{background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2)}
+.sl-result-back-btn{background:var(–surface);border:1px solid var(–border);border-radius:9px;padding:7px 14px;font-family:var(–font-body);font-size:12.5px;font-weight:600;color:var(–text-2);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
+.sl-result-back-btn:hover{background:var(–surface-2);color:var(–text);border-color:rgba(255,255,255,0.2)}
 .sl-result-save-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.sl-save-select{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 11px;font-family:var(–font-body);font-size:12px;color:#fff;outline:none;cursor:pointer}
+.sl-save-select{background:var(–surface);border:1px solid var(–border);border-radius:8px;padding:7px 11px;font-family:var(–font-body);font-size:12px;color:var(–text);outline:none;cursor:pointer}
 .sl-save-select:focus{border-color:var(–accent)}
-.sl-btn-save{background:linear-gradient(135deg,var(–accent),var(–accent-2));color:#fff;border:none;border-radius:8px;padding:7px 16px;font-family:var(–font-body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.sl-btn-save{background:linear-gradient(135deg,var(–accent),var(–accent-2));color:var(–text);border:none;border-radius:8px;padding:7px 16px;font-family:var(–font-body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
 .sl-btn-save:hover{opacity:.85}
 .sl-save-confirm{font-size:12px;color:#4ade80;font-weight:600;display:none}
 .sl-save-confirm.show{display:block}
@@ -647,7 +647,7 @@ border-right:1px solid rgba(0,0,0,0.1);
 [data-theme=“light”] .sl-hero-greeting { color:#13121e; }
 [data-theme=“light”] .sl-hero-sub { color:rgba(19,18,30,0.5); }
 [data-theme=“light”] .sl-input-card {
-background:rgba(255,255,255,0.8);
+background:var(–card-bg);
 border:1px solid rgba(0,0,0,0.1);
 }
 [data-theme=“light”] .sl-input-card:hover {
@@ -658,7 +658,7 @@ border-color:rgba(124,92,252,0.3);
 [data-theme=“light”] .sl-input-card-sub { color:rgba(19,18,30,0.45); }
 [data-theme=“light”] .sl-sets-heading { color:#13121e; }
 [data-theme=“light”] .sl-set-card {
-background:rgba(255,255,255,0.8);
+background:var(–card-bg);
 border:1px solid rgba(0,0,0,0.1);
 }
 [data-theme=“light”] .sl-set-card-title { color:#13121e; }
@@ -668,11 +668,11 @@ border:1px solid rgba(0,0,0,0.1);
 [data-theme=“light”] .sl-set-mode-icon { background:rgba(0,0,0,0.06); }
 [data-theme=“light”] .sl-sets-empty { color:rgba(19,18,30,0.35); }
 [data-theme=“light”] .sl-panel-card {
-background:rgba(255,255,255,0.8);
+background:var(–card-bg);
 border:1px solid rgba(0,0,0,0.1);
 }
 [data-theme=“light”] .sl-topic-textarea {
-background:rgba(255,255,255,0.9);
+background:var(–surface);
 border:1px solid rgba(0,0,0,0.12);
 color:#13121e;
 }
@@ -695,7 +695,7 @@ border:1px solid rgba(0,0,0,0.1);
 color:rgba(19,18,30,0.55);
 }
 [data-theme=“light”] .sl-url-input {
-background:rgba(255,255,255,0.9);
+background:var(–surface);
 border:1px solid rgba(0,0,0,0.12);
 color:#13121e;
 }
@@ -1247,6 +1247,257 @@ padding:24px; text-align:center; margin-bottom:16px;
 [data-theme=“light”] .lb-level-title { color:#13121e; }
 [data-theme=“light”] .lb-tab { color:rgba(19,18,30,0.45); }
 [data-theme=“light”] .lb-tab:hover { color:#13121e; }
+
+/* ============================================================
+GLOBAL THEME-SAFE OVERRIDES — WORKS IN BOTH MODES
+============================================================ */
+
+/* Force all text to use theme variables everywhere */
+.sl-hero-greeting { color: var(–text) !important; }
+.sl-hero-sub { color: var(–text-2) !important; }
+.sl-input-card-title { color: var(–text) !important; }
+.sl-input-card-sub { color: var(–text-2) !important; }
+.sl-sets-heading { color: var(–text) !important; }
+.sl-set-card-title { color: var(–text) !important; }
+.sl-set-stat-num { color: var(–text) !important; }
+.sl-nav-item { color: var(–text-2) !important; }
+.sl-nav-item:hover { color: var(–text) !important; background: var(–surface-2) !important; }
+.sl-nav-item.active { color: var(–accent) !important; background: rgba(124,92,252,0.15) !important; }
+.sl-nav-section-label { color: var(–text-3) !important; }
+.sl-sidebar-logo { color: var(–text) !important; }
+.sl-user-name { color: var(–text) !important; }
+.sl-user-plan { color: var(–text-3) !important; }
+.sl-modes-label { color: var(–text-3) !important; }
+.sl-mode-name { color: var(–text) !important; }
+.sl-mode-btn.selected .sl-mode-name { color: var(–accent) !important; }
+.sl-upload-zone-title { color: var(–text) !important; }
+.sl-upload-zone-sub { color: var(–text-3) !important; }
+.sl-upload-btn { color: var(–text-2) !important; }
+.sl-chip { color: var(–text-2) !important; }
+.sl-url-input { color: var(–text) !important; }
+.sl-file-name { color: var(–text-2) !important; }
+.sl-set-path-label { color: var(–text-3) !important; }
+.sl-sets-empty { color: var(–text-3) !important; }
+.sl-streak-sub { color: var(–text-3) !important; }
+.sl-result-back-btn { color: var(–text-2) !important; }
+
+/* Settings always visible */
+.settings-panel-title { color: var(–text) !important; }
+.settings-panel-sub { color: var(–text-2) !important; }
+.settings-row-title { color: var(–text) !important; }
+.settings-row-sub { color: var(–text-2) !important; }
+.settings-section-label { color: var(–text-3) !important; }
+.settings-nav-title { color: var(–text) !important; }
+.settings-nav-item { color: var(–text-2) !important; }
+.settings-nav-item.active { color: var(–accent) !important; }
+.settings-avatar-name { color: var(–text) !important; }
+.settings-input { color: var(–text) !important; background: var(–surface) !important; border: 1px solid var(–border-2) !important; }
+.settings-select { color: var(–text) !important; background: var(–surface) !important; border: 1px solid var(–border-2) !important; }
+.plan-card-name { color: var(–text) !important; }
+.plan-card-detail { color: var(–text-2) !important; }
+
+/* Content cards always visible */
+.card-body { color: var(–text-2) !important; }
+.card-title { color: var(–text) !important; }
+.card-label { color: var(–text-3) !important; }
+.result-title { color: var(–text) !important; }
+.fc-text { color: var(–text) !important; }
+.concept-term { color: var(–text) !important; }
+.concept-def { color: var(–text-2) !important; }
+.step-title { color: var(–text) !important; }
+.step-desc { color: var(–text-2) !important; }
+.tutor-bubble { color: var(–text) !important; background: var(–surface) !important; border: 1px solid var(–border) !important; }
+.humanizer-text { color: var(–text) !important; }
+
+/* Chat always visible */
+.chat-header-name { color: var(–text) !important; }
+.chat-msg.ai .chat-bubble { color: var(–text) !important; background: var(–surface) !important; }
+.chat-welcome-title { color: var(–text) !important; }
+.chat-welcome-sub { color: var(–text-2) !important; }
+.chat-input { color: var(–text) !important; background: var(–surface) !important; }
+
+/* Leaderboard always visible */
+.lb-title { color: var(–text) !important; }
+.lb-sub { color: var(–text-2) !important; }
+.lb-stat-val { color: var(–text) !important; }
+.lb-stat-label { color: var(–text-3) !important; }
+.lb-streak-title { color: var(–text) !important; }
+.lb-streak-sub { color: var(–text-3) !important; }
+.lb-rank-name { color: var(–text) !important; }
+.lb-rank-xp { color: var(–text) !important; }
+.lb-rank-sets { color: var(–text-3) !important; }
+.lb-rank-badge { color: var(–text-3) !important; }
+.lb-rank-pos { color: var(–text-3) !important; }
+.lb-level-title { color: var(–text) !important; }
+.lb-level-xp { color: var(–text-3) !important; }
+.lb-rank-header div { color: var(–text-3) !important; }
+.lb-signup-title { color: var(–text) !important; }
+.lb-signup-sub { color: var(–text-2) !important; }
+.lb-premium-title { color: var(–text) !important; }
+.lb-premium-sub { color: var(–text-2) !important; }
+.lb-tab { color: var(–text-3) !important; }
+.lb-tab:hover { color: var(–text) !important; }
+.lb-tab.active { color: var(–accent) !important; }
+
+/* Timer always visible */
+.study-timer-display { color: var(–text) !important; }
+.study-timer-label { color: var(–text-3) !important; }
+.timer-btn:not(.primary) { color: var(–text-2) !important; background: var(–surface) !important; border: 1px solid var(–border) !important; }
+.timer-preset { color: var(–text-3) !important; background: var(–surface) !important; border: 1px solid var(–border) !important; }
+.timer-preset.active { color: var(–accent) !important; background: rgba(124,92,252,0.12) !important; border-color: var(–accent) !important; }
+.study-timer { background: var(–bg-2) !important; border: 1px solid var(–border-2) !important; }
+
+/* Custom time input */
+.timer-custom-input {
+background: var(–surface) !important;
+border: 1px solid var(–border-2) !important;
+color: var(–text) !important;
+border-radius: 8px; padding: 5px 8px;
+font-family: var(–font-display); font-size: 13px; font-weight: 700;
+width: 60px; text-align: center; outline: none;
+}
+.timer-custom-input:focus { border-color: var(–accent) !important; }
+.timer-custom-row {
+display: flex; align-items: center; gap: 6px;
+margin-top: 8px; justify-content: center;
+font-size: 12px; color: var(–text-3); font-weight: 600;
+}
+
+/* ============================================================
+LEADERBOARD AS FULL PAGE
+============================================================ */
+.lb-page {
+display: none;
+min-height: calc(100vh - var(–nav-height));
+background: var(–bg);
+position: relative; z-index: 1;
+}
+.lb-page.active { display: block; animation: fadeUp .4s var(–ease) both; }
+.lb-page-inner { max-width: 900px; margin: 0 auto; padding: 36px 32px 60px; }
+.lb-page-header {
+display: flex; align-items: flex-start; justify-content: space-between;
+margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+}
+.lb-page-title {
+font-family: var(–font-display); font-size: 32px; font-weight: 800;
+color: var(–text); letter-spacing: -1px; margin-bottom: 6px;
+}
+.lb-page-sub { font-size: 14px; color: var(–text-2); line-height: 1.5; }
+.lb-page-tabs {
+display: flex; gap: 0; background: var(–surface);
+border: 1px solid var(–border); border-radius: 12px; padding: 4px;
+}
+.lb-page-tab {
+font-family: var(–font-body); font-size: 13px; font-weight: 600;
+color: var(–text-2); background: transparent; border: none;
+border-radius: 9px; padding: 8px 18px; cursor: pointer; transition: all .18s;
+white-space: nowrap;
+}
+.lb-page-tab:hover { color: var(–text); background: var(–surface-2); }
+.lb-page-tab.active { background: linear-gradient(135deg,var(–accent),var(–accent-2)); color: #fff; box-shadow: 0 2px 10px var(–glow-sm); }
+.lb-page-content { }
+.lb-page-panel { display: none; animation: fadeUp .3s var(–ease) both; }
+.lb-page-panel.active { display: block; }
+
+/* Stats row */
+.lb-page-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.lb-page-stat {
+background: var(–card-bg); border: 1px solid var(–border);
+border-radius: var(–radius-lg); padding: 20px; text-align: center;
+}
+.lb-page-stat-val {
+font-family: var(–font-display); font-size: 32px; font-weight: 800;
+color: var(–text); line-height: 1; margin-bottom: 6px;
+}
+.lb-page-stat-val.grad { background: linear-gradient(135deg,var(–accent),var(–accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.lb-page-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(–text-3); }
+
+/* Level card */
+.lb-level-card {
+background: linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.06));
+border: 1px solid rgba(124,92,252,0.2); border-radius: var(–radius-lg);
+padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px;
+}
+.lb-level-badge {
+width: 60px; height: 60px; border-radius: 50%;
+background: linear-gradient(135deg,var(–accent),var(–accent-2));
+display: flex; align-items: center; justify-content: center;
+font-size: 26px; flex-shrink: 0; box-shadow: 0 0 20px var(–glow);
+}
+.lb-level-info { flex: 1; }
+.lb-level-name { font-family: var(–font-display); font-size: 18px; font-weight: 800; color: var(–text); margin-bottom: 4px; }
+.lb-level-progress-wrap { display: flex; align-items: center; gap: 12px; }
+.lb-level-track-wide { flex: 1; height: 8px; background: var(–surface-2); border-radius: 999px; overflow: hidden; }
+.lb-level-fill-wide { height: 100%; background: linear-gradient(90deg,var(–accent),var(–accent-2)); border-radius: 999px; transition: width .6s var(–ease); }
+.lb-level-xp-text { font-size: 12px; color: var(–text-3); font-weight: 600; white-space: nowrap; }
+
+/* Leaderboard table */
+.lb-table-card { background: var(–card-bg); border: 1px solid var(–border); border-radius: var(–radius-xl); overflow: hidden; margin-bottom: 20px; }
+.lb-table-header-row {
+display: grid; grid-template-columns: 56px 1fr 100px 80px 80px;
+padding: 12px 20px; background: var(–surface);
+border-bottom: 1px solid var(–border);
+font-size: 11px; font-weight: 700; text-transform: uppercase;
+letter-spacing: .6px; color: var(–text-3);
+}
+.lb-table-row {
+display: grid; grid-template-columns: 56px 1fr 100px 80px 80px;
+padding: 14px 20px; align-items: center;
+border-bottom: 1px solid var(–border); transition: background .15s;
+}
+.lb-table-row:last-child { border-bottom: none; }
+.lb-table-row:hover { background: var(–surface); }
+.lb-table-row.me { background: rgba(124,92,252,0.08); border-left: 3px solid var(–accent); }
+.lb-table-row.rank1 { background: rgba(251,191,36,0.07); }
+.lb-table-row.rank2 { background: rgba(148,163,184,0.07); }
+.lb-table-row.rank3 { background: rgba(180,83,9,0.07); }
+.lb-pos-num { font-family: var(–font-display); font-size: 16px; font-weight: 800; color: var(–text-3); text-align: center; }
+.lb-pos-gold { color: #fbbf24; }
+.lb-pos-silver { color: #94a3b8; }
+.lb-pos-bronze { color: #b45309; }
+.lb-user-cell { display: flex; align-items: center; gap: 12px; }
+.lb-user-av { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(–font-display); font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0; }
+.lb-user-name { font-size: 14px; font-weight: 700; color: var(–text); }
+.lb-user-level { font-size: 11px; color: var(–text-3); margin-top: 1px; }
+.lb-you-tag { font-size: 9px; background: rgba(124,92,252,0.2); color: var(–accent); border-radius: 4px; padding: 1px 6px; font-weight: 700; margin-left: 6px; }
+.lb-xp-cell { font-family: var(–font-display); font-size: 15px; font-weight: 700; color: var(–text); text-align: right; }
+.lb-sets-cell { font-size: 13px; color: var(–text-2); text-align: right; }
+.lb-streak-cell { font-size: 13px; color: var(–text-2); text-align: right; }
+
+/* Badges grid */
+.lb-badges-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+.lb-badge-card {
+background: var(–card-bg); border: 1px solid var(–border);
+border-radius: var(–radius-lg); padding: 16px; display: flex; gap: 12px; align-items: flex-start;
+transition: all .18s;
+}
+.lb-badge-card.earned { background: linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.06)); border-color: rgba(124,92,252,0.25); }
+.lb-badge-card:not(.earned) { opacity: .5; filter: grayscale(.8); }
+.lb-badge-emoji { font-size: 28px; flex-shrink: 0; }
+.lb-badge-name { font-size: 13px; font-weight: 700; color: var(–text); margin-bottom: 2px; font-family: var(–font-display); }
+.lb-badge-desc { font-size: 11.5px; color: var(–text-3); line-height: 1.4; }
+.lb-badge-earned-tag { font-size: 10px; color: #4ade80; font-weight: 700; margin-top: 4px; }
+
+/* History */
+.lb-history-row {
+display: flex; align-items: center; justify-content: space-between;
+padding: 12px 16px; border-bottom: 1px solid var(–border); font-size: 13.5px;
+}
+.lb-history-row:last-child { border-bottom: none; }
+.lb-history-type { color: var(–text); font-weight: 600; }
+.lb-history-date { color: var(–text-3); font-size: 12px; }
+.lb-history-xp { color: var(–accent); font-weight: 700; font-family: var(–font-display); }
+.lb-empty-state { text-align: center; padding: 48px 20px; color: var(–text-3); }
+.lb-empty-icon { font-size: 48px; margin-bottom: 14px; }
+.lb-empty-text { font-size: 14px; line-height: 1.7; }
+
+@media(max-width:768px) {
+.lb-page-stats { grid-template-columns: repeat(2,1fr); }
+.lb-badges-grid { grid-template-columns: repeat(2,1fr); }
+.lb-table-header-row,.lb-table-row { grid-template-columns: 44px 1fr 80px 60px; }
+.lb-streak-cell { display: none; }
+.lb-table-header-row div:last-child { display: none; }
+}
 </style>
 
 </head>
@@ -1261,7 +1512,7 @@ padding:24px; text-align:center; margin-bottom:16px;
     <button class="page-tab active" id="tab-home" onclick="switchTab('home')">Home</button>
     <button class="page-tab" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
     <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">🤖 AI Checker</button>
-    <button class="page-tab" id="tab-leaderboard" onclick="openLb()">🏆 Leaderboard</button>
+    <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
   </div>
   <div class="nav-right">
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
@@ -1515,6 +1766,117 @@ padding:24px; text-align:center; margin-bottom:16px;
 <div id="setsEmpty" style="display:none"></div>
 </div>
 
+<!-- LEADERBOARD FULL PAGE -->
+
+<div class="page-view" id="view-leaderboard">
+  <div class="lb-page active">
+    <div class="lb-page-inner">
+      <div class="lb-page-header">
+        <div>
+          <div class="lb-page-title">🏆 Leaderboard</div>
+          <div class="lb-page-sub">Earn XP by studying, complete your streak, and climb the rankings.</div>
+        </div>
+        <div class="lb-page-tabs">
+          <button class="lb-page-tab active" onclick="switchLbPageTab('rankings',this)">🏆 Rankings</button>
+          <button class="lb-page-tab" onclick="switchLbPageTab('mystats',this)">📊 My Stats</button>
+          <button class="lb-page-tab" onclick="switchLbPageTab('badges',this)">🎖 Badges</button>
+          <button class="lb-page-tab" onclick="switchLbPageTab('history',this)">📋 History</button>
+        </div>
+      </div>
+
+```
+  <!-- RANKINGS -->
+  <div class="lb-page-panel active" id="lbp-rankings">
+    <div class="lb-premium-card" style="margin-bottom:20px">
+      <div class="lb-premium-icon">⭐</div>
+      <div class="lb-premium-text">
+        <div class="lb-premium-title">Go Premium — Unlock Full Global Rankings</div>
+        <div class="lb-premium-sub">See real-time rankings, weekly competitions, and exclusive badges</div>
+      </div>
+      <button class="btn-lb-premium" onclick="switchTab('home')">Upgrade →</button>
+    </div>
+    <div class="lb-table-card">
+      <div class="lb-table-header-row">
+        <div style="text-align:center">#</div>
+        <div>Student</div>
+        <div style="text-align:right">XP</div>
+        <div style="text-align:right">Sets</div>
+        <div style="text-align:right">Streak</div>
+      </div>
+      <div id="lbPageRankList"></div>
+    </div>
+  </div>
+
+  <!-- MY STATS -->
+  <div class="lb-page-panel" id="lbp-mystats">
+    <div class="lb-page-stats">
+      <div class="lb-page-stat">
+        <div class="lb-page-stat-val grad" id="lbpMyXP">0</div>
+        <div class="lb-page-stat-label">Total XP</div>
+      </div>
+      <div class="lb-page-stat">
+        <div class="lb-page-stat-val" id="lbpMySets">0</div>
+        <div class="lb-page-stat-label">Sets Generated</div>
+      </div>
+      <div class="lb-page-stat">
+        <div class="lb-page-stat-val" id="lbpMyStreak">0</div>
+        <div class="lb-page-stat-label">Day Streak 🔥</div>
+      </div>
+      <div class="lb-page-stat">
+        <div class="lb-page-stat-val" id="lbpMyRank">—</div>
+        <div class="lb-page-stat-label">Your Rank</div>
+      </div>
+    </div>
+    <div class="lb-level-card">
+      <div class="lb-level-badge" id="lbpLevelIcon">🌱</div>
+      <div class="lb-level-info">
+        <div class="lb-level-name" id="lbpLevelName">Beginner</div>
+        <div class="lb-level-progress-wrap">
+          <div class="lb-level-track-wide"><div class="lb-level-fill-wide" id="lbpLevelFill" style="width:0%"></div></div>
+          <div class="lb-level-xp-text" id="lbpLevelXP">0 / 100 XP</div>
+        </div>
+      </div>
+    </div>
+    <div class="lb-signup-card">
+      <div class="lb-signup-icon">🎯</div>
+      <div class="lb-signup-title">Save Your Progress</div>
+      <div class="lb-signup-sub">Create a free account to sync your XP, streak and badges across devices. Your progress currently saves locally only.</div>
+      <div class="lb-signup-btns">
+        <button class="btn-lb-signup" onclick="switchTab('home')">Start Studying →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGES -->
+  <div class="lb-page-panel" id="lbp-badges">
+    <div style="margin-bottom:18px;font-size:14px;color:var(--text-2);line-height:1.6">Earn badges by hitting study milestones. Earned badges appear on your leaderboard profile.</div>
+    <div class="lb-badges-grid" id="lbpBadgesList"></div>
+    <div class="lb-premium-card">
+      <div class="lb-premium-icon">💎</div>
+      <div class="lb-premium-text">
+        <div class="lb-premium-title">20+ Premium-Exclusive Badges</div>
+        <div class="lb-premium-sub">Unlock rare badges, a custom profile border, and animated avatar</div>
+      </div>
+      <button class="btn-lb-premium" onclick="switchTab('home')">Upgrade →</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="lb-page-panel" id="lbp-history">
+    <div class="lb-table-card" id="lbpHistoryList">
+      <div class="lb-empty-state">
+        <div class="lb-empty-icon">📋</div>
+        <div class="lb-empty-text">No study sessions yet.<br>Generate your first study set to start tracking!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+```
+
+  </div>
+</div>
+
 <div class="page-view active" id="view-home-extra">
 <section class="features-section" id="features">
   <div class="features-heading">Why StudLit works</div>
@@ -1640,7 +2002,7 @@ let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 (function(){const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s)})();
 document.getElementById('themeToggle').addEventListener('click',()=>{const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('sl-theme',n)});
 
-function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');['home','workspace','writing'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});document.getElementById('view-home-extra').classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));const tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');['home','workspace','writing','leaderboard'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});document.getElementById('view-home-extra').classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'});if(t==='leaderboard')setTimeout(renderLbPage,50)}
 
 function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(selectedModes.size===1)return;selectedModes.delete(m);btn.classList.remove('selected')}else{selectedModes.add(m);btn.classList.add('selected')}updateModesBar()}
 function updateModesBar(){const bar=document.getElementById('selectedModesBar');const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'};if(selectedModes.size>1){bar.style.display='flex';bar.innerHTML='<span style="font-size:11px;color:var(--text-3);font-weight:600">Generating:</span>'+[...selectedModes].map(m=>`<span class="sel-mode-tag">${names[m]||m}</span>`).join('')}else bar.style.display='none'}
@@ -1724,6 +2086,7 @@ async function generate() {
     showResult(combined);
     lastResult={topic,modes:modeLabel,html:combined};
     updateSaveSelect();
+    addXP(25, 'set');
   } catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
   finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generate Study Set';}}
 }
@@ -2632,19 +2995,12 @@ function updateLeaderboard(s) {
 }
 
 // Award XP when study set is generated
-const _origShowResult_lb = showResult;
-function showResult(html) {
-  _origShowResult_lb(html);
-  addXP(25, 'set');
-}
+// XP award on study set generation - hooked via generate()
+
 
 // Award XP for chat messages
-const _origSendChat_lb = sendChatMessage;
-async function sendChatMessage() {
-  await _origSendChat_lb();
-  const s = loadStats();
-  addXP(2, 'chat');
-}
+// Chat XP handled inline
+
 
 // Add leaderboard button to sidebar
 document.addEventListener('DOMContentLoaded', () => {
@@ -2660,6 +3016,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Init
 renderLb && document.addEventListener('DOMContentLoaded', () => {});
+
+
+// ============================================================
+// LEADERBOARD PAGE
+// ============================================================
+function switchLbPageTab(tab, btn) {
+  document.querySelectorAll('.lb-page-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lb-page-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lbp-' + tab).classList.add('active');
+  renderLbPage();
+}
+
+function renderLbPage() {
+  const s = loadStats();
+  const board = getMockLeaderboard(s);
+
+  // Rankings
+  const rankList = document.getElementById('lbPageRankList');
+  if (rankList) {
+    rankList.innerHTML = board.map((u, i) => {
+      const posClass = i === 0 ? 'rank1' : i === 1 ? 'rank2' : i === 2 ? 'rank3' : '';
+      const posNumClass = i === 0 ? 'lb-pos-gold' : i === 1 ? 'lb-pos-silver' : i === 2 ? 'lb-pos-bronze' : '';
+      const posIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      return `<div class="lb-table-row ${posClass} ${u.isMe ? 'me' : ''}">
+        <div class="lb-pos-num ${posNumClass}">${posIcon}</div>
+        <div class="lb-user-cell">
+          <div class="lb-user-av" style="background:${u.color}">${u.avatar}</div>
+          <div>
+            <div class="lb-user-name">${escHtml(u.name)}${u.isMe ? '<span class="lb-you-tag">You</span>' : ''}</div>
+            <div class="lb-user-level">${getLevel(u.xp).icon} ${getLevel(u.xp).name}</div>
+          </div>
+        </div>
+        <div class="lb-xp-cell">${u.xp.toLocaleString()}</div>
+        <div class="lb-sets-cell">${u.sets}</div>
+        <div class="lb-streak-cell">${u.streak || 0}🔥</div>
+      </div>`;
+    }).join('');
+  }
+
+  // My Stats
+  const myRank = board.findIndex(u => u.isMe) + 1;
+  const el = id => document.getElementById(id);
+  if (el('lbpMyXP')) el('lbpMyXP').textContent = s.xp.toLocaleString();
+  if (el('lbpMySets')) el('lbpMySets').textContent = s.sets;
+  if (el('lbpMyStreak')) el('lbpMyStreak').textContent = s.streak;
+  if (el('lbpMyRank')) el('lbpMyRank').textContent = '#' + myRank;
+  const level = getLevel(s.xp);
+  const nextLevel = LEVELS[LEVELS.indexOf(level) + 1];
+  if (el('lbpLevelIcon')) el('lbpLevelIcon').textContent = level.icon;
+  if (el('lbpLevelName')) el('lbpLevelName').textContent = level.icon + ' ' + level.name;
+  if (nextLevel && el('lbpLevelFill')) {
+    const prog = ((s.xp - level.min) / (level.max - level.min) * 100).toFixed(1);
+    el('lbpLevelFill').style.width = prog + '%';
+    if (el('lbpLevelXP')) el('lbpLevelXP').textContent = s.xp + ' / ' + level.max + ' XP';
+  } else if (el('lbpLevelFill')) {
+    el('lbpLevelFill').style.width = '100%';
+    if (el('lbpLevelXP')) el('lbpLevelXP').textContent = 'MAX LEVEL 🏆';
+  }
+
+  // Badges
+  const badgeList = document.getElementById('lbpBadgesList');
+  if (badgeList) {
+    badgeList.innerHTML = ALL_BADGES.map(b => {
+      const earned = s.earnedBadges.includes(b.id);
+      return `<div class="lb-badge-card ${earned ? 'earned' : ''}">
+        <div class="lb-badge-emoji">${earned ? b.icon : '🔒'}</div>
+        <div>
+          <div class="lb-badge-name">${b.name}</div>
+          <div class="lb-badge-desc">${b.desc}</div>
+          ${earned ? '<div class="lb-badge-earned-tag">✓ Earned</div>' : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // History
+  const histList = document.getElementById('lbpHistoryList');
+  if (histList) {
+    if (s.history.length) {
+      histList.innerHTML = s.history.map(h => `
+        <div class="lb-history-row">
+          <span class="lb-history-type">${escHtml(h.type)}</span>
+          <span class="lb-history-date">${h.date}</span>
+          <span class="lb-history-xp">+${h.xp} XP</span>
+        </div>`).join('');
+    } else {
+      histList.innerHTML = '<div class="lb-empty-state"><div class="lb-empty-icon">📋</div><div class="lb-empty-text">No study sessions yet.<br>Generate your first study set to start tracking!</div></div>';
+    }
+  }
+}
+
+// switchTab handles leaderboard natively
+
+// Custom timer
+function applyCustomTime() {
+  const minsEl = document.getElementById('timerCustomMins');
+  const secsEl = document.getElementById('timerCustomSecs');
+  const mins = parseInt(minsEl?.value) || 0;
+  const secs = parseInt(secsEl?.value) || 0;
+  const total = mins * 60 + secs;
+  if (total <= 0) return;
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSeconds = total;
+  timerTotal = total;
+  document.querySelectorAll('.timer-preset').forEach(b => b.classList.remove('active'));
+  updateTimerDisplay();
+  document.getElementById('timerPlayBtn').textContent = '▶ Start';
+  if (minsEl) minsEl.value = '';
+  if (secsEl) secsEl.value = '';
+}
+
+// Init leaderboard page on load
+document.addEventListener('DOMContentLoaded', () => { renderLbPage(); });
 
 </script>
 
@@ -3194,6 +3665,14 @@ renderLb && document.addEventListener('DOMContentLoaded', () => {});
     <div class="timer-preset" data-mins="5" onclick="timerPreset(this,5)">5m</div>
     <div class="timer-preset" data-mins="45" onclick="timerPreset(this,45)">45m</div>
     <div class="timer-preset" data-mins="60" onclick="timerPreset(this,60)">1h</div>
+  </div>
+  <div class="timer-custom-row">
+    <span>Custom:</span>
+    <input class="timer-custom-input" id="timerCustomMins" type="number" min="1" max="999" placeholder="min" title="Minutes">
+    <span>m</span>
+    <input class="timer-custom-input" id="timerCustomSecs" type="number" min="0" max="59" placeholder="sec" title="Seconds" style="width:48px">
+    <span>s</span>
+    <button class="timer-btn" style="padding:4px 10px;font-size:11px;font-weight:700;flex:none" onclick="applyCustomTime()">Set</button>
   </div>
 </div>
 
