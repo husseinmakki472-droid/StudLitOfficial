@@ -1473,13 +1473,115 @@ let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
   document.body.setAttribute('data-theme',s);
   document.body.classList.toggle('light-mode', s==='light');
 })();
+// Apply theme after DOM ready so injected style works
+document.addEventListener('DOMContentLoaded',function(){ 
+  const s=localStorage.getItem('sl-theme')||'dark';
+  if(s==='light') applyTheme('light');
+});
 document.getElementById('themeToggle').addEventListener('click',()=>{
   const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',n);
-  document.body.setAttribute('data-theme',n);
-  document.body.classList.toggle('light-mode', n==='light');
-  localStorage.setItem('sl-theme',n);
+  applyTheme(n);
 });
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
+  document.body.classList.toggle('light-mode', isLight);
+  localStorage.setItem('sl-theme', theme);
+  
+  // Remove any existing injected light style
+  var old = document.getElementById('sl-light-inject');
+  if (old) old.remove();
+  
+  if (isLight) {
+    // Inject a style tag at end of head — highest cascade position
+    var s = document.createElement('style');
+    s.id = 'sl-light-inject';
+    s.textContent = `
+      body, .studley-layout, .sl-main { background: #f0efff !important; }
+      .sl-sidebar { background: #e2e1f7 !important; border-right: 2px solid rgba(0,0,0,0.12) !important; }
+      .nav-wordmark { color: #0f0e1a !important; }
+      .page-tab { color: rgba(15,14,26,0.55) !important; }
+      .page-tab.active { color: #fff !important; }
+      .sl-hero-greeting { color: #0f0e1a !important; }
+      .sl-hero-sub { color: rgba(15,14,26,0.6) !important; }
+      .hero h1 { color: #0f0e1a !important; }
+      .hero h1 .grad { background: linear-gradient(135deg,#7c5cfc,#b06ef3,#e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+      .hero-sub { color: rgba(15,14,26,0.6) !important; }
+      .hero-badge { background: rgba(0,0,0,0.06) !important; border: 1px solid rgba(0,0,0,0.12) !important; color: rgba(15,14,26,0.6) !important; }
+      .pill { background: rgba(0,0,0,0.05) !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.65) !important; }
+      .stat-val { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; }
+      .stat-label { color: rgba(15,14,26,0.5) !important; }
+      .hero-stats { border-color: rgba(0,0,0,0.1) !important; }
+      .hero-price-note { color: rgba(15,14,26,0.45) !important; }
+      .btn-hero-ghost { background: rgba(0,0,0,0.04) !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: rgba(15,14,26,0.65) !important; }
+      .features-heading, .pricing-heading, .footer-logo { color: #0f0e1a !important; }
+      .features-sub, .pricing-sub, .footer-tagline { color: rgba(15,14,26,0.5) !important; }
+      .feature-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .feature-title { color: #0f0e1a !important; }
+      .feature-desc { color: rgba(15,14,26,0.55) !important; }
+      footer { background: #dddcf5 !important; border-top: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .sl-nav-item { color: rgba(15,14,26,0.6) !important; }
+      .sl-nav-item.active { background: rgba(124,92,252,0.18) !important; color: #5b3fd4 !important; }
+      .sl-nav-section-label { color: rgba(15,14,26,0.45) !important; }
+      .sl-sidebar-logo { color: #0f0e1a !important; }
+      .sl-user-name { color: #0f0e1a !important; }
+      .sl-user-plan { color: rgba(15,14,26,0.5) !important; }
+      .sl-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; }
+      .sl-input-card-title { color: #0f0e1a !important; }
+      .sl-input-card-sub { color: rgba(15,14,26,0.55) !important; }
+      .sl-sets-heading { color: #0f0e1a !important; }
+      .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; }
+      .sl-set-card-title { color: #0f0e1a !important; }
+      .sl-sets-empty, .sets-empty { color: rgba(15,14,26,0.45) !important; }
+      .sl-mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; }
+      .sl-mode-name { color: rgba(15,14,26,0.72) !important; }
+      .sl-mode-btn.selected .sl-mode-name { color: #5b3fd4 !important; }
+      .sl-topic-textarea { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; }
+      .sl-chip { background: #eae9ff !important; border: 1px solid rgba(0,0,0,0.11) !important; color: rgba(15,14,26,0.65) !important; }
+      .sl-panel-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; }
+      .content-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .card-title { color: #0f0e1a !important; }
+      .card-body { color: rgba(15,14,26,0.72) !important; }
+      .card-body * { color: rgba(15,14,26,0.72) !important; }
+      .result-title { color: #0f0e1a !important; }
+      .result-header { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .quiz-question { color: #0f0e1a !important; }
+      .quiz-option { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.72) !important; }
+      .fc-front { background: linear-gradient(135deg,#f0eeff,#e8e7ff) !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .fc-text { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; }
+      .fc-count { color: rgba(15,14,26,0.55) !important; }
+      .fc-indicator { color: rgba(15,14,26,0.45) !important; }
+      .fc-hint { color: rgba(15,14,26,0.35) !important; }
+      .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+      .step-title { color: #0f0e1a !important; }
+      .step-desc { color: rgba(15,14,26,0.65) !important; }
+      .concept-term { color: #0f0e1a !important; }
+      .concept-def { color: rgba(15,14,26,0.65) !important; }
+      .settings-modal { background: #fff !important; }
+      .settings-nav { background: #e2e1f7 !important; }
+      .settings-panel-title { color: #0f0e1a !important; }
+      .settings-row-title { color: #0f0e1a !important; }
+      .settings-row-sub { color: rgba(15,14,26,0.5) !important; }
+      .settings-nav-title { color: #0f0e1a !important; }
+      .settings-nav-item { color: rgba(15,14,26,0.6) !important; }
+      .ai-textarea { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; color: #0f0e1a !important; }
+      .ai-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .humanizer-output { background: #f5f4ff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .humanizer-text { color: #0f0e1a !important; }
+      .pricing-card { background: #f5f4ff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .price-amount { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; }
+      .pricing-features li { color: rgba(15,14,26,0.72) !important; }
+      .modal-box { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; }
+      .new-set-modal { background: #fff !important; }
+      .new-set-input { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; }
+      .navbar { background: rgba(235,234,255,0.95) !important; border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
+      .page-tabs { background: rgba(0,0,0,0.05) !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+    `;
+    document.head.appendChild(s);
+  }
+}
 
 function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');['home','workspace','writing'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});document.getElementById('view-home-extra').classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'})}
 
