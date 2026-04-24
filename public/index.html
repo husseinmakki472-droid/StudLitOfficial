@@ -2564,7 +2564,7 @@ async function sendChat(){
     var res=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:chatHistory.slice(-10),context:''})});
     var data=await res.json();
     var t=document.getElementById('ctyping');if(t)t.remove();
-    var reply=data.reply||'Sorry, something went wrong.';
+    var reply=data.reply||(data.error?'Error: '+data.error:'Sorry, something went wrong. Make sure OPENAI_API_KEY is set in Netlify.');
     chatHistory.push({role:'assistant',content:reply});
     if(msgs){msgs.innerHTML+='<div style="display:flex;gap:8px;align-items:flex-end"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🧑‍🏫</div><div style="max-width:82%;padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(240,239,255,0.62);font-size:13px;line-height:1.6">'+escHtml(reply)+'</div></div>';msgs.scrollTop=msgs.scrollHeight;}
   }catch(e){var t2=document.getElementById('ctyping');if(t2)t2.remove();}
