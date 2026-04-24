@@ -1340,7 +1340,6 @@ body.light-mode #themeLabel,[data-theme=“light”] #themeLabel{color:rgba(15,1
     <div class="sl-user-plan">Free Plan</div>
   </div>
 </div>
-```
 
   </aside>
 
@@ -1492,7 +1491,6 @@ body.light-mode #themeLabel,[data-theme=“light”] #themeLabel{color:rgba(15,1
     <div id="resultArea"></div>
   </div>
 </div>
-```
 
   </main>
 </div>
@@ -1879,8 +1877,8 @@ function randomPrompt(){document.getElementById('studyInput').value=randomPrompt
 function previewMode(mode){var btn=document.querySelector('[data-mode="'+mode+'"]');if(btn)selectMode(btn);if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount();}switchTab('workspace');generate();}
 function demoMode(){document.getElementById('studyInput').value='Photosynthesis';updateCharCount();selectMode(document.querySelector('[data-mode="flashcards"]'));switchTab('workspace');setTimeout(generate,300)}
 
-function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible')}
-function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html}
+function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';}
+function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slResultView').style.display='block';}
 function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
