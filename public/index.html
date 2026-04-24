@@ -1231,6 +1231,9 @@ body.light-mode .lb-history-date,[data-theme=“light”] .lb-history-date{color
 .lb-history-xp{font-family:‘Syne’,sans-serif;font-weight:700;color:#7c5cfc}
 .lb-empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3)}
 body.light-mode .lb-empty,[data-theme=“light”] .lb-empty{color:rgba(15,14,26,0.35)}
+
+.theme-label{font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none;white-space:nowrap}
+body.light-mode #themeLabel,[data-theme=“light”] #themeLabel{color:rgba(15,14,26,0.5) !important}
 </style>
 
 </head>
@@ -1248,7 +1251,10 @@ body.light-mode .lb-empty,[data-theme=“light”] .lb-empty{color:rgba(15,14,26
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
   </div>
   <div class="nav-right">
+    <div style="display:flex;align-items:center;gap:7px">
+    <span id="themeLabel" style="font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none">🌙 Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+  </div>
     <button class="btn-cta" onclick="switchTab('workspace')">▶ <span>Start Studying</span></button>
   </div>
 </nav>
@@ -1619,7 +1625,7 @@ let uploadedFiles=[];
 let uploadedUrls=[];
 let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 
-(function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');}catch(e){}})();
+(function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');var lbl=document.getElementById('themeLabel');if(lbl)lbl.textContent=s==='light'?'☀️ Light':'🌙 Dark';}catch(e){}})();
 // Apply theme after DOM ready so injected style works
 document.addEventListener('DOMContentLoaded',function(){
   try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}
@@ -1654,6 +1660,8 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   document.body.setAttribute('data-theme', theme);
   document.body.classList.toggle('light-mode', isLight);
+  var lbl = document.getElementById('themeLabel');
+  if (lbl) lbl.textContent = isLight ? '☀️ Light' : '🌙 Dark';
   try{localStorage.setItem('sl-theme', theme);}catch(e){}
   
   // Remove any existing injected light style
