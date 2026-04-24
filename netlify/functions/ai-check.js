@@ -17,18 +17,14 @@ const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
 return { statusCode: 500, body: JSON.stringify({ error: ‘OPENAI_API_KEY not set’ }) };
 }
+const systemMsg = ‘Analyze this text for AI-generated patterns. Return ONLY valid JSON no markdown:\n{“score”:<0-100>,“verdict”:”<Likely AI-Generated|Mixed Partially AI|Mostly Human>”,“verdictSub”:”<one sentence>”,“aiPhrases”:[“phrase1”],“variety”:<0-100>,“passive”:<count>,“flaggedPhrases”:[“exact phrase”],“passivePhrases”:[“exact phrase”]}’;
 try {
 const response = await fetch(‘https://api.openai.com/v1/chat/completions’, {
 method: ‘POST’,
 headers: { ‘Content-Type’: ‘application/json’, ‘Authorization’: ’Bearer ’ + apiKey },
 body: JSON.stringify({
-model: ‘gpt-4o-mini’,
-max_tokens: 1000,
-temperature: 0.3,
-messages: [
-{ role: ‘system’, content: ‘Analyze this text for AI-generated patterns. Return ONLY valid JSON no markdown:\n{\n  “score”: <0-100>,\n  “verdict”: “<Likely AI-Generated | Mixed — Partially AI | Mostly Human>”,\n  “verdictSub”: “<one sentence>”,\n  “aiPhrases”: [“phrase1”],\n  “variety”: <0-100>,\n  “passive”: <count>,\n  “flaggedPhrases”: [“exact phrase”],\n  “passivePhrases”: [“exact phrase”]\n}’ },
-{ role: ‘user’, content: ‘Analyze:\n\n’ + text }
-]
+model: ‘gpt-4o-mini’, max_tokens: 1000, temperature: 0.3,
+messages: [{ role: ‘system’, content: systemMsg }, { role: ‘user’, content: ‘Analyze:\n\n’ + text }]
 })
 });
 if (!response.ok) {
@@ -41,21 +37,21 @@ let parsed;
 try { parsed = JSON.parse(raw.replace(/`json|`/g, ‘’).trim()); }
 catch (e) { return { statusCode: 500, body: JSON.stringify({ error: ‘Failed to parse response’ }) }; }
 let flaggedHtml = escHtml(text);
-(parsed.flaggedPhrases || []).forEach(function(phrase) {
-if (!phrase) return;
+const flagged = parsed.flaggedPhrases || [];
+for (let i = 0; i < flagged.length; i++) {
+const phrase = flagged[i];
+if (!phrase) continue;
 const esc = escHtml(phrase);
 flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[]\]/g, ‘\$&’), ‘gi’), ‘<span class="ai-flag-span">’ + esc + ‘</span>’);
-});
-(parsed.passivePhrases || []).forEach(function(phrase) {
-if (!phrase) return;
+}
+const passive = parsed.passivePhrases || [];
+for (let j = 0; j < passive.length; j++) {
+const phrase = passive[j];
+if (!phrase) continue;
 const esc = escHtml(phrase);
 flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[]\]/g, ‘\$&’), ‘gi’), ‘<span class="ai-flag-span-med">’ + esc + ‘</span>’);
-});
-return {
-statusCode: 200,
-headers: { ‘Content-Type’: ‘application/json’, ‘Access-Control-Allow-Origin’: ‘*’ },
-body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml: flaggedHtml })
-};
+}
+return { statusCode: 200, headers: { ‘Content-Type’: ‘application/json’, ‘Access-Control-Allow-Origin’: ‘*’ }, body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml: flaggedHtml }) };
 } catch (err) {
 return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
 }
