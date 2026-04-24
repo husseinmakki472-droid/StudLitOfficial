@@ -1621,7 +1621,29 @@ let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 
 (function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');}catch(e){}})();
 // Apply theme after DOM ready so injected style works
-document.addEventListener('DOMContentLoaded',function(){try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}});
+document.addEventListener('DOMContentLoaded',function(){
+  try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}
+  // Restore accent color
+  try{var ac=localStorage.getItem('sl-accent');var ac2=localStorage.getItem('sl-accent2');if(ac)applyAccentColor(ac,ac2);}catch(e){}
+  // Restore font size
+  try{var fs=localStorage.getItem('sl-font-size');if(fs)applyFontSize(parseInt(fs));}catch(e){}
+  // Restore name in sidebar
+  try{
+    var prefs=JSON.parse(localStorage.getItem('sl-prefs')||'{}');
+    if(prefs.name){
+      document.querySelectorAll('.sl-user-name').forEach(function(el){el.textContent=prefs.name;});
+      document.querySelectorAll('.sl-user-avatar').forEach(function(el){el.textContent=prefs.name.charAt(0).toUpperCase();});
+    }
+    // Restore default modes
+    var dm=JSON.parse(localStorage.getItem('sl-default-modes')||'[]');
+    if(dm.length){
+      selectedModes=new Set(dm);
+      dm.forEach(function(mode){
+        document.querySelectorAll('[data-mode="'+mode+'"]').forEach(function(btn){btn.classList.add('selected');});
+      });
+    }
+  }catch(e){}
+});
 var _tt=document.getElementById('themeToggle');if(_tt)_tt.addEventListener('click',()=>{
   const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   applyTheme(n);
@@ -2199,103 +2221,150 @@ function switchSettingsPanel(panel, btn) {
 }
 
 function saveSettings() {
-  // Save profile
-  const name = document.getElementById('settingsName')?.value || 'Hussein Makki';
-  localStorage.setItem('sl-name', name);
-  const av = document.getElementById('settingsAvatar');
-  if (av) av.textContent = name.charAt(0).toUpperCase();
-  const dn = document.getElementById('settingsDisplayName');
-  if (dn) dn.textContent = name;
-  const slUserName = document.querySelector('.sl-user-name');
-  if (slUserName) slUserName.textContent = name;
+  try {
+    // Profile
+    var name = document.getElementById('settingsName') ? document.getElementById('settingsName').value.trim() : '';
+    if (!name) name = 'Hussein';
+    localStorage.setItem('sl-name', name);
 
-  // Save appearance
-  const dark = document.getElementById('darkModeToggle')?.checked;
-  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  localStorage.setItem('sl-theme', dark ? 'dark' : 'light');
+    // Update name everywhere on page
+    document.querySelectorAll('.sl-user-name, .settings-display-name, #settingsDisplayName').forEach(function(el){ el.textContent = name; });
+    var av = document.getElementById('settingsAvatar');
+    if (av) av.textContent = name.charAt(0).toUpperCase();
+    var sav = document.querySelector('.sl-user-avatar');
+    if (sav) sav.textContent = name.charAt(0).toUpperCase();
 
-  const fontSize = document.getElementById('fontSizeSlider')?.value || 14;
-  document.documentElement.style.setProperty('--content-font-size', fontSize + 'px');
-  localStorage.setItem('sl-font-size', fontSize);
+    // Appearance - dark mode
+    var dark = document.getElementById('darkModeToggle') ? document.getElementById('darkModeToggle').checked : true;
+    var theme = dark ? 'dark' : 'light';
+    applyTheme(theme);
 
-  // Save all prefs to localStorage
-  const prefs = {
-    name: document.getElementById('settingsName')?.value,
-    username: document.getElementById('settingsUsername')?.value,
-    email: document.getElementById('settingsEmail')?.value,
-    school: document.getElementById('settingsSchool')?.value,
-    difficulty: document.getElementById('difficultySelect')?.value,
-    quizLength: document.getElementById('quizLengthSelect')?.value,
-    flashcardCount: document.getElementById('flashcardCountSelect')?.value,
-    podcastSpeed: document.getElementById('podcastSpeedSelect')?.value,
-    autoGen: document.getElementById('autoGenToggle')?.checked,
-    dailyReminder: document.getElementById('dailyReminderToggle')?.checked,
-    reminderTime: document.getElementById('reminderTime')?.value,
-    streak: document.getElementById('streakToggle')?.checked,
-    weeklyReport: document.getElementById('weeklyReportToggle')?.checked,
-    compact: document.getElementById('compactToggle')?.checked,
-    reduceMotion: document.getElementById('reduceMotionToggle')?.checked,
-  };
-  localStorage.setItem('sl-prefs', JSON.stringify(prefs));
+    // Font size
+    var fs = document.getElementById('fontSizeSlider') ? document.getElementById('fontSizeSlider').value : 14;
+    applyFontSize(parseInt(fs));
 
-  // Flash all saved messages
-  document.querySelectorAll('.settings-saved-msg').forEach(m => {
-    m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2200);
-  });
+    // Save all prefs
+    var prefs = {
+      name: name,
+      username: document.getElementById('settingsUsername') ? document.getElementById('settingsUsername').value : '',
+      email: document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value : '',
+      school: document.getElementById('settingsSchool') ? document.getElementById('settingsSchool').value : '',
+      difficulty: document.getElementById('difficultySelect') ? document.getElementById('difficultySelect').value : 'medium',
+      quizLength: document.getElementById('quizLengthSelect') ? document.getElementById('quizLengthSelect').value : '8',
+      flashcardCount: document.getElementById('flashcardCountSelect') ? document.getElementById('flashcardCountSelect').value : '10',
+      fontSize: fs,
+      autoGen: document.getElementById('autoGenToggle') ? document.getElementById('autoGenToggle').checked : false,
+      compact: document.getElementById('compactToggle') ? document.getElementById('compactToggle').checked : false,
+      reduceMotion: document.getElementById('reduceMotionToggle') ? document.getElementById('reduceMotionToggle').checked : false,
+    };
+    localStorage.setItem('sl-prefs', JSON.stringify(prefs));
+
+    // Default modes
+    var defaultModes = [];
+    document.querySelectorAll('.mode-check-item.checked').forEach(function(el){ if(el.dataset.mode) defaultModes.push(el.dataset.mode); });
+    if (defaultModes.length) localStorage.setItem('sl-default-modes', JSON.stringify(defaultModes));
+
+    // Flash saved messages
+    document.querySelectorAll('.settings-saved-msg').forEach(function(m){
+      m.classList.add('show'); setTimeout(function(){ m.classList.remove('show'); }, 2200);
+    });
+  } catch(e) { console.warn('saveSettings error:', e); }
 }
 
 function loadSettingsFromStorage() {
-  const prefs = JSON.parse(localStorage.getItem('sl-prefs') || '{}');
-  if (prefs.name) document.getElementById('settingsName').value = prefs.name;
-  if (prefs.username) document.getElementById('settingsUsername').value = prefs.username;
-  if (prefs.email) document.getElementById('settingsEmail').value = prefs.email;
-  if (prefs.school) document.getElementById('settingsSchool').value = prefs.school;
-  if (prefs.difficulty) document.getElementById('difficultySelect').value = prefs.difficulty;
-  if (prefs.quizLength) document.getElementById('quizLengthSelect').value = prefs.quizLength;
-  if (prefs.flashcardCount) document.getElementById('flashcardCountSelect').value = prefs.flashcardCount;
-  if (prefs.podcastSpeed) document.getElementById('podcastSpeedSelect').value = prefs.podcastSpeed;
-  if (prefs.reminderTime) document.getElementById('reminderTime').value = prefs.reminderTime;
-  if (prefs.compact !== undefined) {
-    document.getElementById('compactToggle').checked = prefs.compact;
-    if (prefs.compact) document.body.classList.add('compact-mode');
-  }
-  if (prefs.reduceMotion !== undefined) {
-    document.getElementById('reduceMotionToggle').checked = prefs.reduceMotion;
-    if (prefs.reduceMotion) document.body.classList.add('reduce-motion');
-  }
-  // Restore accent colour
-  const accent = localStorage.getItem('sl-accent');
-  const accent2 = localStorage.getItem('sl-accent2');
-  if (accent) {
-    document.documentElement.style.setProperty('--accent', accent);
-    document.documentElement.style.setProperty('--accent-2', accent2 || accent);
-    document.querySelectorAll('.color-swatch').forEach(s => {
-      s.classList.toggle('active', s.dataset.accent === accent);
-    });
-  }
-  // Dark mode toggle
-  const theme = localStorage.getItem('sl-theme') || 'dark';
-  const darkToggle = document.getElementById('darkModeToggle');
-  if (darkToggle) darkToggle.checked = theme === 'dark';
-  // Font size
-  const fs = localStorage.getItem('sl-font-size');
-  if (fs) {
-    document.getElementById('fontSizeSlider').value = fs;
-    document.documentElement.style.setProperty('--content-font-size', fs + 'px');
-  }
+  try {
+    var prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem('sl-prefs') || '{}'); } catch(e){}
+
+    if (prefs.name) {
+      var el = document.getElementById('settingsName');
+      if (el) el.value = prefs.name;
+    }
+    if (prefs.username) { var el2=document.getElementById('settingsUsername'); if(el2) el2.value=prefs.username; }
+    if (prefs.email) { var el3=document.getElementById('settingsEmail'); if(el3) el3.value=prefs.email; }
+    if (prefs.school) { var el4=document.getElementById('settingsSchool'); if(el4) el4.value=prefs.school; }
+    if (prefs.difficulty) { var el5=document.getElementById('difficultySelect'); if(el5) el5.value=prefs.difficulty; }
+    if (prefs.quizLength) { var el6=document.getElementById('quizLengthSelect'); if(el6) el6.value=prefs.quizLength; }
+    if (prefs.flashcardCount) { var el7=document.getElementById('flashcardCountSelect'); if(el7) el7.value=prefs.flashcardCount; }
+    if (prefs.fontSize) { var sl=document.getElementById('fontSizeSlider'); if(sl) sl.value=prefs.fontSize; }
+    if (prefs.autoGen !== undefined) { var ag=document.getElementById('autoGenToggle'); if(ag) ag.checked=prefs.autoGen; }
+    if (prefs.compact !== undefined) { var ct=document.getElementById('compactToggle'); if(ct) ct.checked=prefs.compact; }
+    if (prefs.reduceMotion !== undefined) { var rm=document.getElementById('reduceMotionToggle'); if(rm) rm.checked=prefs.reduceMotion; }
+
+    // Restore accent colour swatches
+    var accent = '';
+    try { accent = localStorage.getItem('sl-accent') || ''; } catch(e){}
+    if (accent) {
+      document.querySelectorAll('.color-swatch').forEach(function(s){
+        s.classList.toggle('active', s.dataset.accent === accent);
+      });
+    }
+
+    // Dark mode toggle
+    var theme = '';
+    try { theme = localStorage.getItem('sl-theme') || 'dark'; } catch(e){ theme='dark'; }
+    var darkToggle = document.getElementById('darkModeToggle');
+    if (darkToggle) darkToggle.checked = theme === 'dark';
+
+    // Default modes checkmarks
+    var defaultModes = [];
+    try { defaultModes = JSON.parse(localStorage.getItem('sl-default-modes') || '[]'); } catch(e){}
+    if (defaultModes.length) {
+      document.querySelectorAll('.mode-check-item').forEach(function(el){
+        if (el.dataset.mode && defaultModes.indexOf(el.dataset.mode) !== -1) el.classList.add('checked');
+        else el.classList.remove('checked');
+      });
+    }
+  } catch(e) { console.warn('loadSettings error:', e); }
 }
 
 function setAccentColor(swatch) {
-  const accent = swatch.dataset.accent;
-  const accent2 = swatch.dataset.accent2;
-  document.documentElement.style.setProperty('--accent', accent);
-  document.documentElement.style.setProperty('--accent-2', accent2);
-  document.documentElement.style.setProperty('--glow', accent + '44');
-  document.documentElement.style.setProperty('--glow-sm', accent + '22');
-  localStorage.setItem('sl-accent', accent);
-  localStorage.setItem('sl-accent2', accent2);
-  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-  swatch.classList.add('active');
+  try {
+    var accent = swatch.dataset.accent || '#7c5cfc';
+    var accent2 = swatch.dataset.accent2 || accent;
+    localStorage.setItem('sl-accent', accent);
+    localStorage.setItem('sl-accent2', accent2);
+    document.querySelectorAll('.color-swatch').forEach(function(s){ s.classList.remove('active'); });
+    swatch.classList.add('active');
+    applyAccentColor(accent, accent2);
+  } catch(e) {}
+}
+
+function applyAccentColor(accent, accent2) {
+  // Remove old accent style
+  var old = document.getElementById('sl-accent-inject');
+  if (old) old.remove();
+  if (!accent || accent === '#7c5cfc') return; // default, no override needed
+  var s = document.createElement('style');
+  s.id = 'sl-accent-inject';
+  s.textContent =
+    '.btn-gen,.sl-btn-generate,.btn-hero,.btn-primary,.btn-cta,.sl-btn-new-set,.btn-newset,.chat-send,.timer-w-play,.timer-w-set,.lb-upsell-btn { background: linear-gradient(135deg,'+accent+','+accent2+') !important; }' +
+    '.page-tab.active,.lb-tab.active,.ai-sub-tab.active { background: linear-gradient(135deg,'+accent+','+accent2+') !important; }' +
+    '.sl-nav-item.active { background: rgba('+hexToRgb(accent)+',0.2) !important; color: '+accent+' !important; }' +
+    '.sl-mode-btn.selected { border-color: '+accent+' !important; background: rgba('+hexToRgb(accent)+',0.15) !important; }' +
+    '.sl-mode-btn.selected .sl-mode-name { color: '+accent+' !important; }' +
+    '.sets-divider,.sl-sets-divider { background: linear-gradient(180deg,'+accent+','+accent2+') !important; }' +
+    '.card-label,.lb-history-xp { color: '+accent+' !important; }' +
+    '.lb-level-fill,.timer-w-prog-fill { background: linear-gradient(90deg,'+accent+','+accent2+') !important; }';
+  document.head.appendChild(s);
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? parseInt(result[1],16)+','+parseInt(result[2],16)+','+parseInt(result[3],16) : '124,92,252';
+}
+
+function applyFontSize(size) {
+  if (!size || size < 12 || size > 20) size = 14;
+  localStorage.setItem('sl-font-size', size);
+  // Inject font size style
+  var old = document.getElementById('sl-font-inject');
+  if (old) old.remove();
+  if (size === 14) return; // default
+  var s = document.createElement('style');
+  s.id = 'sl-font-inject';
+  s.textContent = '.card-body,.tutor-bubble,.quiz-option,.step-desc,.concept-def,.fitb-sentence,.humanizer-text,.podcast-script { font-size: '+size+'px !important; line-height: 1.7 !important; }';
+  document.head.appendChild(s);
 }
 
 function toggleDarkMode(input) {
