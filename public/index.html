@@ -175,6 +175,7 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .tutor-bubble{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px 14px 14px 14px;padding:13px 16px;font-size:14px;color:rgba(240,239,255,0.6);line-height:1.7;flex:1}
 .tutor-followup{margin-top:12px;padding:12px 16px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.2);border-radius:16px;font-size:13.5px;color:rgba(240,239,255,0.6);font-style:italic;cursor:pointer;transition:background .18s}
 .tutor-followup:hover{background:rgba(124,92,252,0.14)}
+.solve-point{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)}.solve-point:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}.solve-point-title{font-size:13.5px;font-weight:700;color:rgba(240,239,255,0.88);margin-bottom:4px}.solve-point-body{font-size:13.5px;color:rgba(240,239,255,0.62);line-height:1.7}
 .lesson-body{padding:0 2px}
 .lesson-title{font-size:22px;font-weight:700;color:rgba(240,239,255,0.95);margin:0 0 24px;line-height:1.3}
 .lesson-section{margin-bottom:26px;animation:cardEntrance .45s cubic-bezier(0.22,1,0.36,1) both}
@@ -908,7 +909,8 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
 [data-theme=”light”] .lesson-think{background:rgba(124,92,252,0.04) !important;border-color:rgba(124,92,252,0.12) !important}
 [data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
-[data-theme=“light”] .concept-term { color: #0f0e1a !important; }
+[data-theme=”light”] .solve-point-title{color:#0f0e1a !important}[data-theme=”light”] .solve-point-body{color:rgba(15,14,26,0.72) !important}[data-theme=”light”] .solve-point{border-bottom-color:rgba(0,0,0,0.07) !important}
+[data-theme=”light”] .concept-term { color: #0f0e1a !important; }
 [data-theme=“light”] .concept-def { color: rgba(15,14,26,0.65) !important; }
 [data-theme=“light”] .concept-item { border-bottom: 1px solid rgba(0,0,0,0.07) !important; }
 [data-theme=“light”] .step-title { color: #0f0e1a !important; }
@@ -2018,11 +2020,11 @@ function renderSolveHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No solve data returned.</div></div>';
   const qa=d.quickAnswer?`<div class="content-card" style="animation-delay:0s"><div class="card-label">Quick Answer</div><div class="card-body">${escHtml(d.quickAnswer)}</div></div>`:'';
-  const steps=(d.stepByStep||[]).map((s,i)=>`<li><strong>Step ${s.step||i+1}${s.title?' — '+escHtml(s.title):''}:</strong> ${escHtml(s.content||'')}</li>`).join('');
-  const stepsHtml=steps?`<div class="content-card" style="animation-delay:.05s"><div class="card-label">Step-by-Step Breakdown</div><div class="card-body"><ul>${steps}</ul></div></div>`:'';
+  const breakdown=(d.stepByStep||[]).map(s=>`<div class="solve-point"><div class="solve-point-title">${escHtml(s.title||'')}</div><div class="solve-point-body">${escHtml(s.content||'')}</div></div>`).join('');
+  const breakdownHtml=breakdown?`<div class="content-card" style="animation-delay:.05s"><div class="card-label">Breakdown</div><div class="card-body">${breakdown}</div></div>`:'';
   const examplesHtml=(d.examples&&d.examples.length)?`<div class="content-card" style="animation-delay:.1s"><div class="card-label">Examples</div><div class="card-body"><ul>${d.examples.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div></div>`:'';
   const insight=d.keyInsight?`<div class="content-card" style="animation-delay:.15s"><div class="card-label">Key Insight</div><div class="card-body"><div class="highlight-block">📌 ${escHtml(d.keyInsight)}</div></div></div>`:'';
-  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true},{text:'Step-by-step'}])}${qa}${stepsHtml}${examplesHtml}${insight}<div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz me →</button></div>`;
+  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true}])}${qa}${breakdownHtml}${examplesHtml}${insight}<div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz me →</button></div>`;
 }
 
 function renderFlashcardsHTML(topic, d){
