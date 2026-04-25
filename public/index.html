@@ -2162,6 +2162,41 @@ function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);c
 function revealFITB(i,answer){const el=document.getElementById('fitb-'+i);if(el&&!el.classList.contains('revealed')){el.textContent=answer;el.classList.add('revealed')}}
 function revealFITB2(si,pi){const key=si+'-'+pi;const entry=fitbBlanks.find(b=>b.id===key);const el=document.getElementById('fitb-'+key);if(el&&entry&&!el.classList.contains('revealed')){el.textContent=entry.blank;el.classList.add('revealed')}}
 
+async function loadPdfJs(){
+  if(window.pdfjsLib)return window.pdfjsLib;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  try{
+    const wRes=await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js');
+    const wText=await wRes.text();
+    const wBlob=new Blob([wText],{type:'application/javascript'});
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(wBlob);
+  }catch(e){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
+  return window.pdfjsLib;
+}
+async function extractPdfClientSide(file){
+  const lib=await loadPdfJs();
+  const ab=await file.arrayBuffer();
+  const pdf=await lib.getDocument({data:ab}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    text+=content.items.map(item=>item.str).join(' ')+'\n';
+    if(text.length>60000)break;
+  }
+  return text.trim();
+}
+async function loadMammothBrowser(){
+  if(window.mammoth)return window.mammoth;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  return window.mammoth;
+}
+async function extractDocxClientSide(file){
+  const m=await loadMammothBrowser();
+  const ab=await file.arrayBuffer();
+  const result=await m.extractRawText({arrayBuffer:ab});
+  return(result.value||'').trim();
+}
 async function handleFileUpload(input){
   const file=input.files[0];if(!file)return;input.value='';
   const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};
@@ -2177,14 +2212,17 @@ async function handleFileUpload(input){
     if(file.type.startsWith('text/')||lname.endsWith('.txt')||lname.endsWith('.md')){
       fileObj.textContent=await file.text();
     } else if(isPdf||isDocx){
-      if(file.size>4*1024*1024){
-        fileObj.readError='File too large (max 4 MB for text extraction)';
-      } else {
+      if(file.size>75*1024*1024){
+        fileObj.readError='File too large (max 75 MB)';
+      } else if(file.size<=4*1024*1024){
         const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
         const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:base64})});
         const result=await res.json();
         if(res.ok&&result.text){fileObj.textContent=result.text;}
         else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
+      } else {
+        fileObj.textContent=isPdf?await extractPdfClientSide(file):await extractDocxClientSide(file);
+        if(!fileObj.textContent)fileObj.readError=isPdf?'No text found — may be a scanned image PDF':'No text found in document';
       }
     } else if(file.type.startsWith('image/')){
       const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
