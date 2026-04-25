@@ -2163,37 +2163,36 @@ async function handleFileUpload(input){
   const file=input.files[0];if(!file)return;input.value='';
   const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};
   let icon='📎';for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}
-  const isPdf=file.type==='application/pdf'||file.name.endsWith('.pdf');
-  const isDocx=file.name.endsWith('.docx')||file.type.includes('wordprocessingml');
-  const isDoc=file.name.endsWith('.doc')||file.type==='application/msword';
-  const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':(isDocx||isDoc)?'Doc':'File';
-  const fileObj={name:file.name,type:typeLabel,icon,mimeType:file.type};
-  try{
-    if(file.type.startsWith('text/')||file.name.endsWith('.txt')||file.name.endsWith('.md')){
-      fileObj.textContent=await file.text();
-    } else if(isPdf){
-      if(typeof pdfjsLib!=='undefined'){
-        const buf=await file.arrayBuffer();
-        const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
-        let txt='';
-        for(let p=1;p<=pdf.numPages;p++){const pg=await pdf.getPage(p);const ct=await pg.getTextContent();txt+=ct.items.map(i=>i.str).join(' ')+'\n';}
-        fileObj.textContent=txt.trim();
-      }
-    } else if(isDocx&&typeof mammoth!=='undefined'){
-      const buf=await file.arrayBuffer();
-      const result=await mammoth.extractRawText({arrayBuffer:buf});
-      fileObj.textContent=(result.value||'').trim();
-    } else if(file.type.startsWith('image/')){
-      const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file);});
-      fileObj.imageData=dataUrl.split(',')[1];
-    }
-  }catch(e){console.warn('File read error:',e);}
+  const lname=file.name.toLowerCase();
+  const isPdf=file.type==='application/pdf'||lname.endsWith('.pdf');
+  const isDocx=lname.endsWith('.docx')||file.type.includes('wordprocessingml');
+  const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':isDocx?'Doc':'File';
+  const fileObj={name:file.name,type:typeLabel,icon,mimeType:file.type,reading:true};
   uploadedFiles.push(fileObj);renderFileList();
   if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from: ${file.name}`;updateCharCount();}
+  try{
+    if(file.type.startsWith('text/')||lname.endsWith('.txt')||lname.endsWith('.md')){
+      fileObj.textContent=await file.text();
+    } else if(isPdf||isDocx){
+      if(file.size>4*1024*1024){
+        fileObj.readError='File too large (max 4 MB for text extraction)';
+      } else {
+        const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
+        const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:base64})});
+        const result=await res.json();
+        if(res.ok&&result.text){fileObj.textContent=result.text;}
+        else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
+      }
+    } else if(file.type.startsWith('image/')){
+      const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
+      fileObj.imageData=base64;
+    }
+  }catch(e){fileObj.readError=e.message||'Read failed';console.warn('File read error:',e);}
+  fileObj.reading=false;renderFileList();
 }
 function addUrlLesson(){const input=document.getElementById('lessonUrlInput');const url=input.value.trim();if(!url)return;let icon='🔗';if(url.includes('youtube.com')||url.includes('youtu.be'))icon='▶️';uploadedFiles.push({name:url,type:'URL',icon,data:null});if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from URL: ${url}`;updateCharCount()}input.value='';renderFileList()}
 function removeFile(i){uploadedFiles.splice(i,1);renderFileList()}
-function renderFileList(){const list=document.getElementById('uploadFileList');if(!uploadedFiles.length){list.innerHTML='';return}list.innerHTML=uploadedFiles.map((f,i)=>{const status=f.textContent?` <span style="color:#4ade80;font-size:10px;font-weight:700">✓ read</span>`:f.imageData?` <span style="color:#7c5cfc;font-size:10px;font-weight:700">✓ image</span>`:'';return`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}${status}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`;}).join('')}
+function renderFileList(){const list=document.getElementById('uploadFileList');if(!uploadedFiles.length){list.innerHTML='';return}list.innerHTML=uploadedFiles.map((f,i)=>{let status='';if(f.reading)status=' <span style="color:#f59e0b;font-size:10px;font-weight:700">⏳ reading…</span>';else if(f.readError)status=` <span style="color:#f87171;font-size:10px;font-weight:700" title="${escHtml(f.readError)}">⚠ ${escHtml(f.readError)}</span>`;else if(f.textContent)status=' <span style="color:#4ade80;font-size:10px;font-weight:700">✓ ready</span>';else if(f.imageData)status=' <span style="color:#7c5cfc;font-size:10px;font-weight:700">✓ image</span>';return`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}${status}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`;}).join('')}
 function uploadDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over')}
 function uploadDragLeave(){document.getElementById('uploadZone').classList.remove('drag-over')}
 function uploadDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');const file=e.dataTransfer.files[0];if(!file)return;const dt=new DataTransfer();dt.items.add(file);const inp=document.getElementById('fileInputMain');inp.files=dt.files;handleFileUpload(inp)}
@@ -3549,8 +3548,5 @@ function timerUpdateDisplay() {
 </div>
 <div class="xp-toast" id="xpToast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js"></script>
-<script>if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='';</script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 </body>
 </html>
