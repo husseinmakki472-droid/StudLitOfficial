@@ -5,6 +5,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions.extract]
+  external_node_modules = ["pdf-parse", "mammoth"]
+
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]

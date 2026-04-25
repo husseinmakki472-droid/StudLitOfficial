@@ -175,6 +175,17 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .tutor-bubble{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px 14px 14px 14px;padding:13px 16px;font-size:14px;color:rgba(240,239,255,0.6);line-height:1.7;flex:1}
 .tutor-followup{margin-top:12px;padding:12px 16px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.2);border-radius:16px;font-size:13.5px;color:rgba(240,239,255,0.6);font-style:italic;cursor:pointer;transition:background .18s}
 .tutor-followup:hover{background:rgba(124,92,252,0.14)}
+.solve-point{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)}.solve-point:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}.solve-point-title{font-size:13.5px;font-weight:700;color:rgba(240,239,255,0.88);margin-bottom:4px}.solve-point-body{font-size:13.5px;color:rgba(240,239,255,0.62);line-height:1.7}
+.lesson-body{padding:0 2px}
+.lesson-title{font-size:22px;font-weight:700;color:rgba(240,239,255,0.95);margin:0 0 24px;line-height:1.3}
+.lesson-section{margin-bottom:26px;animation:cardEntrance .45s cubic-bezier(0.22,1,0.36,1) both}
+.lesson-section-heading{font-size:16px;font-weight:700;color:rgba(240,239,255,0.88);margin:0 0 10px}
+.lesson-content{font-size:14px;color:rgba(240,239,255,0.62);line-height:1.75;margin:0 0 12px}
+.lesson-content strong{color:rgba(240,239,255,0.92);font-weight:600}
+.lesson-quote{border-left:3px solid #7c5cfc;margin:12px 0 14px;padding:10px 16px;background:rgba(124,92,252,0.07);border-radius:0 12px 12px 0;font-style:italic;color:rgba(240,239,255,0.62);font-size:13.5px;line-height:1.65}
+.lesson-think{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.15);border-radius:14px;padding:12px 16px;margin-top:12px}
+.lesson-think-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c5cfc;display:block;margin-bottom:6px}
+.lesson-think-q{font-size:13.5px;color:rgba(240,239,255,0.58);font-style:italic;margin:0;line-height:1.65}
 .test-header-strip{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border:1px solid rgba(124,92,252,0.25);border-radius:22px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .test-header-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff}
 .test-timer-badge{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700}
@@ -890,8 +901,16 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .quiz-opt-letter { background: #eae9ff !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.65) !important; }
 
 /* ── Tutor / notes / plan ── */
-[data-theme=“light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
-[data-theme=“light”] .concept-term { color: #0f0e1a !important; }
+[data-theme=”light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+[data-theme=”light”] .lesson-title{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-section-heading{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-content{color:rgba(15,14,26,0.72) !important}
+[data-theme=”light”] .lesson-content strong{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
+[data-theme=”light”] .lesson-think{background:rgba(124,92,252,0.04) !important;border-color:rgba(124,92,252,0.12) !important}
+[data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
+[data-theme=”light”] .solve-point-title{color:#0f0e1a !important}[data-theme=”light”] .solve-point-body{color:rgba(15,14,26,0.72) !important}[data-theme=”light”] .solve-point{border-bottom-color:rgba(0,0,0,0.07) !important}
+[data-theme=”light”] .concept-term { color: #0f0e1a !important; }
 [data-theme=“light”] .concept-def { color: rgba(15,14,26,0.65) !important; }
 [data-theme=“light”] .concept-item { border-bottom: 1px solid rgba(0,0,0,0.07) !important; }
 [data-theme=“light”] .step-title { color: #0f0e1a !important; }
@@ -1075,7 +1094,13 @@ body[data-theme=“light”] .quiz-question { color: #0f0e1a !important; }
 body.light-mode .quiz-option,
 body[data-theme=“light”] .quiz-option { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.72) !important; }
 body.light-mode .tutor-bubble,
-body[data-theme=“light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+body[data-theme=”light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+body.light-mode .lesson-title,body[data-theme=”light”] .lesson-title{color:#0f0e1a !important}
+body.light-mode .lesson-section-heading,body[data-theme=”light”] .lesson-section-heading{color:#0f0e1a !important}
+body.light-mode .lesson-content,body[data-theme=”light”] .lesson-content{color:rgba(15,14,26,0.72) !important}
+body.light-mode .lesson-content strong,body[data-theme=”light”] .lesson-content strong{color:#0f0e1a !important}
+body.light-mode .lesson-quote,body[data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
+body.light-mode .lesson-think-q,body[data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
 body.light-mode .fc-front,
 body[data-theme=“light”] .fc-front { background: linear-gradient(135deg,#f0eeff,#e8e7ff) !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
 body.light-mode .fc-text,
@@ -1780,6 +1805,7 @@ function applyTheme(theme) {
       .fc-indicator { color: rgba(15,14,26,0.45) !important; }
       .fc-hint { color: rgba(15,14,26,0.35) !important; }
       .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+      .lesson-title{color:#0f0e1a !important}.lesson-section-heading{color:#0f0e1a !important}.lesson-content{color:rgba(15,14,26,0.72) !important}.lesson-content strong{color:#0f0e1a !important}.lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}.lesson-think-q{color:rgba(15,14,26,0.65) !important}
       .step-title { color: #0f0e1a !important; }
       .step-desc { color: rgba(15,14,26,0.65) !important; }
       .concept-term { color: #0f0e1a !important; }
@@ -1950,7 +1976,7 @@ async function generate() {
   const btn = document.getElementById('generateBtn')||document.getElementById('generateBtn2');
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
   showLoading();
-  const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,textContent:f.textContent||null}));
+  const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent||null,imageData:f.imageData||null}));
   try {
     const res = await fetch('/.netlify/functions/study',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -1994,11 +2020,11 @@ function renderSolveHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No solve data returned.</div></div>';
   const qa=d.quickAnswer?`<div class="content-card" style="animation-delay:0s"><div class="card-label">Quick Answer</div><div class="card-body">${escHtml(d.quickAnswer)}</div></div>`:'';
-  const steps=(d.stepByStep||[]).map((s,i)=>`<li><strong>Step ${s.step||i+1}${s.title?' — '+escHtml(s.title):''}:</strong> ${escHtml(s.content||'')}</li>`).join('');
-  const stepsHtml=steps?`<div class="content-card" style="animation-delay:.05s"><div class="card-label">Step-by-Step Breakdown</div><div class="card-body"><ul>${steps}</ul></div></div>`:'';
+  const breakdown=(d.stepByStep||[]).map(s=>`<div class="solve-point"><div class="solve-point-title">${escHtml(s.title||'')}</div><div class="solve-point-body">${escHtml(s.content||'')}</div></div>`).join('');
+  const breakdownHtml=breakdown?`<div class="content-card" style="animation-delay:.05s"><div class="card-label">Breakdown</div><div class="card-body">${breakdown}</div></div>`:'';
   const examplesHtml=(d.examples&&d.examples.length)?`<div class="content-card" style="animation-delay:.1s"><div class="card-label">Examples</div><div class="card-body"><ul>${d.examples.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div></div>`:'';
   const insight=d.keyInsight?`<div class="content-card" style="animation-delay:.15s"><div class="card-label">Key Insight</div><div class="card-body"><div class="highlight-block">📌 ${escHtml(d.keyInsight)}</div></div></div>`:'';
-  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true},{text:'Step-by-step'}])}${qa}${stepsHtml}${examplesHtml}${insight}<div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz me →</button></div>`;
+  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true}])}${qa}${breakdownHtml}${examplesHtml}${insight}<div class="next-action"><span>Keep going?</span><button onclick="switchAndGenerate('flashcards')">Flashcards →</button><button onclick="switchAndGenerate('quiz')">Quiz me →</button></div>`;
 }
 
 function renderFlashcardsHTML(topic, d){
@@ -2042,12 +2068,22 @@ function renderNotesHTML(topic, d){
   return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Organized'}])}${sHtml}`;
 }
 
+function sanitizeLessonHtml(str){
+  return(str||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/<(?!\/?strong\b)[^>]*>/gi,'').replace(/\n+/g,' ');
+}
 function renderTutorHTML(topic, d){
   const t=topic||'your topic';
-  const msgs=(d&&d.messages)||[];
-  if(!msgs.length)return'<div class="error-card"><div class="error-card-label">⚠ No messages</div><div class="error-card-body">No tutor data returned.</div></div>';
-  const msgsHtml=msgs.map((m,i)=>`<div class="tutor-msg" style="animation-delay:${i*.07}s"><div class="tutor-msg-wrap"><div class="tutor-avatar">🧑‍🏫</div><div class="tutor-bubble">${escHtml(m.text||m)}</div></div></div>`).join('');
-  return`${resultHeader('tutor',t,[{text:'🧑‍🏫 AI Tutor',accent:true},{text:'Conversational'}])}${msgsHtml}<div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
+  const title=(d&&d.title)||t;
+  const sections=(d&&d.sections)||[];
+  if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No tutor lesson data returned.</div></div>';
+  const secHtml=sections.map((s,i)=>{
+    const paras=Array.isArray(s.paragraphs)&&s.paragraphs.length?s.paragraphs:(s.content?[s.content]:[]);
+    const parasHtml=paras.map(p=>`<p class="lesson-content">${sanitizeLessonHtml(p)}</p>`).join('');
+    const quoteHtml=s.keyTakeaway?`<blockquote class="lesson-quote">"${escHtml(s.keyTakeaway)}"</blockquote>`:'';
+    const thinkHtml=s.thinkAboutIt?`<div class="lesson-think"><span class="lesson-think-label">Think About It</span><p class="lesson-think-q">${escHtml(s.thinkAboutIt)}</p></div>`:'';
+    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${parasHtml}${quoteHtml}${thinkHtml}</div>`;
+  }).join('');
+  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}</div><div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
 }
 
 function renderPracticeTestHTML(topic, d){
@@ -2126,10 +2162,40 @@ function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);c
 function revealFITB(i,answer){const el=document.getElementById('fitb-'+i);if(el&&!el.classList.contains('revealed')){el.textContent=answer;el.classList.add('revealed')}}
 function revealFITB2(si,pi){const key=si+'-'+pi;const entry=fitbBlanks.find(b=>b.id===key);const el=document.getElementById('fitb-'+key);if(el&&entry&&!el.classList.contains('revealed')){el.textContent=entry.blank;el.classList.add('revealed')}}
 
-function handleFileUpload(input){const file=input.files[0];if(!file)return;const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};let icon='📎';for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':file.type==='application/pdf'?'PDF':'File';const reader=new FileReader();reader.onload=()=>{uploadedFiles.push({name:file.name,type:typeLabel,icon,data:reader.result,mimeType:file.type});renderFileList();if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from: ${file.name}`;updateCharCount()}};if(file.type.startsWith('text/'))reader.readAsText(file);else reader.readAsDataURL(file);input.value=''}
+async function handleFileUpload(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};
+  let icon='📎';for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}
+  const lname=file.name.toLowerCase();
+  const isPdf=file.type==='application/pdf'||lname.endsWith('.pdf');
+  const isDocx=lname.endsWith('.docx')||file.type.includes('wordprocessingml');
+  const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':isDocx?'Doc':'File';
+  const fileObj={name:file.name,type:typeLabel,icon,mimeType:file.type,reading:true};
+  uploadedFiles.push(fileObj);renderFileList();
+  if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from: ${file.name}`;updateCharCount();}
+  try{
+    if(file.type.startsWith('text/')||lname.endsWith('.txt')||lname.endsWith('.md')){
+      fileObj.textContent=await file.text();
+    } else if(isPdf||isDocx){
+      if(file.size>4*1024*1024){
+        fileObj.readError='File too large (max 4 MB for text extraction)';
+      } else {
+        const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
+        const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:base64})});
+        const result=await res.json();
+        if(res.ok&&result.text){fileObj.textContent=result.text;}
+        else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
+      }
+    } else if(file.type.startsWith('image/')){
+      const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
+      fileObj.imageData=base64;
+    }
+  }catch(e){fileObj.readError=e.message||'Read failed';console.warn('File read error:',e);}
+  fileObj.reading=false;renderFileList();
+}
 function addUrlLesson(){const input=document.getElementById('lessonUrlInput');const url=input.value.trim();if(!url)return;let icon='🔗';if(url.includes('youtube.com')||url.includes('youtu.be'))icon='▶️';uploadedFiles.push({name:url,type:'URL',icon,data:null});if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from URL: ${url}`;updateCharCount()}input.value='';renderFileList()}
 function removeFile(i){uploadedFiles.splice(i,1);renderFileList()}
-function renderFileList(){const list=document.getElementById('uploadFileList');if(!uploadedFiles.length){list.innerHTML='';return}list.innerHTML=uploadedFiles.map((f,i)=>`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`).join('')}
+function renderFileList(){const list=document.getElementById('uploadFileList');if(!uploadedFiles.length){list.innerHTML='';return}list.innerHTML=uploadedFiles.map((f,i)=>{let status='';if(f.reading)status=' <span style="color:#f59e0b;font-size:10px;font-weight:700">⏳ reading…</span>';else if(f.readError)status=` <span style="color:#f87171;font-size:10px;font-weight:700" title="${escHtml(f.readError)}">⚠ ${escHtml(f.readError)}</span>`;else if(f.textContent)status=' <span style="color:#4ade80;font-size:10px;font-weight:700">✓ ready</span>';else if(f.imageData)status=' <span style="color:#7c5cfc;font-size:10px;font-weight:700">✓ image</span>';return`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}${status}</span><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`;}).join('')}
 function uploadDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over')}
 function uploadDragLeave(){document.getElementById('uploadZone').classList.remove('drag-over')}
 function uploadDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');const file=e.dataTransfer.files[0];if(!file)return;const dt=new DataTransfer();dt.items.add(file);const inp=document.getElementById('fileInputMain');inp.files=dt.files;handleFileUpload(inp)}
