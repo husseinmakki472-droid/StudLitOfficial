@@ -63,7 +63,7 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
 body: JSON.stringify({
-model: 'gpt-4o-mini', max_tokens: 16000, temperature: 0.4,
+model: 'gpt-4o-mini', max_tokens: 4096, temperature: 0.4,
 messages: [
 { role: 'system', content: systemPrompt },
 { role: 'user', content: userContent }
