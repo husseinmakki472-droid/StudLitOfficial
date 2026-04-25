@@ -175,6 +175,16 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .tutor-bubble{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px 14px 14px 14px;padding:13px 16px;font-size:14px;color:rgba(240,239,255,0.6);line-height:1.7;flex:1}
 .tutor-followup{margin-top:12px;padding:12px 16px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.2);border-radius:16px;font-size:13.5px;color:rgba(240,239,255,0.6);font-style:italic;cursor:pointer;transition:background .18s}
 .tutor-followup:hover{background:rgba(124,92,252,0.14)}
+.lesson-body{padding:0 2px}
+.lesson-title{font-size:22px;font-weight:700;color:rgba(240,239,255,0.95);margin:0 0 24px;line-height:1.3}
+.lesson-section{margin-bottom:26px;animation:cardEntrance .45s cubic-bezier(0.22,1,0.36,1) both}
+.lesson-section-heading{font-size:16px;font-weight:700;color:rgba(240,239,255,0.88);margin:0 0 10px}
+.lesson-content{font-size:14px;color:rgba(240,239,255,0.62);line-height:1.75;margin:0 0 12px}
+.lesson-content strong{color:rgba(240,239,255,0.92);font-weight:600}
+.lesson-quote{border-left:3px solid #7c5cfc;margin:12px 0 14px;padding:10px 16px;background:rgba(124,92,252,0.07);border-radius:0 12px 12px 0;font-style:italic;color:rgba(240,239,255,0.62);font-size:13.5px;line-height:1.65}
+.lesson-think{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.15);border-radius:14px;padding:12px 16px;margin-top:12px}
+.lesson-think-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c5cfc;display:block;margin-bottom:6px}
+.lesson-think-q{font-size:13.5px;color:rgba(240,239,255,0.58);font-style:italic;margin:0;line-height:1.65}
 .test-header-strip{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border:1px solid rgba(124,92,252,0.25);border-radius:22px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .test-header-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff}
 .test-timer-badge{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700}
@@ -890,7 +900,14 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .quiz-opt-letter { background: #eae9ff !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.65) !important; }
 
 /* ── Tutor / notes / plan ── */
-[data-theme=“light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+[data-theme=”light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+[data-theme=”light”] .lesson-title{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-section-heading{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-content{color:rgba(15,14,26,0.72) !important}
+[data-theme=”light”] .lesson-content strong{color:#0f0e1a !important}
+[data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
+[data-theme=”light”] .lesson-think{background:rgba(124,92,252,0.04) !important;border-color:rgba(124,92,252,0.12) !important}
+[data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
 [data-theme=“light”] .concept-term { color: #0f0e1a !important; }
 [data-theme=“light”] .concept-def { color: rgba(15,14,26,0.65) !important; }
 [data-theme=“light”] .concept-item { border-bottom: 1px solid rgba(0,0,0,0.07) !important; }
@@ -1075,7 +1092,13 @@ body[data-theme=“light”] .quiz-question { color: #0f0e1a !important; }
 body.light-mode .quiz-option,
 body[data-theme=“light”] .quiz-option { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.72) !important; }
 body.light-mode .tutor-bubble,
-body[data-theme=“light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+body[data-theme=”light”] .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+body.light-mode .lesson-title,body[data-theme=”light”] .lesson-title{color:#0f0e1a !important}
+body.light-mode .lesson-section-heading,body[data-theme=”light”] .lesson-section-heading{color:#0f0e1a !important}
+body.light-mode .lesson-content,body[data-theme=”light”] .lesson-content{color:rgba(15,14,26,0.72) !important}
+body.light-mode .lesson-content strong,body[data-theme=”light”] .lesson-content strong{color:#0f0e1a !important}
+body.light-mode .lesson-quote,body[data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
+body.light-mode .lesson-think-q,body[data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
 body.light-mode .fc-front,
 body[data-theme=“light”] .fc-front { background: linear-gradient(135deg,#f0eeff,#e8e7ff) !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
 body.light-mode .fc-text,
@@ -1780,6 +1803,7 @@ function applyTheme(theme) {
       .fc-indicator { color: rgba(15,14,26,0.45) !important; }
       .fc-hint { color: rgba(15,14,26,0.35) !important; }
       .tutor-bubble { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; }
+      .lesson-title{color:#0f0e1a !important}.lesson-section-heading{color:#0f0e1a !important}.lesson-content{color:rgba(15,14,26,0.72) !important}.lesson-content strong{color:#0f0e1a !important}.lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}.lesson-think-q{color:rgba(15,14,26,0.65) !important}
       .step-title { color: #0f0e1a !important; }
       .step-desc { color: rgba(15,14,26,0.65) !important; }
       .concept-term { color: #0f0e1a !important; }
@@ -2044,10 +2068,16 @@ function renderNotesHTML(topic, d){
 
 function renderTutorHTML(topic, d){
   const t=topic||'your topic';
-  const msgs=(d&&d.messages)||[];
-  if(!msgs.length)return'<div class="error-card"><div class="error-card-label">⚠ No messages</div><div class="error-card-body">No tutor data returned.</div></div>';
-  const msgsHtml=msgs.map((m,i)=>`<div class="tutor-msg" style="animation-delay:${i*.07}s"><div class="tutor-msg-wrap"><div class="tutor-avatar">🧑‍🏫</div><div class="tutor-bubble">${escHtml(m.text||m)}</div></div></div>`).join('');
-  return`${resultHeader('tutor',t,[{text:'🧑‍🏫 AI Tutor',accent:true},{text:'Conversational'}])}${msgsHtml}<div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
+  const title=(d&&d.title)||t;
+  const sections=(d&&d.sections)||[];
+  if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No tutor lesson data returned.</div></div>';
+  const secHtml=sections.map((s,i)=>{
+    const contentHtml=escHtml(s.content||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    const quoteHtml=s.keyTakeaway?`<blockquote class="lesson-quote">"${escHtml(s.keyTakeaway)}"</blockquote>`:'';
+    const thinkHtml=s.thinkAboutIt?`<div class="lesson-think"><span class="lesson-think-label">Think About It</span><p class="lesson-think-q">${escHtml(s.thinkAboutIt)}</p></div>`:'';
+    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2><p class="lesson-content">${contentHtml}</p>${quoteHtml}${thinkHtml}</div>`;
+  }).join('');
+  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}</div><div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
 }
 
 function renderPracticeTestHTML(topic, d){

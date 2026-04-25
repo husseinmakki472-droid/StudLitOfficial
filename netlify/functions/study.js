@@ -41,7 +41,7 @@ quiz: '"quiz":{"questions":[{"question":"question text","options":["A) option","
 fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
 summary: '"summary":{"overview":"3-5 sentence overview","keyPoints":["point 1","point 2"],"mustRemember":"most important takeaway"}',
 notes: '"notes":{"sections":[{"heading":"section title","content":"detailed notes","bullets":["bullet 1"]}]}',
-tutor: '"tutor":{"messages":[{"text":"explanation","type":"explain"}]}',
+tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"1. Section Title","content":"Paragraph prose. Wrap **key terms** in double asterisks. Write 3-5 substantive sentences.","keyTakeaway":"One-sentence key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
 practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"...","sampleAnswer":"..."}]}]}',
 keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"full definition","importance":"why it matters"}]}',
 studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Introduction","tasks":["task 1"],"duration":"45 min"}]}',
