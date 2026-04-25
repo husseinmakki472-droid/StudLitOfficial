@@ -631,6 +631,29 @@ transition:all .2s cubic-bezier(0.22,1,0.36,1);
 
 /* Result view inside sl-main */
 .sl-result-view { padding:0 40px 60px; max-width:960px; margin:0 auto; width:100%; }
+/* ===== SPLIT RESULT VIEW ===== */
+#slResultView { flex-direction:column; height:calc(100vh - 52px); overflow:hidden; }
+.sv-topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 20px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; gap:12px; flex-wrap:wrap; background:rgba(13,12,24,0.97); }
+.sv-topic-label { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#f0efff; flex:1; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sv-body { display:flex; flex:1; overflow:hidden; }
+.sv-sidenav { width:188px; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.07); overflow-y:auto; padding:14px 8px; background:rgba(11,10,22,0.8); display:flex; flex-direction:column; gap:3px; }
+.sv-nav-btn { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; border:none; background:transparent; color:rgba(240,239,255,0.5); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; text-align:left; width:100%; transition:all .15s; }
+.sv-nav-btn:hover { background:rgba(255,255,255,0.06); color:#f0efff; }
+.sv-nav-btn.active { background:rgba(124,92,252,0.18); color:#c4a8ff; font-weight:600; }
+.sv-nav-icon { font-size:15px; flex-shrink:0; }
+.sv-nav-divider { margin:8px 0 4px; padding:0 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:rgba(240,239,255,0.2); }
+.sv-main { flex:1; overflow-y:auto; padding:28px 36px 60px; }
+.sv-chat-panel { width:300px; flex-shrink:0; border-left:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; background:rgba(11,10,22,0.6); }
+.sv-chat-header { padding:13px 16px; border-bottom:1px solid rgba(255,255,255,0.07); font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:rgba(240,239,255,0.65); flex-shrink:0; display:flex; align-items:center; gap:8px; }
+.sv-chat-messages { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+.sv-chat-empty { text-align:center; padding:30px 12px; color:rgba(240,239,255,0.28); font-size:13px; line-height:1.7; }
+.sv-chat-footer { padding:10px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:8px; flex-shrink:0; }
+.sv-chat-input { flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:9px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:#f0efff; outline:none; }
+.sv-chat-input:focus { border-color:#7c5cfc; }
+.sv-chat-send { background:linear-gradient(135deg,#7c5cfc,#b06ef3); border:none; border-radius:9px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; flex-shrink:0; transition:opacity .15s; }
+.sv-chat-send:hover { opacity:.85; }
+@media(max-width:900px){ .sv-chat-panel{display:none} .sv-sidenav{width:150px} .sv-main{padding:16px 16px 40px} }
+@media(max-width:640px){ .sv-sidenav{display:none} .sv-body{flex-direction:column} .sv-main{padding:12px} }
 .sl-result-topbar {
 display:flex; align-items:center; justify-content:space-between;
 padding:14px 0; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1);
@@ -858,9 +881,23 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .sets-empty { color: rgba(15,14,26,0.4) !important; }
 
 /* ── Result view ── */
-[data-theme=“light”] .sl-result-topbar { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=“light”] .sl-result-back-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: rgba(15,14,26,0.65) !important; }
-[data-theme=“light”] .sl-save-select { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; }
+[data-theme=”light”] .sl-result-topbar { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
+[data-theme=”light”] .sl-result-back-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: rgba(15,14,26,0.65) !important; }
+[data-theme=”light”] .sl-save-select { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; }
+/* ── Split view light mode ── */
+[data-theme=”light”] .sv-topbar { background:rgba(250,249,255,0.98)!important; border-bottom-color:rgba(0,0,0,0.09)!important; }
+[data-theme=”light”] .sv-topic-label { color:#0f0e1a!important; }
+[data-theme=”light”] .sv-sidenav { background:rgba(243,242,255,0.95)!important; border-right-color:rgba(0,0,0,0.08)!important; }
+[data-theme=”light”] .sv-nav-btn { color:rgba(15,14,26,0.5)!important; }
+[data-theme=”light”] .sv-nav-btn:hover { background:rgba(0,0,0,0.05)!important; color:#0f0e1a!important; }
+[data-theme=”light”] .sv-nav-btn.active { background:rgba(124,92,252,0.12)!important; color:#6c47f0!important; }
+[data-theme=”light”] .sv-nav-divider { color:rgba(15,14,26,0.3)!important; }
+[data-theme=”light”] .sv-main { background:transparent!important; }
+[data-theme=”light”] .sv-chat-panel { background:rgba(243,242,255,0.8)!important; border-left-color:rgba(0,0,0,0.08)!important; }
+[data-theme=”light”] .sv-chat-header { color:rgba(15,14,26,0.6)!important; border-bottom-color:rgba(0,0,0,0.08)!important; }
+[data-theme=”light”] .sv-chat-empty { color:rgba(15,14,26,0.35)!important; }
+[data-theme=”light”] .sv-chat-input { background:#fff!important; border-color:rgba(0,0,0,0.12)!important; color:#0f0e1a!important; }
+[data-theme=”light”] .sv-chat-footer { border-top-color:rgba(0,0,0,0.08)!important; }
 
 /* ── Content cards ── */
 [data-theme=“light”] .content-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
@@ -1562,20 +1599,32 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 </div>
 
-<!-- RESULT VIEW (inside ws-create) -->
+<!-- RESULT VIEW - Split layout -->
 <div id="slResultView" style="display:none">
-  <div class="sl-result-view">
-    <div class="sl-result-topbar">
-      <div class="sl-result-topbar-left">
-        <button class="sl-result-back-btn" onclick="slShowHome()">← New Set</button>
+  <div class="sv-topbar">
+    <button class="sl-result-back-btn" onclick="slShowHome()">← New Set</button>
+    <div class="sv-topic-label" id="svTopicLabel">Study Set</div>
+    <div class="sl-result-save-row">
+      <select class="sl-save-select" id="saveSetSelect"><option value="">— save to set —</option></select>
+      <button class="sl-btn-save" onclick="saveSession()">💾 Save</button>
+      <span class="sl-save-confirm" id="saveConfirm">✓ Saved!</span>
+    </div>
+  </div>
+  <div class="sv-body">
+    <nav class="sv-sidenav" id="svSidenav"></nav>
+    <div class="sv-main" id="svMain">
+      <div id="resultArea"></div>
+    </div>
+    <div class="sv-chat-panel">
+      <div class="sv-chat-header">🧑‍🏫 AI Tutor</div>
+      <div class="sv-chat-messages" id="svChatMessages">
+        <div class="sv-chat-empty">Ask me anything about this topic</div>
       </div>
-      <div class="sl-result-save-row">
-        <select class="sl-save-select" id="saveSetSelect"><option value="">— save to set —</option></select>
-        <button class="sl-btn-save" onclick="saveSession()">💾 Save</button>
-        <span class="sl-save-confirm" id="saveConfirm">✓ Saved!</span>
+      <div class="sv-chat-footer">
+        <input class="sv-chat-input" id="svChatInput" placeholder="Ask about this topic..." onkeydown="if(event.key==='Enter')svSendChat()">
+        <button class="sv-chat-send" onclick="svSendChat()">→</button>
       </div>
     </div>
-    <div id="resultArea"></div>
   </div>
 </div>
 </div><!-- end ws-create -->
@@ -1966,13 +2015,13 @@ function previewMode(mode){var btn=document.querySelector('[data-mode="'+mode+'"
 function demoMode(){document.getElementById('studyInput').value='Photosynthesis';updateCharCount();selectMode(document.querySelector('[data-mode="flashcards"]'));switchTab('workspace');setTimeout(generate,300)}
 
 function switchWsTab(tab){document.querySelectorAll('.ws-section').forEach(s=>s.classList.remove('active'));var el=document.getElementById('ws-'+tab);if(el)el.classList.add('active');document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');if(tab==='sets')try{renderSlSets();}catch(e){}}
-function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';}
-function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slResultView').style.display='block';switchWsTab('create');}
+function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';}
+function showResult(html){document.getElementById('emptyState').style.display='none';document.getElementById('slHomeView').style.display='none';const rv=document.getElementById('slResultView');rv.style.display='flex';const main=document.getElementById('svMain');if(main)main.innerHTML='<div id="resultArea">'+html+'</div>';const sn=document.getElementById('svSidenav');if(sn)sn.innerHTML='';switchWsTab('create');}
 function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${names[mode]||mode}</div></div>`}
-function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
+function showLoading(){document.getElementById('emptyState').style.display='none';document.getElementById('slHomeView').style.display='none';const rv=document.getElementById('slResultView');rv.style.display='flex';const topicEl=document.getElementById('svTopicLabel');if(topicEl)topicEl.textContent='Generating...';const sn=document.getElementById('svSidenav');if(sn)sn.innerHTML='';const main=document.getElementById('svMain');if(main)main.innerHTML='<div id="resultArea"><div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div></div>';switchWsTab('create');}
 
 async function generate() {
   const input = getInput();
@@ -1994,30 +2043,29 @@ async function generate() {
     const data = await res.json();
     if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Server error')+'</div></div>');return;}
     const topic = data.topic||input||'Study Set';
-    const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
-    let combined='';
-    modes.forEach((mode,i)=>{
-      if(modes.length>1)combined+=`<div style="margin-bottom:32px;${i>0?'border-top:1px solid rgba(255,255,255,0.08);padding-top:24px':''}">`;
+    const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'MC Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
+    const modeHtmlMap={};
+    modes.forEach(mode=>{
       const d=data.results?.[mode];
-      if(!d){combined+='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned.</div></div>';}
+      if(!d){modeHtmlMap[mode]='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned.</div></div>';}
       else{
         switch(mode){
-          case 'solve':combined+=renderSolveHTML(topic,d);break;
-          case 'flashcards':combined+=renderFlashcardsHTML(topic,d);break;
-          case 'quiz':combined+=renderQuizHTML(topic,d);break;
-          case 'summary':combined+=renderSummaryHTML(topic,d);break;
-          case 'notes':combined+=renderNotesHTML(topic,d);break;
-          case 'tutor':combined+=renderTutorHTML(topic,d);break;
-          case 'practicetest':combined+=renderPracticeTestHTML(topic,d);break;
-          case 'fitb':combined+=renderFITBHTML(topic,d);break;
-          case 'keyconcepts':combined+=renderKeyConceptsHTML(topic,d);break;
-          case 'studyplan':combined+=renderStudyPlanHTML(topic,d);break;
+          case 'solve':modeHtmlMap[mode]=renderSolveHTML(topic,d);break;
+          case 'flashcards':modeHtmlMap[mode]=renderFlashcardsHTML(topic,d);break;
+          case 'quiz':modeHtmlMap[mode]=renderQuizHTML(topic,d);break;
+          case 'summary':modeHtmlMap[mode]=renderSummaryHTML(topic,d);break;
+          case 'notes':modeHtmlMap[mode]=renderNotesHTML(topic,d);break;
+          case 'tutor':modeHtmlMap[mode]=renderTutorHTML(topic,d);break;
+          case 'practicetest':modeHtmlMap[mode]=renderPracticeTestHTML(topic,d);break;
+          case 'fitb':modeHtmlMap[mode]=renderFITBHTML(topic,d);break;
+          case 'keyconcepts':modeHtmlMap[mode]=renderKeyConceptsHTML(topic,d);break;
+          case 'studyplan':modeHtmlMap[mode]=renderStudyPlanHTML(topic,d);break;
         }
       }
-      if(modes.length>1)combined+='</div>';
     });
-    showResult(combined);
-    lastResult={topic,modes:modeLabel,html:combined};
+    const combinedForSave=Object.values(modeHtmlMap).join('<hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0">');
+    showStudySet(topic,modeHtmlMap);
+    lastResult={topic,modes:modeLabel,html:combinedForSave};
     updateSaveSelect();
     try{addXP(25,'set');}catch(e){}
   } catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
@@ -2547,6 +2595,58 @@ function slOpenPanel(name) {
   if (panel) panel.classList.add('open');
   if (card) card.classList.add('active-card');
   activePanel = name;
+}
+
+// ============================================================
+// SPLIT RESULT VIEW
+// ============================================================
+const _svModeLabels={solve:'Solve',flashcards:'Flashcards',quiz:'MC Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Lesson',practicetest:'Practice Test',fitb:'Fill in Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan',podcast:'Podcast'};
+const _svModeIcons={solve:'⚡',flashcards:'🃏',quiz:'✅',summary:'📋',notes:'📝',tutor:'🧑‍🏫',practicetest:'📄',fitb:'✏️',keyconcepts:'🔑',studyplan:'📅',podcast:'🎙️'};
+let svModeHtmlMap={},svActiveTopic='',svChatHistory=[];
+
+function showStudySet(topic,modeHtmlMap){
+  svModeHtmlMap=modeHtmlMap;svActiveTopic=topic;
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('slHomeView').style.display='none';
+  const rv=document.getElementById('slResultView');rv.style.display='flex';
+  const topicEl=document.getElementById('svTopicLabel');if(topicEl)topicEl.textContent=topic;
+  const sidenav=document.getElementById('svSidenav');
+  if(sidenav){
+    sidenav.innerHTML='<div class="sv-nav-divider">Modes</div>'+Object.keys(modeHtmlMap).map(m=>`<button class="sv-nav-btn" id="svnav-${m}" onclick="svShowMode('${m}')"><span class="sv-nav-icon">${_svModeIcons[m]||'📚'}</span><span>${_svModeLabels[m]||m}</span></button>`).join('');
+  }
+  const firstMode=Object.keys(modeHtmlMap)[0];if(firstMode)svShowMode(firstMode);
+  const chatMsgs=document.getElementById('svChatMessages');
+  if(chatMsgs)chatMsgs.innerHTML=`<div class="sv-chat-empty">Ask me anything about <strong>${escHtml(topic)}</strong></div>`;
+  svChatHistory=[];
+  updateSaveSelect();
+  switchWsTab('create');
+}
+
+function svShowMode(mode){
+  const main=document.getElementById('svMain');if(main)main.innerHTML=svModeHtmlMap[mode]||'';
+  document.querySelectorAll('.sv-nav-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('svnav-'+mode);if(btn)btn.classList.add('active');
+  if(main)main.scrollTop=0;
+}
+
+async function svSendChat(){
+  const input=document.getElementById('svChatInput');
+  const msg=input?.value.trim();if(!msg)return;input.value='';
+  const msgs=document.getElementById('svChatMessages');
+  if(msgs){
+    msgs.innerHTML+=`<div style="display:flex;gap:8px;align-items:flex-end;flex-direction:row-reverse"><div style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:Syne;color:rgba(240,239,255,0.62);flex-shrink:0">H</div><div style="max-width:82%;padding:9px 13px;border-radius:14px;border-bottom-right-radius:4px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;font-size:13px;line-height:1.6">${escHtml(msg)}</div></div>`;
+    msgs.innerHTML+='<div id="svtyping" style="display:flex;gap:8px;align-items:flex-end"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🧑‍🏫</div><div style="padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(240,239,255,0.62);font-size:13px">...</div></div>';
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+  svChatHistory.push({role:'user',content:msg});
+  try{
+    const res=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:svChatHistory.slice(-10),context:svActiveTopic?'The student is studying: '+svActiveTopic+'. Answer questions helpfully about this topic.':''})});
+    const data=await res.json();
+    const t=document.getElementById('svtyping');if(t)t.remove();
+    const reply=data.reply||'Sorry, something went wrong.';
+    svChatHistory.push({role:'assistant',content:reply});
+    if(msgs){msgs.innerHTML+=`<div style="display:flex;gap:8px;align-items:flex-end"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🧑‍🏫</div><div style="max-width:82%;padding:9px 13px;border-radius:14px;border-bottom-left-radius:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(240,239,255,0.62);font-size:13px;line-height:1.6">${escHtml(reply)}</div></div>`;msgs.scrollTop=msgs.scrollHeight;}
+  }catch(e){const t2=document.getElementById('svtyping');if(t2)t2.remove();}
 }
 
 function slShowHome() {
