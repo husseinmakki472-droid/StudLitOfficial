@@ -1,7 +1,3 @@
-function safeBlocks(blocks) {
-return blocks.filter(function(b) { return b.type !== 'text' || (b.text && b.text.trim()); });
-}
-
 const handler = async (event) => {
 if (event.httpMethod !== 'POST') {
 return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -16,9 +12,9 @@ const urlsArr = urls || [];
 if (!topic && !filesArr.length) {
 return { statusCode: 400, body: JSON.stringify({ error: 'topic or files required' }) };
 }
-const apiKey = process.env.ANTHROPIC_API_KEY;
+const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
-return { statusCode: 500, body: JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }) };
+return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
 }
 let fileCtx = '';
 if (filesArr.length) {
@@ -56,29 +52,31 @@ if (i < modesArr.length - 1) modeStructures += ',\n    ';
 const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate these study modes: ' + modeList + '\n\nReturn this JSON:\n{\n  "topic": "specific topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
 const imageBlocks = filesArr
 .filter(function(f) { return f.imageData && f.mimeType; })
-.map(function(f) { return { type: 'image', source: { type: 'base64', media_type: f.mimeType, data: f.imageData } }; });
-const userContent = safeBlocks([
+.map(function(f) { return { type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }; });
+const userContent = [
 ...imageBlocks,
-{ type: 'text', text: fileCtx, cache_control: { type: 'ephemeral' } },
+...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
 { type: 'text', text: queryText }
-]);
+];
 try {
-const response = await fetch('https://api.anthropic.com/v1/messages', {
+const response = await fetch('https://api.openai.com/v1/chat/completions', {
 method: 'POST',
-headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'prompt-caching-2024-07-31' },
+headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
 body: JSON.stringify({
-model: 'claude-haiku-4-5-20251001', max_tokens: 16000, temperature: 0.4,
-system: systemPrompt,
-messages: [{ role: 'user', content: userContent }]
+model: 'gpt-4o-mini', max_tokens: 16000, temperature: 0.4,
+messages: [
+{ role: 'system', content: systemPrompt },
+{ role: 'user', content: userContent }
+]
 })
 });
 if (!response.ok) {
 const err = await response.json().catch(function() { return {}; });
-return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'Claude API error' }) };
+return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
 }
 const data = await response.json();
-const content = (data.content && data.content[0] && data.content[0].text) || '';
-if (!content) return { statusCode: 500, body: JSON.stringify({ error: 'No content from Claude' }) };
+const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+if (!content) return { statusCode: 500, body: JSON.stringify({ error: 'No content from OpenAI' }) };
 let parsed;
 try { parsed = JSON.parse(content); }
 catch (e) { return { statusCode: 500, body: JSON.stringify({ error: 'Invalid JSON from AI' }) }; }
