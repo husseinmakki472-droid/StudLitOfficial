@@ -26,7 +26,7 @@ fileCtx += '\n\nUploaded materials:\n';
 for (let i = 0; i < filesArr.length; i++) {
 const f = filesArr[i];
 if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 12000) + '\n';
-else fileCtx += '\n[File: ' + f.name + ' (' + f.type + ')]\n';
+else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ')]\n';
 }
 }
 if (urlsArr.length) {
@@ -54,7 +54,11 @@ modeStructures += (modeMap[m] || ('"' + m + '":{"content":"study material"}'));
 if (i < modesArr.length - 1) modeStructures += ',\n    ';
 }
 const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate these study modes: ' + modeList + '\n\nReturn this JSON:\n{\n  "topic": "specific topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
+const imageBlocks = filesArr
+.filter(function(f) { return f.imageData && f.mimeType; })
+.map(function(f) { return { type: 'image', source: { type: 'base64', media_type: f.mimeType, data: f.imageData } }; });
 const userContent = safeBlocks([
+...imageBlocks,
 { type: 'text', text: fileCtx, cache_control: { type: 'ephemeral' } },
 { type: 'text', text: queryText }
 ]);
