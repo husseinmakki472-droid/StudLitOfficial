@@ -1976,7 +1976,9 @@ async function generate() {
   const btn = document.getElementById('generateBtn')||document.getElementById('generateBtn2');
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
   showLoading();
-  const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'�'):null,imageData:f.imageData||null}));
+  const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
+  const failedFiles = uploadedFiles.filter(f=>f.readError&&!f.imageData);
+  if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
   try {
     let res;
     try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[]})});}
@@ -2039,7 +2041,7 @@ function renderFlashcardsHTML(topic, d){
 function renderQuizHTML(topic, d){
   const t=topic||'your topic';
   const questions=(d&&d.questions)||[];
-  if(!questions.length)return'<div class="error-card"><div class="error-card-label">⚠ No questions</div><div class="error-card-body">No quiz data returned.</div></div>';
+  if(!questions.length)return'<div class="error-card"><div class="error-card-label">⚠ Quiz unavailable</div><div class="error-card-body">No questions were generated. Try selecting only Quiz mode (not combined with other modes) so the AI can focus its full response on questions.</div></div>';
   quizData=questions.map(q=>({q:q.question||'',opts:q.options||[],correct:typeof q.correct==='number'?q.correct:0,difficulty:q.difficulty||'Medium',explanation:q.explanation||''}));
   quizCurrent=0;quizScore=0;
   return`${resultHeader('quiz',t,[{text:'📝 '+quizData.length+' Questions',accent:true},{text:'Multiple Choice'}])}<div id="quizBody">${renderQuizQuestion()}</div>`;
@@ -2050,7 +2052,7 @@ function renderSummaryHTML(topic, d){
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No summary data returned.</div></div>';
   const overview=d.overview?`<div class="content-card"><div class="card-label">Overview</div><div class="card-body">${escHtml(d.overview)}</div></div>`:'';
   const kps=(d.keyPoints||[]);
-  const kpHtml=kps.length?`<div class="content-card"><div class="card-label">Key Takeaways</div><div class="card-body"><ul>${kps.map(p=>`<li>${escHtml(p)}</li>`).join('')}</ul></div></div>`:'';
+  const kpHtml=kps.length?`<div class="content-card"><div class="card-label">Key Takeaways</div><div class="card-body"><ul style="padding-left:18px">${kps.map(p=>`<li style="margin-bottom:8px">${escHtml(p)}</li>`).join('')}</ul></div></div>`:'';
   const mr=d.mustRemember?`<div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.06));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Must Remember</div><div class="card-body" style="font-size:15px;font-weight:500">${escHtml(d.mustRemember)}</div></div>`:'';
   return`${resultHeader('summary',t,[{text:'📋 Summary',accent:true},{text:'Exam-Ready'}])}${overview}${kpHtml}${mr}`;
 }
@@ -2059,11 +2061,12 @@ function renderNotesHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No notes data returned.</div></div>';
   const sections=(d.sections||[]);
-  if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No notes sections returned.</div></div>';
+  if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No notes were generated. Try selecting only Notes mode so the AI can dedicate the full response to detailed notes.</div></div>';
   const sHtml=sections.map((s,i)=>{
     const bullets=(s.bullets||[]);
-    const bHtml=bullets.length?`<ul>${bullets.map(b=>`<li>${escHtml(b)}</li>`).join('')}</ul>`:'';
-    return`<div class="content-card" style="animation-delay:${i*.05}s"><div class="card-label">${escHtml(s.heading||'')}</div><div class="card-body">${escHtml(s.content||'')}${bHtml}</div></div>`;
+    const bHtml=bullets.length?`<ul style="margin-top:8px">${bullets.map(b=>`<li style="margin-bottom:6px">${escHtml(b)}</li>`).join('')}</ul>`:'';
+    const contentHtml=s.content?`<p style="margin:0 0 4px">${escHtml(s.content)}</p>`:'';
+    return`<div class="content-card" style="animation-delay:${i*.05}s"><div class="card-label">${escHtml(s.heading||'')}</div><div class="card-body">${contentHtml}${bHtml}</div></div>`;
   }).join('');
   return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Organized'}])}${sHtml}`;
 }

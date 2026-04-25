@@ -1,3 +1,16 @@
+function repairJson(str) {
+  str = str.replace(/,\s*([}\]])/g, '$1');
+  const quoteCount = (str.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) str += '"';
+  const stack = [];
+  for (const ch of str) {
+    if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if ((ch === '}' || ch === ']') && stack[stack.length - 1] === ch) stack.pop();
+  }
+  return str + stack.reverse().join('');
+}
+
 const handler = async (event) => {
 if (event.httpMethod !== 'POST') {
 return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -21,8 +34,8 @@ if (filesArr.length) {
 fileCtx += '\n\nUploaded materials:\n';
 for (let i = 0; i < filesArr.length; i++) {
 const f = filesArr[i];
-if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 50000) + '\n';
-else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ')]\n';
+if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 25000) + '\n';
+else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ') — no text extracted]\n';
 }
 }
 if (urlsArr.length) {
@@ -30,18 +43,18 @@ fileCtx += '\n\nURLs:\n';
 for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
 }
 const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
-const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON, no markdown, no backticks. Cover the ENTIRE content thoroughly — do not skip, summarize, or truncate any part of the lesson. Generate as many sections, cards, questions, and paragraphs as needed to fully cover every concept. Never use a fixed number limit. When given uploaded material, teach ALL of it in depth.';
+const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON matching the schema exactly — no markdown, no backticks. Be comprehensive and detailed: for notes generate at least 8 sections each with 4-6 detailed bullet points; for quiz generate at least 10 questions covering different concepts; for flashcards generate at least 18 cards. Cover every major concept from the content. Never leave arrays empty. Fill every field.';
 const modeMap = {
-flashcards: '"flashcards":{"cards":[{"front":"term or question","back":"definition or answer"}]}',
-quiz: '"quiz":{"questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct"}]}',
+flashcards: '"flashcards":{"cards":[{"front":"term or question","back":"detailed definition or full answer"}]}',
+quiz: '"quiz":{"questions":[{"question":"specific, clear question about a key concept","options":["A) first option","B) second option","C) third option","D) fourth option"],"correct":0,"explanation":"clear explanation of why the correct answer is right"}]}',
 fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
-summary: '"summary":{"overview":"3-5 sentence overview","keyPoints":["point 1","point 2"],"mustRemember":"most important takeaway"}',
-notes: '"notes":{"sections":[{"heading":"section title","content":"detailed notes","bullets":["bullet 1"]}]}',
-tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"1. Section Title","paragraphs":["Thorough paragraph explaining this concept in depth with examples. Wrap key terms in <strong>strong tags</strong>. Write as many sentences as needed to fully explain — do not summarize, elaborate completely.","Continue with more detail, sub-concepts, real-world applications, and any nuances the student needs to know.","Add more paragraphs as needed until this section is completely covered."],"keyTakeaway":"One-sentence key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
-practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"...","sampleAnswer":"..."}]}]}',
-keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"full definition","importance":"why it matters"}]}',
-studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Introduction","tasks":["task 1"],"duration":"45 min"}]}',
-solve: '"solve":{"quickAnswer":"direct answer","stepByStep":[{"step":1,"title":"step title","content":"explanation"}],"keyInsight":"most important thing","examples":["example 1"]}'
+summary: '"summary":{"overview":"comprehensive 5-7 sentence overview covering all main ideas","keyPoints":["detailed key point 1","detailed key point 2","detailed key point 3","detailed key point 4","detailed key point 5","detailed key point 6","detailed key point 7","detailed key point 8"],"mustRemember":"the single most critical concept to remember"}',
+notes: '"notes":{"sections":[{"heading":"Section Title","content":"Thorough paragraph explaining this section with details and context.","bullets":["Detailed bullet point 1 with full explanation","Detailed bullet point 2 with full explanation","Detailed bullet point 3 with full explanation","Detailed bullet point 4 with full explanation","Detailed bullet point 5 with full explanation"]}]}',
+tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"1. Section Title","paragraphs":["Thorough paragraph explaining this concept in depth with examples. Wrap key terms in <strong>strong tags</strong>. Write as many sentences as needed to fully explain.","Continue with more detail, sub-concepts, real-world applications, and nuances.","Add more paragraphs as needed until this section is completely covered."],"keyTakeaway":"One-sentence key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
+practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"detailed question requiring explanation","sampleAnswer":"comprehensive sample answer with key points"}]}]}',
+keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"complete, detailed definition","importance":"why this concept matters and how it connects to other ideas"}]}',
+studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Introduction","tasks":["specific task 1","specific task 2"],"duration":"45 min"}]}',
+solve: '"solve":{"quickAnswer":"direct, complete answer","stepByStep":[{"step":1,"title":"step title","content":"detailed explanation of this step"}],"keyInsight":"most important insight","examples":["concrete example 1","concrete example 2"]}'
 };
 let modeStructures = '';
 for (let i = 0; i < modesArr.length; i++) {
@@ -63,7 +76,8 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
 body: JSON.stringify({
-model: 'gpt-4o-mini', max_tokens: 4096, temperature: 0.4,
+model: 'gpt-4o-mini', max_tokens: 4096, temperature: 0.3,
+response_format: { type: 'json_object' },
 messages: [
 { role: 'system', content: systemPrompt },
 { role: 'user', content: userContent }
@@ -79,7 +93,10 @@ const content = (data.choices && data.choices[0] && data.choices[0].message && d
 if (!content) return { statusCode: 500, body: JSON.stringify({ error: 'No content from OpenAI' }) };
 let parsed;
 try { parsed = JSON.parse(content); }
-catch (e) { return { statusCode: 500, body: JSON.stringify({ error: 'Invalid JSON from AI' }) }; }
+catch (e) {
+try { parsed = JSON.parse(repairJson(content)); }
+catch (e2) { return { statusCode: 500, body: JSON.stringify({ error: 'Try selecting fewer modes or a shorter topic and generate again.' }) }; }
+}
 return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(parsed) };
 } catch (err) {
 return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
