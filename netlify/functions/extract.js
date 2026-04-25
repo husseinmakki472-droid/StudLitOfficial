@@ -13,7 +13,7 @@ const isPdf = mimeType === 'application/pdf' || lname.endsWith('.pdf');
 const isDocx = lname.endsWith('.docx') || (mimeType && mimeType.includes('wordprocessingml'));
 try {
 if (isPdf) {
-const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+const pdfParse = require('pdf-parse');
 const result = await pdfParse(buf);
 const text = (result.text || '').trim();
 return {

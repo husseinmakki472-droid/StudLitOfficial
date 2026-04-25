@@ -2068,6 +2068,9 @@ function renderNotesHTML(topic, d){
   return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Organized'}])}${sHtml}`;
 }
 
+function sanitizeLessonHtml(str){
+  return(str||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/<(?!\/?strong\b)[^>]*>/gi,'').replace(/\n+/g,' ');
+}
 function renderTutorHTML(topic, d){
   const t=topic||'your topic';
   const title=(d&&d.title)||t;
@@ -2075,7 +2078,7 @@ function renderTutorHTML(topic, d){
   if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No tutor lesson data returned.</div></div>';
   const secHtml=sections.map((s,i)=>{
     const paras=Array.isArray(s.paragraphs)&&s.paragraphs.length?s.paragraphs:(s.content?[s.content]:[]);
-    const parasHtml=paras.map(p=>`<p class="lesson-content">${escHtml(p).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</p>`).join('');
+    const parasHtml=paras.map(p=>`<p class="lesson-content">${sanitizeLessonHtml(p)}</p>`).join('');
     const quoteHtml=s.keyTakeaway?`<blockquote class="lesson-quote">"${escHtml(s.keyTakeaway)}"</blockquote>`:'';
     const thinkHtml=s.thinkAboutIt?`<div class="lesson-think"><span class="lesson-think-label">Think About It</span><p class="lesson-think-q">${escHtml(s.thinkAboutIt)}</p></div>`:'';
     return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${parasHtml}${quoteHtml}${thinkHtml}</div>`;
