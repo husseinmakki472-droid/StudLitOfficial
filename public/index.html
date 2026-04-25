@@ -1983,7 +1983,7 @@ async function generate() {
     catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
     let data;
     try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
-    if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Server error')+'</div></div>');return;}
+    if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
     const topic = data.topic||input||'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
     let combined='';
