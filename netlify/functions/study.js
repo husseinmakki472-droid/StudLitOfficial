@@ -21,7 +21,7 @@ if (filesArr.length) {
 fileCtx += '\n\nUploaded materials:\n';
 for (let i = 0; i < filesArr.length; i++) {
 const f = filesArr[i];
-if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 12000) + '\n';
+if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 80000) + '\n';
 else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ')]\n';
 }
 }
@@ -30,14 +30,14 @@ fileCtx += '\n\nURLs:\n';
 for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
 }
 const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
-const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON, no markdown, no backticks. Cover the ENTIRE content. Generate as many items as needed to fully cover the lesson. Never use a fixed number limit.';
+const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON, no markdown, no backticks. Cover the ENTIRE content thoroughly — do not skip, summarize, or truncate any part of the lesson. Generate as many sections, cards, questions, and paragraphs as needed to fully cover every concept. Never use a fixed number limit. When given uploaded material, teach ALL of it in depth.';
 const modeMap = {
 flashcards: '"flashcards":{"cards":[{"front":"term or question","back":"definition or answer"}]}',
 quiz: '"quiz":{"questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct"}]}',
 fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
 summary: '"summary":{"overview":"3-5 sentence overview","keyPoints":["point 1","point 2"],"mustRemember":"most important takeaway"}',
 notes: '"notes":{"sections":[{"heading":"section title","content":"detailed notes","bullets":["bullet 1"]}]}',
-tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"1. Section Title","paragraphs":["First paragraph of flowing prose. Wrap key terms in <strong>strong tags</strong>. 3-5 sentences.","Second paragraph continuing the explanation with more detail and real-world examples."],"keyTakeaway":"One-sentence key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
+tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"1. Section Title","paragraphs":["Thorough paragraph explaining this concept in depth with examples. Wrap key terms in <strong>strong tags</strong>. Write as many sentences as needed to fully explain — do not summarize, elaborate completely.","Continue with more detail, sub-concepts, real-world applications, and any nuances the student needs to know.","Add more paragraphs as needed until this section is completely covered."],"keyTakeaway":"One-sentence key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
 practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"...","sampleAnswer":"..."}]}]}',
 keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"full definition","importance":"why it matters"}]}',
 studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Introduction","tasks":["task 1"],"duration":"45 min"}]}',

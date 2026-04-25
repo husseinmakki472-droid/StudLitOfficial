@@ -2177,7 +2177,7 @@ async function extractPdfClientSide(file){
     const page=await pdf.getPage(i);
     const content=await page.getTextContent();
     text+=content.items.map(item=>item.str).join(' ')+'\n';
-    if(text.length>60000)break;
+    if(text.length>200000)break;
   }
   return text.trim();
 }
