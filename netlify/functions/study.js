@@ -21,7 +21,7 @@ if (filesArr.length) {
 fileCtx += '\n\nUploaded materials:\n';
 for (let i = 0; i < filesArr.length; i++) {
 const f = filesArr[i];
-if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 80000) + '\n';
+if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 120000) + '\n';
 else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ')]\n';
 }
 }
