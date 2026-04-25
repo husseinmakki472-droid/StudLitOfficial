@@ -1982,7 +1982,8 @@ async function generate() {
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[]})
     });
-    const data = await res.json();
+    let data;
+    try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
     if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Server error')+'</div></div>');return;}
     const topic = data.topic||input||'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
@@ -2162,25 +2163,6 @@ function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);c
 function revealFITB(i,answer){const el=document.getElementById('fitb-'+i);if(el&&!el.classList.contains('revealed')){el.textContent=answer;el.classList.add('revealed')}}
 function revealFITB2(si,pi){const key=si+'-'+pi;const entry=fitbBlanks.find(b=>b.id===key);const el=document.getElementById('fitb-'+key);if(el&&entry&&!el.classList.contains('revealed')){el.textContent=entry.blank;el.classList.add('revealed')}}
 
-async function loadPdfJs(){
-  if(window.pdfjsLib)return window.pdfjsLib;
-  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc='/pdf.worker.min.js';
-  return window.pdfjsLib;
-}
-async function extractPdfClientSide(file){
-  const lib=await loadPdfJs();
-  const ab=await file.arrayBuffer();
-  const pdf=await lib.getDocument({data:new Uint8Array(ab)}).promise;
-  let text='';
-  for(let i=1;i<=pdf.numPages;i++){
-    const page=await pdf.getPage(i);
-    const content=await page.getTextContent();
-    text+=content.items.map(item=>item.str).join(' ')+'\n';
-    if(text.length>200000)break;
-  }
-  return text.trim();
-}
 async function loadMammothBrowser(){
   if(window.mammoth)return window.mammoth;
   await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
@@ -2216,8 +2198,7 @@ async function handleFileUpload(input){
         if(res.ok&&result.text){fileObj.textContent=result.text;}
         else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
       } else if(isPdf){
-        fileObj.textContent=await extractPdfClientSide(file);
-        if(!fileObj.textContent)fileObj.readError='No text found — may be a scanned image PDF';
+        fileObj.readError='PDF too large for auto-reading. Use the Paste tab to paste your notes, or try a PDF under 4 MB.';
       } else {
         fileObj.textContent=await extractDocxClientSide(file);
         if(!fileObj.textContent)fileObj.readError='No text found in document';
