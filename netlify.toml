@@ -1,6 +1,5 @@
 [build]
-  command = "npm run build"
-  publish = "out"
+  publish = "public"
   functions = "netlify/functions"
 
 [functions]
@@ -18,9 +17,3 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
