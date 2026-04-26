@@ -1322,13 +1322,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 #slStep2View{display:none;padding:16px 0 60px;max-width:640px;margin:0 auto}
 .wz-step2-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#f0efff;text-align:center;margin-bottom:8px}
 .wz-step2-sub{font-size:14px;color:rgba(240,239,255,0.45);text-align:center;margin-bottom:28px}
-.wz-methods-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
-.wz-method-card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s var(--ease);user-select:none}
-.wz-method-card:hover{background:rgba(124,92,252,0.06);border-color:rgba(124,92,252,0.3)}
-.wz-method-card.selected{background:rgba(124,92,252,0.12);border-color:#7c5cfc;box-shadow:0 0 14px rgba(124,92,252,0.18)}
-.wz-method-icon{width:40px;height:40px;border-radius:12px;background:rgba(124,92,252,0.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:background .2s}
-.wz-method-card.selected .wz-method-icon{background:rgba(124,92,252,0.28)}
-.wz-method-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#f0efff}
+.wz-methods-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:28px}
+.wz-method-card{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.035);border:1.5px solid rgba(255,255,255,0.08);border-radius:18px;padding:18px 20px;cursor:pointer;transition:all .2s var(--ease);user-select:none}
+.wz-method-card:hover{background:rgba(124,92,252,0.06);border-color:rgba(124,92,252,0.25);transform:translateY(-1px)}
+.wz-method-card.selected{background:rgba(124,92,252,0.1);border-color:#7c5cfc;box-shadow:0 0 18px rgba(124,92,252,0.15)}
+.wz-method-icon{width:44px;height:44px;border-radius:12px;background:rgba(124,92,252,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:background .2s}
+.wz-method-card.selected .wz-method-icon{background:rgba(124,92,252,0.35)}
+.wz-method-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#f0efff}
 .wz-lang-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
 .wz-lang-label{font-size:13px;color:rgba(240,239,255,0.5);font-weight:500}
 .wz-lang-select{background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;color:#f0efff;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 14px;outline:none;cursor:pointer;transition:border-color .2s}
@@ -1359,13 +1359,21 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .15s;color:rgba(240,239,255,0.5);font-size:13.5px;font-weight:500;user-select:none}
 .wz-sidebar-item:hover{background:rgba(255,255,255,0.04);color:#f0efff}
 .wz-sidebar-item.active{background:rgba(255,255,255,0.06);color:#f0efff}
-.wz-sidebar-circle{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.22);flex-shrink:0;transition:all .15s;display:flex;align-items:center;justify-content:center}
-.wz-sidebar-item.active .wz-sidebar-circle{border-color:#7c5cfc;background:#7c5cfc}
-.wz-sidebar-item.loaded .wz-sidebar-circle::after{content:'';width:6px;height:6px;border-radius:50%;background:#7c5cfc}
-.wz-sidebar-item.active.loaded .wz-sidebar-circle::after{background:#fff}
-.wz-sidebar-divider{height:1px;background:rgba(255,255,255,0.06);margin:8px 4px}
-.wz-sidebar-add{display:flex;align-items:center;gap:8px;padding:9px 12px;color:rgba(240,239,255,0.35);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:color .15s;text-transform:uppercase}
+.wz-sidebar-circle{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);flex-shrink:0;transition:all .2s;position:relative}
+.wz-sidebar-item.active .wz-sidebar-circle{border-color:#7c5cfc;border-width:5px}
+.wz-sidebar-item.loaded:not(.active) .wz-sidebar-circle{border-color:rgba(124,92,252,0.5)}
+.wz-sidebar-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;opacity:.6}
+.wz-sidebar-item.active .wz-sidebar-icon{opacity:1}
+.wz-sidebar-divider{height:1px;background:rgba(255,255,255,0.06);margin:10px 4px}
+.wz-sidebar-add{display:flex;align-items:center;gap:6px;padding:9px 12px;color:rgba(240,239,255,0.35);font-size:11.5px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:color .15s;text-transform:uppercase}
 .wz-sidebar-add:hover{color:#7c5cfc}
+.wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;gap:20px}
+.wz-processing-art{font-size:80px;line-height:1;filter:drop-shadow(0 8px 24px rgba(124,92,252,0.2));animation:wzFloat 3s ease-in-out infinite}
+@keyframes wzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.wz-processing-text{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:rgba(240,239,255,0.5)}
+.wz-right-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:30px 20px;text-align:center;gap:12px}
+.wz-right-empty-icon{font-size:36px;opacity:.35}
+.wz-right-empty-text{font-size:13px;color:rgba(240,239,255,0.3);line-height:1.5}
 .wz-panel-main{flex:1;overflow-y:auto;padding:24px 28px 40px}
 .wz-panel-right{width:320px;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;overflow:hidden}
 .wz-right-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0}
@@ -1428,6 +1436,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme=”light”] .wz-sidebar-item{color:rgba(15,14,26,0.5)}
 [data-theme=”light”] .wz-sidebar-item:hover,[data-theme=”light”] .wz-sidebar-item.active{background:rgba(0,0,0,0.04);color:#0f0e1a}
 [data-theme=”light”] .wz-sidebar-circle{border-color:rgba(0,0,0,0.2)}
+[data-theme=”light”] .wz-right-empty-text{color:rgba(15,14,26,0.3)}
+[data-theme=”light”] .wz-processing-text{color:rgba(15,14,26,0.4)}
+[data-theme=”light”] .wz-method-name{color:#0f0e1a}
 [data-theme=”light”] .wz-sidebar-divider{background:rgba(0,0,0,0.07)}
 [data-theme=”light”] .wz-sidebar-add{color:rgba(15,14,26,0.35)}
 [data-theme=”light”] .wz-panel-right{border-left-color:rgba(0,0,0,0.08)}
@@ -1787,22 +1798,22 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <!-- Main content -->
     <div class="wz-panel-main" id="wzResultMain">
       <div class="wz-processing">
-        <div class="shimmer-container" style="width:100%">
-          <div class="shimmer-block" style="height:60px"></div>
-          <div class="shimmer-block" style="height:140px"></div>
-          <div class="shimmer-block" style="height:100px"></div>
-        </div>
+        <div class="wz-processing-art">📚</div>
+        <div class="wz-processing-text">Processing content…</div>
       </div>
     </div>
     <!-- Right panel: Chat + Content tabs -->
     <div class="wz-panel-right">
       <div class="wz-right-tabs">
-        <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">💬 Chat</button>
-        <button class="wz-right-tab" id="wzTabContent" onclick="wzSwitchRightTab('content')">📄 Content</button>
+        <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">Chat</button>
+        <button class="wz-right-tab" id="wzTabContent" onclick="wzSwitchRightTab('content')">Content</button>
       </div>
       <div class="wz-right-pane active" id="wzRightChat">
         <div class="wz-chat-msgs" id="wzChatMsgs">
-          <div class="wz-chat-welcome">Ask me anything about the material — definitions, examples, deeper explanations…</div>
+          <div class="wz-right-empty">
+            <div class="wz-right-empty-icon">🎓</div>
+            <div class="wz-right-empty-text">Here to help you learn</div>
+          </div>
         </div>
         <div class="wz-chat-input-row">
           <textarea class="wz-chat-input" id="wzChatInput" placeholder="Ask me anything about the material…" rows="1" onkeydown="wzChatKeydown(event)"></textarea>
@@ -3480,8 +3491,12 @@ function wzBuildSidebar(methods) {
       <span>${WZ_MODE_NAMES[m]||m}</span>
     </div>`
   ).join('') +
-  `<div class="wz-sidebar-divider"></div>
-  <div class="wz-sidebar-add" onclick="wzAddMethod()"><span style="font-size:16px;margin-right:2px">+</span> ADD METHOD</div>`;
+  `<div class="wz-sidebar-item" data-mode="__content__" onclick="wzShowTab('__content__')" style="margin-top:4px">
+    <div class="wz-sidebar-icon">📄</div>
+    <span>Content</span>
+  </div>
+  <div class="wz-sidebar-divider"></div>
+  <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>`;
 }
 
 function wzBuildTabbedResult(topic, methods, results) {
@@ -3505,7 +3520,7 @@ function wzBuildTabbedResult(topic, methods, results) {
     wzResultTabs[mode] = html;
   });
   document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
-    if (wzResultTabs[el.dataset.mode]) el.classList.add('loaded');
+    if (wzResultTabs[el.dataset.mode] || el.dataset.mode === '__content__') el.classList.add('loaded');
   });
   wzShowTab(methods[0]);
   lastResult = { topic, modes: methods.join('+'), html: wzResultTabs[methods[0]] || '' };
@@ -3514,12 +3529,17 @@ function wzBuildTabbedResult(topic, methods, results) {
 }
 
 function wzShowTab(mode) {
-  const html = wzResultTabs[mode];
-  if (html === undefined) return;
-  document.getElementById('wzResultMain').innerHTML = html;
   document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
     el.classList.toggle('active', el.dataset.mode === mode);
   });
+  if (mode === '__content__') {
+    const src = document.getElementById('wzSourceContent');
+    document.getElementById('wzResultMain').innerHTML = `<div style="padding:8px 0"><h2 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;color:var(--text)">Source Content</h2><div style="white-space:pre-wrap;font-size:14px;line-height:1.7;color:var(--text-2)">${escHtml(src ? src.textContent : '')}</div></div>`;
+    return;
+  }
+  const html = wzResultTabs[mode];
+  if (html === undefined) return;
+  document.getElementById('wzResultMain').innerHTML = html;
 }
 
 function wzAddMethod() {
@@ -3546,9 +3566,9 @@ function wzInitChat(ctx) {
   wzChatContext = ctx;
   wzChatHistory = [];
   const msgs = document.getElementById('wzChatMsgs');
-  if (msgs) msgs.innerHTML = '<div class="wz-chat-welcome">Ask me anything about the material — definitions, examples, deeper explanations…</div>';
+  if (msgs) msgs.innerHTML = '<div class="wz-right-empty"><div class="wz-right-empty-icon">🎓</div><div class="wz-right-empty-text">Here to help you learn</div></div>';
   const src = document.getElementById('wzSourceContent');
-  if (src) src.textContent = ctx ? ctx.slice(0, 2000) + (ctx.length > 2000 ? '…' : '') : 'No source content available.';
+  if (src) src.textContent = ctx ? ctx.slice(0, 3000) + (ctx.length > 3000 ? '\n\n…' : '') : 'No source content available.';
 }
 
 async function wzSendChat() {
@@ -3559,7 +3579,7 @@ async function wzSendChat() {
   input.value = '';
   const msgs = document.getElementById('wzChatMsgs');
   if (!msgs) return;
-  msgs.querySelector('.wz-chat-welcome')?.remove();
+  msgs.querySelector('.wz-right-empty')?.remove();
   msgs.insertAdjacentHTML('beforeend', `<div class="wz-chat-msg user">${escHtml(msg)}</div>`);
   const loadId = 'wzcl' + Date.now();
   msgs.insertAdjacentHTML('beforeend', `<div class="wz-chat-msg ai" id="${loadId}" style="opacity:.6">…</div>`);
