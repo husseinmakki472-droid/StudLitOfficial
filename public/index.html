@@ -138,6 +138,13 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .fc-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .fc-count{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:rgba(240,239,255,0.6)}
 .fc-arrows{display:flex;gap:8px}
+/* Big bold flashcard in the wizard 3-panel view */
+#wzResultMain .flashcard{height:clamp(340px,calc(100vh - 310px),600px);margin-bottom:20px}
+#wzResultMain .fc-text{font-size:clamp(22px,3.5vw,36px);line-height:1.25}
+#wzResultMain #fcBackText{font-size:clamp(16px,2.2vw,24px) !important}
+#wzResultMain .fc-indicator{font-size:12px;margin-bottom:20px}
+#wzResultMain .fc-hint{font-size:14px;margin-top:20px}
+#wzResultMain .fc-face{border-radius:24px;padding:40px}
 .fc-arrow{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:background .18s,border-color .18s,transform .15s var(--ease-back);color:rgba(240,239,255,0.6)}
 .fc-arrow:hover{background:rgba(255,255,255,0.04);border-color:#7c5cfc;color:#f0efff;transform:scale(1.06)}
 .fc-conf{display:flex;gap:8px;margin-top:4px}
