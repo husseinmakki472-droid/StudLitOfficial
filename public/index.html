@@ -3550,10 +3550,26 @@ function wzShowTab(mode) {
   if (mode === '__content__') {
     const content = wzFullContent || '';
     const paras = content.split(/\n\n+/).filter(p=>p.trim());
-    const bodyHtml = paras.length
-      ? paras.map(p=>`<p class="lesson-content">${escHtml(p.trim())}</p>`).join('')
-      : '<p class="lesson-content" style="opacity:.5">No source content available. Upload a file or paste text to see it here.</p>';
-    document.getElementById('wzResultMain').innerHTML = `<div class="lesson-body" style="padding:8px 0">${bodyHtml}</div>`;
+    const main = document.getElementById('wzResultMain');
+    main.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'lesson-body';
+    wrap.style.padding = '8px 0';
+    if (paras.length) {
+      paras.forEach(p => {
+        const el = document.createElement('p');
+        el.className = 'lesson-content';
+        el.textContent = p.trim();
+        wrap.appendChild(el);
+      });
+    } else {
+      const el = document.createElement('p');
+      el.className = 'lesson-content';
+      el.style.opacity = '0.5';
+      el.textContent = 'No source content available. Upload a file or paste text to see it here.';
+      wrap.appendChild(el);
+    }
+    main.appendChild(wrap);
     return;
   }
   const html = wzResultTabs[mode];
@@ -3588,13 +3604,30 @@ function wzInitChat(ctx) {
   if (msgs) msgs.innerHTML = '<div class="wz-right-empty"><div class="wz-right-empty-icon">🎓</div><div class="wz-right-empty-text">Here to help you learn</div></div>';
   const src = document.getElementById('wzSourceContent');
   if (src) {
+    src.innerHTML = '';
     if (ctx) {
       const paras = ctx.split(/\n\n+/).filter(p=>p.trim());
-      src.innerHTML = paras.length
-        ? `<div style="padding:4px 0">${paras.map(p=>`<p style="font-size:13px;line-height:1.7;color:rgba(240,239,255,0.7);margin:0 0 12px">${escHtml(p.trim())}</p>`).join('')}</div>`
-        : '<p style="font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0">No source content available.</p>';
+      if (paras.length) {
+        const wrap = document.createElement('div');
+        wrap.style.padding = '4px 0';
+        paras.forEach(p => {
+          const el = document.createElement('p');
+          el.style.cssText = 'font-size:13px;line-height:1.7;color:rgba(240,239,255,0.7);margin:0 0 12px';
+          el.textContent = p.trim();
+          wrap.appendChild(el);
+        });
+        src.appendChild(wrap);
+      } else {
+        const el = document.createElement('p');
+        el.style.cssText = 'font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0';
+        el.textContent = 'No source content available.';
+        src.appendChild(el);
+      }
     } else {
-      src.innerHTML = '<p style="font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0">No source content available. Upload a file or paste text to see it here.</p>';
+      const el = document.createElement('p');
+      el.style.cssText = 'font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0';
+      el.textContent = 'No source content available. Upload a file or paste text to see it here.';
+      src.appendChild(el);
     }
   }
 }
