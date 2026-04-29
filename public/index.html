@@ -437,9 +437,9 @@ letter-spacing:.8px; color:rgba(240,239,255,0.35); padding:0 12px;
 margin-bottom:6px; margin-top:8px;
 }
 .sl-sidebar-bottom {
-margin-top:auto; padding:12px 8px 0;
+margin-top:auto; padding:12px 8px 8px;
 border-top:1px solid rgba(255,255,255,0.1);
-display:flex; align-items:center; gap:10px;
+display:flex; flex-direction:column; align-items:stretch; gap:4px;
 }
 .sl-user-avatar {
 width:32px; height:32px; border-radius:50%;
@@ -1523,17 +1523,14 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <aside class="sl-sidebar">
     <div class="sl-sidebar-logo">Stud<span>Lit</span></div>
     <nav class="sl-nav">
-      <button class="sl-nav-item active" id="wstab-sets" onclick="switchWsTab('sets')">
-        <span class="sl-nav-item-icon">📚</span> Study Sets
+      <button class="sl-nav-item" id="wstab-create" onclick="switchWsTab('create')">
+        <span class="sl-nav-item-icon">✏️</span> Create Set
       </button>
       <button class="sl-nav-item" id="wstab-solve" onclick="switchWsTab('solve')">
         <span class="sl-nav-item-icon">⚡</span> Solve
       </button>
-      <button class="sl-nav-item" id="wstab-checker" onclick="switchWsTab('checker')">
-        <span class="sl-nav-item-icon">🤖</span> AI Checker
-      </button>
-      <button class="sl-nav-item" id="wstab-create" onclick="switchWsTab('create')">
-        <span class="sl-nav-item-icon">✏️</span> Create Set
+      <button class="sl-nav-item active" id="wstab-sets" onclick="switchWsTab('sets')">
+        <span class="sl-nav-item-icon">📚</span> Study Sets
       </button>
     </nav>
     <div class="sl-sidebar-bottom">
@@ -3550,10 +3547,26 @@ function wzShowTab(mode) {
   if (mode === '__content__') {
     const content = wzFullContent || '';
     const paras = content.split(/\n\n+/).filter(p=>p.trim());
-    const bodyHtml = paras.length
-      ? paras.map(p=>`<p class="lesson-content">${escHtml(p.trim())}</p>`).join('')
-      : '<p class="lesson-content" style="opacity:.5">No source content available. Upload a file or paste text to see it here.</p>';
-    document.getElementById('wzResultMain').innerHTML = `<div class="lesson-body" style="padding:8px 0">${bodyHtml}</div>`;
+    const main = document.getElementById('wzResultMain');
+    main.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'lesson-body';
+    wrap.style.padding = '8px 0';
+    if (paras.length) {
+      paras.forEach(p => {
+        const el = document.createElement('p');
+        el.className = 'lesson-content';
+        el.textContent = p.trim();
+        wrap.appendChild(el);
+      });
+    } else {
+      const el = document.createElement('p');
+      el.className = 'lesson-content';
+      el.style.opacity = '0.5';
+      el.textContent = 'No source content available. Upload a file or paste text to see it here.';
+      wrap.appendChild(el);
+    }
+    main.appendChild(wrap);
     return;
   }
   const html = wzResultTabs[mode];
@@ -3588,13 +3601,30 @@ function wzInitChat(ctx) {
   if (msgs) msgs.innerHTML = '<div class="wz-right-empty"><div class="wz-right-empty-icon">🎓</div><div class="wz-right-empty-text">Here to help you learn</div></div>';
   const src = document.getElementById('wzSourceContent');
   if (src) {
+    src.innerHTML = '';
     if (ctx) {
       const paras = ctx.split(/\n\n+/).filter(p=>p.trim());
-      src.innerHTML = paras.length
-        ? `<div style="padding:4px 0">${paras.map(p=>`<p style="font-size:13px;line-height:1.7;color:rgba(240,239,255,0.7);margin:0 0 12px">${escHtml(p.trim())}</p>`).join('')}</div>`
-        : '<p style="font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0">No source content available.</p>';
+      if (paras.length) {
+        const wrap = document.createElement('div');
+        wrap.style.padding = '4px 0';
+        paras.forEach(p => {
+          const el = document.createElement('p');
+          el.style.cssText = 'font-size:13px;line-height:1.7;color:rgba(240,239,255,0.7);margin:0 0 12px';
+          el.textContent = p.trim();
+          wrap.appendChild(el);
+        });
+        src.appendChild(wrap);
+      } else {
+        const el = document.createElement('p');
+        el.style.cssText = 'font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0';
+        el.textContent = 'No source content available.';
+        src.appendChild(el);
+      }
     } else {
-      src.innerHTML = '<p style="font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0">No source content available. Upload a file or paste text to see it here.</p>';
+      const el = document.createElement('p');
+      el.style.cssText = 'font-size:13px;color:rgba(240,239,255,0.35);padding:8px 0';
+      el.textContent = 'No source content available. Upload a file or paste text to see it here.';
+      src.appendChild(el);
     }
   }
 }
@@ -4126,22 +4156,6 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   </div><!-- /settings-modal -->
 </div><!-- /settings-overlay -->
 
-<button onclick="toggleChat()" style="position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:none;color:#fff;font-size:22px;cursor:pointer;z-index:500;box-shadow:0 6px 28px rgba(124,92,252,0.28);display:flex;align-items:center;justify-content:center">💬<div style="position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:#4ade80;border-radius:50%;border:2px solid #07070f"></div></button>
-
-<div id="chatWindow" style="position:fixed;bottom:96px;right:28px;width:360px;height:480px;background:#0d0d1a;border:1px solid rgba(255,255,255,0.14);border-radius:28px;display:none;flex-direction:column;z-index:500;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5)">
-  <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:12px;flex-shrink:0;background:#111128">
-    <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);display:flex;align-items:center;justify-content:center;font-size:16px">🧑‍🏫</div>
-    <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#f0efff">StudLit AI</div><div style="font-size:11px;color:#4ade80">● Online</div></div>
-    <button onclick="toggleChat()" style="background:none;border:none;color:rgba(240,239,255,0.38);cursor:pointer;font-size:16px;margin-left:auto">✕</button>
-  </div>
-  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
-    <div style="text-align:center;padding:16px"><div style="font-size:30px;margin-bottom:8px">🧠</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#f0efff;margin-bottom:6px">Hey Hussein! Ask me anything.</div><div style="font-size:12px;color:rgba(240,239,255,0.38)">Explain concepts, quiz you, answer study questions.</div></div>
-  </div>
-  <div style="padding:10px 12px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;align-items:center;background:#111128">
-    <input id="chatInput" placeholder="Ask anything..." style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:9px 13px;font-family:'DM Sans',sans-serif;font-size:13px;color:#f0efff;outline:none" onkeydown="if(event.key==='Enter')sendChat()">
-    <button onclick="sendChat()" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:none;color:#fff;font-size:14px;cursor:pointer">➤</button>
-  </div>
-</div>
 
 <!-- LEADERBOARD PAGE -->
 
