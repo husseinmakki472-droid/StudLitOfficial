@@ -214,20 +214,12 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .features-section{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:60px 28px;border-top:1px solid rgba(255,255,255,0.1)}
 .features-heading{text-align:center;font-family:'Syne',sans-serif;font-size:clamp(26px,3vw,38px);font-weight:800;color:#f0efff;margin-bottom:10px;letter-spacing:-.5px}
 .features-sub{text-align:center;font-size:15px;color:rgba(240,239,255,0.35);margin-bottom:44px}
-.features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.feature-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;transition:border-color .2s,box-shadow .2s,transform .2s cubic-bezier(0.22,1,0.36,1)}
-.feature-card:hover{border-color:#7c5cfc;box-shadow:0 4px 24px rgba(124,92,252,0.22);transform:translateY(-3px)}
-.feature-icon-box{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(124,92,252,0.25),rgba(176,110,243,0.18));border:1px solid rgba(124,92,252,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;flex-shrink:0}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feature-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:24px;transition:border-color .2s,box-shadow .2s,transform .2s cubic-bezier(0.22,1,0.36,1)}
+.feature-card:hover{border-color:#7c5cfc;box-shadow:0 4px 20px rgba(124,92,252,0.2);transform:translateY(-3px)}
 .feature-icon{font-size:26px;margin-bottom:14px;display:block}
-.feature-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#f0efff;margin-bottom:7px}
-.feature-desc{font-size:13px;color:rgba(240,239,255,0.4);line-height:1.65}
-.hero-social-proof{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px;margin-bottom:20px;animation:fadeUp .8s .28s cubic-bezier(0.22,1,0.36,1) both}
-.hero-avatars{display:flex}
-.hero-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:2px solid #07070f;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#fff;margin-left:-8px}
-.hero-avatars .hero-avatar:first-child{margin-left:0}
-.hero-rating{display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(240,239,255,0.55)}
-.hero-stars{color:#fbbf24;letter-spacing:1px;font-size:12px}
-[data-theme="light"] .hero-avatar{border-color:#f5f4ff}
+.feature-title{font-family:'Syne',sans-serif;font-size:15.5px;font-weight:700;color:#f0efff;margin-bottom:7px}
+.feature-desc{font-size:13px;color:rgba(240,239,255,0.35);line-height:1.65}
 .pricing-section{max-width:520px;margin:0 auto;padding:60px 28px;text-align:center}
 .pricing-heading{font-family:'Syne',sans-serif;font-size:clamp(26px,3vw,38px);font-weight:800;color:#f0efff;letter-spacing:-.5px;margin-bottom:10px}
 .pricing-sub{font-size:15px;color:rgba(240,239,255,0.35);margin-bottom:36px}
@@ -1023,9 +1015,7 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .features-section { border-top: 1.5px solid rgba(0,0,0,0.09) !important; }
 [data-theme=“light”] .features-heading { color: #0f0e1a !important; }
 [data-theme=“light”] .features-sub { color: rgba(15,14,26,0.5) !important; }
-[data-theme=”light”] .feature-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=”light”] .feature-icon-box { background: linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1)) !important; border-color: rgba(124,92,252,0.2) !important; }
-[data-theme=”light”] .hero-rating { color: rgba(19,18,30,0.55) !important; }
+[data-theme=“light”] .feature-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
 [data-theme=“light”] .feature-title { color: #0f0e1a !important; }
 [data-theme=“light”] .feature-desc { color: rgba(15,14,26,0.55) !important; }
 [data-theme=“light”] .pricing-heading { color: #0f0e1a !important; }
@@ -1506,24 +1496,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div class="page-view active" id="view-home">
 <section class="hero">
   <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 2-Day Free Trial</div>
-  <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
-  <p class="hero-sub">StudLit uses AI to transform your notes, books, and lectures into smarter summaries, quizzes, and study tools.</p>
+  <h1>Study smarter.<br><span class="grad">Learn anything.</span></h1>
+  <p class="hero-sub">Turn your notes, questions, and topics into flashcards, quizzes, summaries, and personalized study plans — instantly.</p>
   <div class="hero-actions">
-    <button class="btn-hero" onclick="showPricingModal()">Get Started Free →</button>
-    <button class="btn-hero-ghost" onclick="switchTab('workspace')">Explore Features</button>
+    <button class="btn-hero" onclick="showPricingModal()">Start Free Trial →</button>
+    <button class="btn-hero-ghost" onclick="demoMode()">See it in action →</button>
   </div>
-  <div class="hero-social-proof">
-    <div class="hero-avatars">
-      <div class="hero-avatar">A</div>
-      <div class="hero-avatar">J</div>
-      <div class="hero-avatar">M</div>
-      <div class="hero-avatar">S</div>
-    </div>
-    <div class="hero-rating">
-      <span class="hero-stars">★★★★★</span>
-      <span>Loved by <strong>10,000+</strong> students worldwide · <strong>4.9/5</strong></span>
-    </div>
-  </div>
+  <div class="hero-price-note">2 days free, then $15/mo. Cancel anytime.</div>
   <div class="hero-pills">
     <span class="pill">🧠 AI Tutor</span><span class="pill">🃏 Flashcards</span><span class="pill">📝 Quizzes</span><span class="pill">📋 Summaries</span><span class="pill">🎯 Practice Tests</span><span class="pill">⚡ Active Recall</span><span class="pill">📊 Study Plans</span><span class="pill">🔑 Key Concepts</span>
   </div>
@@ -1643,8 +1622,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div class="ws-section" id="ws-create">
 <div id="slHomeView">
   <div class="sl-hero">
-    <div class="sl-hero-greeting">Welcome back, Hussein! 👋</div>
-    <div class="sl-hero-sub">Upload your content and get instant AI-powered study tools</div>
+    <div class="sl-hero-greeting">Hey Hussein, what do you wanna master?</div>
+    <div class="sl-hero-sub">Upload anything and get interactive flashcards, quizzes, summaries, and more</div>
 
     <!-- Three input cards -->
     <div class="sl-input-cards">
@@ -1902,13 +1881,15 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 <div class="page-view active" id="view-home-extra">
 <section class="features-section" id="features">
-  <div class="features-heading">Everything you need to ace your studies</div>
-  <div class="features-sub">Powered by AI — built for students who want results</div>
+  <div class="features-heading">Why StudLit works</div>
+  <div class="features-sub">Built on the science of how memory actually forms</div>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon-box">📊</div><div class="feature-title">AI Summaries</div><div class="feature-desc">Get instant, accurate summaries of any content — textbooks, notes, or lectures.</div></div>
-    <div class="feature-card"><div class="feature-icon-box">📝</div><div class="feature-title">Smart Quizzes</div><div class="feature-desc">Generate quizzes that adapt to your learning and test exactly what matters.</div></div>
-    <div class="feature-card"><div class="feature-icon-box">🃏</div><div class="feature-title">Flashcards</div><div class="feature-desc">Create and review flashcards effortlessly with spaced repetition built in.</div></div>
-    <div class="feature-card"><div class="feature-icon-box">📈</div><div class="feature-title">Study Analytics</div><div class="feature-desc">Track your progress and improve continuously with performance insights.</div></div>
+    <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-title">Active Recall</div><div class="feature-desc">Testing yourself beats re-reading. StudLit puts retrieval practice at the core of every study session.</div></div>
+    <div class="feature-card"><span class="feature-icon">🔁</span><div class="feature-title">Spaced Repetition</div><div class="feature-desc">Hard cards come back sooner. Easy cards fade back. Your study time goes exactly where it's needed.</div></div>
+    <div class="feature-card"><span class="feature-icon">🧩</span><div class="feature-title">10 Study Modes</div><div class="feature-desc">From AI tutor to practice test — every mode matches a different kind of studying and exam.</div></div>
+    <div class="feature-card"><span class="feature-icon">📑</span><div class="feature-title">Notes → Study Set</div><div class="feature-desc">Paste lecture notes and get a complete flashcard deck or quiz in seconds.</div></div>
+    <div class="feature-card"><span class="feature-icon">🎯</span><div class="feature-title">Exam-Style Practice</div><div class="feature-desc">Practice Test mode mimics real test conditions so you're never surprised on exam day.</div></div>
+    <div class="feature-card"><span class="feature-icon">🧠</span><div class="feature-title">AI Tutor Explanations</div><div class="feature-desc">Don't just memorize — understand. Tutor Mode walks you through concepts clearly.</div></div>
   </div>
 </section>
 <section class="pricing-section">
