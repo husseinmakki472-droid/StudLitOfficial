@@ -3718,7 +3718,7 @@ function wzBuildTabbedResult(topic, methods, results) {
   document.getElementById('wzResultTitleEl').textContent = topic;
   methods.forEach(mode => {
     const d = results[mode];
-    let html = d ? '' : `<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">No data returned.</div></div>`;
+    let html = d ? '' : `<div class="error-card"><div class="error-card-label">⚠ Content unavailable</div><div class="error-card-body">This mode didn't return data. <button class="regen-btn" style="margin-top:10px" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Try again</button></div></div>`;
     if (d) switch(mode) {
       case 'notes': html=renderNotesHTML(topic,d); break;
       case 'quiz': html=renderQuizHTML(topic,d); break;
