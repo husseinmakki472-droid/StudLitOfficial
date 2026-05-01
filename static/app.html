@@ -1560,6 +1560,40 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-chat-send{background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:none;border-radius:10px;width:36px;height:36px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:opacity .2s,transform .15s;flex-shrink:0;align-self:flex-end}
 .wz-chat-send:hover{opacity:.88;transform:scale(1.05)}
 .wz-content-pane{padding:16px;color:rgba(240,239,255,0.7);font-size:13px;line-height:1.7}
+/* Quick Notes panel */
+.qn-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.qn-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.35)}
+.qn-actions{display:flex;gap:4px}
+.qn-btn{background:none;border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:rgba(240,239,255,0.4);font-size:13px;padding:4px 8px;cursor:pointer;transition:all .15s}
+.qn-btn:hover{background:rgba(255,255,255,0.08);color:#f0efff}
+.qn-textarea{flex:1;width:100%;background:none;border:none;outline:none;resize:none;padding:14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.8;min-height:0}
+.qn-textarea::placeholder{color:rgba(240,239,255,0.2)}
+.qn-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.qn-char{font-size:10.5px;color:rgba(240,239,255,0.2)}
+.qn-saved{font-size:10.5px;color:#4ade80;opacity:0;transition:opacity .3s}
+.qn-saved.show{opacity:1}
+/* Content preview */
+.content-preview-wrap{max-width:760px;padding:24px 28px}
+.content-preview-section{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.content-preview-section:last-child{border-bottom:none}
+.content-preview-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,239,255,0.3);margin-bottom:12px}
+.content-preview-file-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px}
+.content-preview-file-icon{font-size:18px;flex-shrink:0}
+.content-preview-file-name{font-size:13px;font-weight:600;color:#f0efff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.content-preview-file-meta{font-size:11px;color:rgba(240,239,255,0.3);white-space:nowrap}
+.content-preview-text{font-size:13.5px;line-height:1.85;color:rgba(240,239,255,0.65)}
+.content-preview-para{margin:0 0 9px}
+.content-preview-more{font-size:12px;color:rgba(240,239,255,0.3);font-style:italic;margin-top:6px}
+.content-img-wrap{margin-bottom:14px}
+.content-img-preview{max-width:100%;max-height:400px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);object-fit:contain}
+.content-img-name{font-size:11px;color:rgba(240,239,255,0.3);margin-top:6px}
+.content-preview-paste-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:7px}
+[data-theme="light"] .qn-textarea{color:#0f0e1a}
+[data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
+[data-theme="light"] .qn-header,[data-theme="light"] .qn-footer{border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .qn-btn{border-color:rgba(0,0,0,0.09);color:rgba(15,14,26,0.4)}
+[data-theme="light"] .content-preview-text{color:rgba(15,14,26,0.7)}
+[data-theme="light"] .content-preview-file-name{color:#0f0e1a}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;color:rgba(240,239,255,0.4);font-size:14px;gap:16px}
 /* Keep existing result view for paste flow */
 .sl-result-layout{display:flex;gap:20px;align-items:flex-start}
@@ -1930,11 +1964,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       </div>
     </div>
     <div class="wz-resize-handle" id="resizeRight" onmousedown="wzStartResize(event,'right')"><div class="wz-resize-handle-line"></div></div>
-    <!-- Right panel: Chat + Content tabs -->
+    <!-- Right panel: Chat + Quick Notes tabs -->
     <div class="wz-panel-right" id="wzPanelRight">
       <div class="wz-right-tabs">
         <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">Chat</button>
-        <button class="wz-right-tab" id="wzTabContent" onclick="wzSwitchRightTab('content')">Content</button>
+        <button class="wz-right-tab" id="wzTabNotes" onclick="wzSwitchRightTab('notes')">Quick Notes</button>
       </div>
       <div class="wz-right-pane active" id="wzRightChat">
         <div class="wz-chat-msgs" id="wzChatMsgs">
@@ -1948,8 +1982,19 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
           <button class="wz-chat-send" onclick="wzSendChat()">↑</button>
         </div>
       </div>
-      <div class="wz-right-pane" id="wzRightContent">
-        <div class="wz-content-pane" id="wzSourceContent">Source content will appear here.</div>
+      <div class="wz-right-pane" id="wzRightNotes">
+        <div class="qn-header">
+          <span class="qn-title">Quick Notes</span>
+          <div class="qn-actions">
+            <button class="qn-btn" onclick="qnCopy()" title="Copy all">⎘</button>
+            <button class="qn-btn" onclick="qnClear()" title="Clear">↺</button>
+          </div>
+        </div>
+        <textarea class="qn-textarea" id="qnTextarea" placeholder="Jot down thoughts, ideas, or things to remember while you study…" oninput="qnSave()"></textarea>
+        <div class="qn-footer">
+          <span class="qn-char" id="qnChar">0 words</span>
+          <span class="qn-saved" id="qnSaved"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -4179,25 +4224,47 @@ function wzShowTab(mode) {
     el.classList.toggle('active', el.dataset.mode === mode);
   });
   if (mode === '__content__') {
-    const content = wzFullContent || '';
     const main = document.getElementById('wzResultMain');
-    if (!content.trim()) {
-      main.innerHTML = '<div style="text-align:center;padding:60px 24px"><div style="font-size:40px;margin-bottom:14px">📄</div><div style="font-size:15px;color:var(--text-3)">No source content.<br>Upload a file or paste text to preview it here.</div></div>';
+    const hasFiles = uploadedFiles.length > 0;
+    if (!hasFiles && !wzFullContent.trim()) {
+      main.innerHTML = '<div style="text-align:center;padding:80px 24px"><div style="font-size:48px;margin-bottom:16px;opacity:.3">📂</div><div style="font-size:15px;color:var(--text-3)">No content yet.<br>Upload a file or paste text to preview it here.</div></div>';
       return;
     }
-    const files = uploadedFiles.filter(f => f.textContent);
-    const wordCount = content.trim().split(/\s+/).length;
-    const charCount = content.length;
-    let html = '<div style="max-width:720px">';
-    html += '<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">';
-    html += '<div style="font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:10px">📄 Source Content</div>';
-    if (files.length) html += files.map(f=>`<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--text-2);margin:0 6px 6px 0">📄 ${escHtml(f.name)}</span>`).join('');
-    html += `<div style="font-size:12px;color:var(--text-3);margin-top:6px">${wordCount.toLocaleString()} words · ${charCount.toLocaleString()} characters</div></div>`;
-    html += '<div style="font-size:14px;line-height:1.85;color:var(--text-2)">';
-    content.split(/\n/).filter(l=>l.trim()).forEach(line=>{
-      html += `<p style="margin:0 0 10px">${escHtml(line.trim())}</p>`;
+    let html = '<div class="content-preview-wrap">';
+    // Image files
+    const imageFiles = uploadedFiles.filter(f => f.imageData && f.mimeType);
+    if (imageFiles.length) {
+      html += '<div class="content-preview-section">';
+      html += '<div class="content-preview-section-label">Images</div>';
+      imageFiles.forEach(f => {
+        html += `<div class="content-img-wrap"><img src="data:${escHtml(f.mimeType)};base64,${f.imageData}" class="content-img-preview" alt="${escHtml(f.name)}"><div class="content-img-name">${escHtml(f.name)}</div></div>`;
+      });
+      html += '</div>';
+    }
+    // Text files
+    const textFiles = uploadedFiles.filter(f => f.textContent && f.type !== 'URL' && f.type !== 'Text');
+    textFiles.forEach(f => {
+      const wc = f.textContent.trim().split(/\s+/).length;
+      html += `<div class="content-preview-section">`;
+      html += `<div class="content-preview-file-header"><span class="content-preview-file-icon">${f.icon||'📄'}</span><span class="content-preview-file-name">${escHtml(f.name)}</span><span class="content-preview-file-meta">${wc.toLocaleString()} words</span></div>`;
+      html += `<div class="content-preview-text">`;
+      f.textContent.trim().split(/\n+/).filter(l=>l.trim()).slice(0, 80).forEach(line => {
+        html += `<p class="content-preview-para">${escHtml(line.trim())}</p>`;
+      });
+      if (f.textContent.trim().split(/\n+/).length > 80) html += `<div class="content-preview-more">… ${(f.textContent.trim().split(/\n+/).length - 80)} more paragraphs</div>`;
+      html += `</div></div>`;
     });
-    html += '</div></div>';
+    // Pasted URLs and text
+    const pasteFiles = uploadedFiles.filter(f => f.type === 'URL' || f.type === 'Text');
+    if (pasteFiles.length) {
+      html += '<div class="content-preview-section">';
+      html += '<div class="content-preview-section-label">Pasted Content</div>';
+      pasteFiles.forEach(f => {
+        html += `<div class="content-preview-paste-item"><span style="font-size:16px">${f.icon||'📝'}</span><div><div class="content-preview-file-name">${escHtml(f.name)}</div><div style="font-size:11px;color:var(--text-3)">${f.type}</div></div></div>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
     main.innerHTML = html;
     return;
   }
@@ -4254,9 +4321,10 @@ function wzPickMethod(mode) {
 
 function wzSwitchRightTab(tab) {
   document.getElementById('wzTabChat').classList.toggle('active', tab==='chat');
-  document.getElementById('wzTabContent').classList.toggle('active', tab==='content');
+  document.getElementById('wzTabNotes').classList.toggle('active', tab==='notes');
   document.getElementById('wzRightChat').classList.toggle('active', tab==='chat');
-  document.getElementById('wzRightContent').classList.toggle('active', tab==='content');
+  document.getElementById('wzRightNotes').classList.toggle('active', tab==='notes');
+  if (tab === 'notes') qnLoad();
 }
 
 // ---- Wizard Chat (3-panel) ----
@@ -4265,6 +4333,7 @@ function wzInitChat(ctx) {
   wzChatHistory = [];
   const msgs = document.getElementById('wzChatMsgs');
   if (msgs) msgs.innerHTML = '<div class="wz-right-empty"><div class="wz-right-empty-icon">🎓</div><div class="wz-right-empty-text">Here to help you learn</div></div>';
+  // Content is now shown in the left sidebar __content__ tab, not in the right panel
   const src = document.getElementById('wzSourceContent');
   if (!src) return;
   src.innerHTML = '';
@@ -4488,6 +4557,44 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   window.wzTimerRefresh = function(){ _updateUI(); };
   setTimeout(function(){ _updateUI(); }, 0);
 })();
+
+// ---- Quick Notes ----
+const QN_KEY = 'sl-quicknotes';
+function qnLoad() {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta) return;
+  try { ta.value = localStorage.getItem(QN_KEY) || ''; } catch(e){}
+  qnUpdateCount();
+}
+function qnSave() {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta) return;
+  try { localStorage.setItem(QN_KEY, ta.value); } catch(e){}
+  qnUpdateCount();
+  const badge = document.getElementById('qnSaved');
+  if (badge) { badge.textContent = 'Saved'; badge.classList.add('show'); clearTimeout(badge._t); badge._t = setTimeout(() => badge.classList.remove('show'), 1600); }
+}
+function qnClear() {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta || !ta.value) return;
+  if (!confirm('Clear all quick notes?')) return;
+  ta.value = ''; qnSave();
+}
+function qnCopy() {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta || !ta.value.trim()) return;
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const badge = document.getElementById('qnSaved');
+    if (badge) { badge.textContent = 'Copied!'; badge.classList.add('show'); clearTimeout(badge._t); badge._t = setTimeout(() => badge.classList.remove('show'), 1600); }
+  });
+}
+function qnUpdateCount() {
+  const ta = document.getElementById('qnTextarea');
+  const el = document.getElementById('qnChar');
+  if (!ta || !el) return;
+  const wc = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  el.textContent = wc + (wc === 1 ? ' word' : ' words');
+}
 
 </script>
 
