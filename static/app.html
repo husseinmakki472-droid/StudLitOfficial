@@ -1424,8 +1424,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-result-topbar-back:hover{color:#f0efff}
 .wz-result-topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wz-result-topbar-save{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.wz-result-3panel{display:flex;flex:1;height:0;overflow:hidden}
-.wz-panel-sidebar{width:220px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.07);padding:16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.wz-result-3panel{display:flex;flex:1;height:0;overflow:hidden;user-select:none}
+.wz-resize-handle{width:6px;flex-shrink:0;cursor:col-resize;display:flex;align-items:center;justify-content:center;background:transparent;transition:background .15s;z-index:10;position:relative}
+.wz-resize-handle:hover,.wz-resize-handle.dragging{background:rgba(124,92,252,0.12)}
+.wz-resize-handle-line{width:2px;height:40px;border-radius:999px;background:rgba(255,255,255,0.1);transition:background .15s,height .15s}
+.wz-resize-handle:hover .wz-resize-handle-line,.wz-resize-handle.dragging .wz-resize-handle-line{background:#7c5cfc;height:60px}
+.wz-panel-sidebar{width:220px;flex-shrink:0;padding:16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .wz-sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;color:rgba(240,239,255,0.5);font-size:13px;font-weight:500;user-select:none;position:relative}
 .wz-sidebar-item:hover{background:rgba(255,255,255,0.04);color:#f0efff}
 .wz-sidebar-item.active{background:rgba(124,92,252,0.1);color:#f0efff;border-left:3px solid #7c5cfc;padding-left:9px}
@@ -1444,7 +1448,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-right-empty-icon{font-size:36px;opacity:.35}
 .wz-right-empty-text{font-size:13px;color:rgba(240,239,255,0.3);line-height:1.5}
 .wz-panel-main{flex:1;overflow-y:auto;padding:32px}
-.wz-panel-right{width:360px;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;overflow:hidden}
+.wz-panel-right{width:360px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
 .wz-right-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0}
 .wz-right-tab{flex:1;padding:13px 10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(240,239,255,0.4);cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
 .wz-right-tab.active{color:#f0efff;border-bottom-color:#7c5cfc}
@@ -1871,6 +1875,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="wz-result-3panel">
     <!-- Left sidebar -->
     <div class="wz-panel-sidebar" id="wzResultSidebar"></div>
+    <div class="wz-resize-handle" id="resizeLeft" onmousedown="wzStartResize(event,'left')"><div class="wz-resize-handle-line"></div></div>
     <!-- Main content -->
     <div class="wz-panel-main" id="wzResultMain">
       <div class="wz-processing">
@@ -1878,8 +1883,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <div class="wz-processing-text">Processing content…</div>
       </div>
     </div>
+    <div class="wz-resize-handle" id="resizeRight" onmousedown="wzStartResize(event,'right')"><div class="wz-resize-handle-line"></div></div>
     <!-- Right panel: Chat + Content tabs -->
-    <div class="wz-panel-right">
+    <div class="wz-panel-right" id="wzPanelRight">
       <div class="wz-right-tabs">
         <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">Chat</button>
         <button class="wz-right-tab" id="wzTabContent" onclick="wzSwitchRightTab('content')">Content</button>
@@ -4015,6 +4021,60 @@ async function wzSendChat2() {
   msgs.scrollTop = msgs.scrollHeight;
 }
 function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();wzSendChat2();} }
+
+// Panel resize
+(function(){
+  let _dragging = false, _which = null, _startX = 0, _startW = 0;
+  const MIN = 140, MAX_SIDE = 520, MIN_MAIN = 200;
+
+  window.wzStartResize = function(e, which) {
+    e.preventDefault();
+    _dragging = true;
+    _which = which;
+    _startX = e.clientX;
+    const el = which === 'left'
+      ? document.getElementById('wzResultSidebar')
+      : document.getElementById('wzPanelRight');
+    _startW = el ? el.offsetWidth : 0;
+    document.getElementById('resize' + (which === 'left' ? 'Left' : 'Right'))
+      ?.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  document.addEventListener('mousemove', function(e) {
+    if (!_dragging) return;
+    const container = document.querySelector('.wz-result-3panel');
+    if (!container) return;
+    const totalW = container.offsetWidth;
+    const sidebar = document.getElementById('wzResultSidebar');
+    const rightPanel = document.getElementById('wzPanelRight');
+    if (!sidebar || !rightPanel) return;
+    const sideW = sidebar.offsetWidth;
+    const rightW = rightPanel.offsetWidth;
+    const mainMinW = MIN_MAIN;
+
+    if (_which === 'left') {
+      let newW = _startW + (e.clientX - _startX);
+      const maxW = totalW - rightW - mainMinW - 12;
+      newW = Math.max(MIN, Math.min(MAX_SIDE, maxW, newW));
+      sidebar.style.width = newW + 'px';
+    } else {
+      let newW = _startW - (e.clientX - _startX);
+      const maxW = totalW - sideW - mainMinW - 12;
+      newW = Math.max(MIN, Math.min(MAX_SIDE, maxW, newW));
+      rightPanel.style.width = newW + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!_dragging) return;
+    _dragging = false;
+    document.querySelectorAll('.wz-resize-handle').forEach(h => h.classList.remove('dragging'));
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
 
 </script>
 
