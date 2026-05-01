@@ -201,6 +201,24 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .lesson-section-heading{font-size:16px;font-weight:700;color:rgba(240,239,255,0.88);margin:0 0 10px}
 .lesson-content{font-size:14px;color:rgba(240,239,255,0.62);line-height:1.7;margin:0 0 16px}
 .lesson-content strong{color:rgba(240,239,255,0.92);font-weight:600}
+.notes-toolbar{display:flex;align-items:center;gap:4px;padding:8px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;margin-bottom:18px;flex-wrap:wrap}
+.notes-toolbar-btn{background:none;border:none;color:rgba(240,239,255,0.55);font-size:13px;padding:5px 9px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;line-height:1;font-weight:600}
+.notes-toolbar-btn:hover{background:rgba(124,92,252,0.15);color:rgba(240,239,255,0.9)}
+.notes-toolbar-btn.active{background:rgba(124,92,252,0.25);color:#b06ef3}
+.notes-toolbar-sep{width:1px;height:18px;background:rgba(255,255,255,0.1);margin:0 4px;flex-shrink:0}
+.notes-editor-section{position:relative;margin-bottom:28px;padding:14px 16px;border:1px solid transparent;border-radius:16px;transition:border-color .18s,background .18s}
+.notes-editor-section:hover{border-color:rgba(124,92,252,0.2);background:rgba(124,92,252,0.03)}
+.notes-editor-section:focus-within{border-color:rgba(124,92,252,0.35);background:rgba(124,92,252,0.05)}
+.notes-editable-heading{font-size:16px;font-weight:700;color:rgba(240,239,255,0.88);margin:0 0 8px;outline:none;border:none;background:none;width:100%;cursor:text;padding:2px 0}
+.notes-editable-heading:empty:before{content:attr(data-placeholder);color:rgba(240,239,255,0.22);font-weight:400;font-style:italic}
+.notes-editable-content{font-size:14px;color:rgba(240,239,255,0.62);line-height:1.7;outline:none;border:none;background:none;width:100%;cursor:text;padding:2px 0;min-height:24px}
+.notes-editable-content:empty:before{content:attr(data-placeholder);color:rgba(240,239,255,0.22);font-style:italic}
+.notes-editable-content strong{color:rgba(240,239,255,0.92);font-weight:600}
+.notes-section-del{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(240,239,255,0.2);font-size:15px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:color .15s,background .15s;opacity:0}
+.notes-editor-section:hover .notes-section-del{opacity:1}
+.notes-section-del:hover{color:#f87171;background:rgba(248,113,113,0.1)}
+.notes-add-section-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:rgba(124,92,252,0.06);border:1px dashed rgba(124,92,252,0.25);border-radius:14px;color:rgba(124,92,252,0.7);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;margin-top:8px}
+.notes-add-section-btn:hover{background:rgba(124,92,252,0.12);border-color:rgba(124,92,252,0.45);color:#b06ef3}
 .lesson-quote{border-left:3px solid #7c5cfc;margin:12px 0 14px;padding:10px 16px;background:rgba(124,92,252,0.07);border-radius:0 12px 12px 0;font-style:italic;color:rgba(240,239,255,0.62);font-size:13.5px;line-height:1.65}
 .lesson-think{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.15);border-radius:14px;padding:12px 16px;margin-top:12px}
 .lesson-think-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c5cfc;display:block;margin-bottom:6px}
@@ -2386,7 +2404,7 @@ function demoMode(){document.getElementById('studyInput').value='Photosynthesis'
 
 function switchWsTab(tab){document.querySelectorAll('.ws-section').forEach(s=>s.classList.remove('active'));var el=document.getElementById('ws-'+tab);if(el)el.classList.add('active');document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');if(tab==='sets')try{renderSlSets();}catch(e){}}
 function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';}
-function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';document.querySelector('.studley-layout')?.classList.add('result-mode');switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');}
+function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';document.querySelector('.studley-layout')?.classList.add('result-mode');switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');const nb=document.getElementById('notesEditorBody');if(nb)nb.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el=>el.addEventListener('input',notesSaveEdits));}
 function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -2537,6 +2555,40 @@ function renderSummaryHTML(topic, d){
   return`${resultHeader('summary',t,[{text:'📋 Summary',accent:true},{text:'Exam-Ready'}])}${overview}${kpHtml}${mr}`;
 }
 
+function notesFormat(cmd,val){document.execCommand(cmd,false,val||null);}
+function notesDeleteSection(btn){const sec=btn.closest('.notes-editor-section');if(sec)sec.remove();notesSaveEdits();}
+function notesAddSection(){
+  const body=document.getElementById('notesEditorBody');if(!body)return;
+  const sec=document.createElement('div');sec.className='notes-editor-section';
+  sec.innerHTML=`<button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…"></div><div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…"></div>`;
+  sec.querySelector('.notes-editable-heading').addEventListener('input',notesSaveEdits);
+  sec.querySelector('.notes-editable-content').addEventListener('input',notesSaveEdits);
+  body.insertBefore(sec,body.lastElementChild);
+  sec.querySelector('.notes-editable-heading').focus();
+}
+function notesSaveEdits(){
+  const body=document.getElementById('notesEditorBody');if(!body)return;
+  const topic=body.dataset.topic||'';
+  const sections=[...body.querySelectorAll('.notes-editor-section')].map(sec=>({
+    heading:sec.querySelector('.notes-editable-heading').innerText.trim(),
+    content:'',
+    bullets:sec.querySelector('.notes-editable-content').innerHTML.trim()
+      .split(/<br\s*\/?>/i).map(l=>l.replace(/<[^>]+>/g,'').trim()).filter(Boolean)
+  }));
+  const newHtml=renderNotesHTML(topic,{sections});
+  wzResultTabs['notes']=newHtml;
+}
+function notesCopyAll(){
+  const body=document.getElementById('notesEditorBody');if(!body)return;
+  const lines=[];
+  body.querySelectorAll('.notes-editor-section').forEach(sec=>{
+    const h=sec.querySelector('.notes-editable-heading').innerText.trim();
+    if(h)lines.push(h+'\n');
+    sec.querySelector('.notes-editable-content').innerText.trim().split('\n').forEach(l=>{if(l.trim())lines.push('• '+l.trim());});
+    lines.push('');
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showInfoToast('Notes copied to clipboard!'));
+}
 function renderNotesHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No notes data returned.</div></div>';
@@ -2544,11 +2596,12 @@ function renderNotesHTML(topic, d){
   if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No notes were generated. Try selecting only Notes mode so the AI can dedicate the full response to detailed notes.</div></div>';
   const sHtml=sections.map((s,i)=>{
     const bullets=(s.bullets||[]);
-    const parasHtml=bullets.map(b=>`<p class="lesson-content">${escHtml(b)}</p>`).join('');
-    const contentHtml=s.content?`<p class="lesson-content">${escHtml(s.content)}</p>`:'';
-    return`<div class="lesson-section" style="animation-delay:${i*.05}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${contentHtml}${parasHtml}</div>`;
+    const contentLines=[...(s.content?[s.content]:[]),...bullets].filter(Boolean);
+    const innerHtml=contentLines.map((l,li)=>li<contentLines.length-1?escHtml(l)+'<br>':escHtml(l)).join('');
+    return`<div class="notes-editor-section" style="animation-delay:${i*.05}s"><button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…">${escHtml(s.heading||'')}</div><div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…">${innerHtml}</div></div>`;
   }).join('');
-  return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Organized'}])}<div class="lesson-body">${sHtml}</div>`;
+  const toolbar=`<div class="notes-toolbar"><button class="notes-toolbar-btn" onclick="notesFormat('bold')" title="Bold"><b>B</b></button><button class="notes-toolbar-btn" onclick="notesFormat('italic')" title="Italic"><i>I</i></button><button class="notes-toolbar-btn" onclick="notesFormat('underline')" title="Underline"><u>U</u></button><button class="notes-toolbar-btn" onclick="notesFormat('strikeThrough')" title="Strikethrough"><s>S</s></button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('insertUnorderedList')" title="Bullet list">• List</button><button class="notes-toolbar-btn" onclick="notesFormat('insertOrderedList')" title="Numbered list">1. List</button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('removeFormat')" title="Clear formatting">✕ Format</button><div class="notes-toolbar-sep" style="margin-left:auto"></div><button class="notes-toolbar-btn" onclick="notesCopyAll()" title="Copy all notes">⎘ Copy</button></div>`;
+  return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Editable'}])}<div id="notesEditorBody" data-topic="${escHtml(t)}">${toolbar}${sHtml}<button class="notes-add-section-btn" onclick="notesAddSection()">＋ Add Section</button></div>`;
 }
 
 function sanitizeLessonHtml(str){
@@ -3775,6 +3828,14 @@ function wzShowTab(mode) {
   const html = wzResultTabs[mode];
   if (html === undefined) return;
   document.getElementById('wzResultMain').innerHTML = html;
+  if (mode === 'notes') {
+    const body = document.getElementById('notesEditorBody');
+    if (body) {
+      body.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el => {
+        el.addEventListener('input', notesSaveEdits);
+      });
+    }
+  }
 }
 
 const WZ_MODE_DESCS = {notes:'Organized section-by-section notes',quiz:'Multiple choice questions & answers',flashcards:'Active recall flip cards',tutor:'In-depth guided lesson',practicetest:'Written short-answer assessment',fitb:'Fill-in-the-blank sentences',summary:'Overview, key points & takeaway',keyconcepts:'Glossary of important terms',studyplan:'Day-by-day study roadmap',solve:'Step-by-step problem breakdown'};
