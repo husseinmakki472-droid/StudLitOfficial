@@ -1457,15 +1457,32 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-sidebar-divider{height:1px;background:rgba(255,255,255,0.06);margin:10px 4px}
 .wz-sidebar-add{display:flex;align-items:center;gap:6px;padding:9px 12px;color:rgba(240,239,255,0.35);font-size:11.5px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:color .15s;text-transform:uppercase}
 .wz-sidebar-add:hover{color:#7c5cfc}
-.wz-timer-block{margin:10px 4px 4px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px}
-.wz-timer-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.3);margin-bottom:10px}
-.wz-timer-display{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;color:#f0efff;letter-spacing:2px;margin-bottom:12px;line-height:1}
-.wz-timer-btns{display:flex;gap:6px}
-.wz-timer-btn{flex:1;padding:7px 0;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
-.wz-timer-start{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 10px rgba(124,92,252,0.35)}
-.wz-timer-start:hover{box-shadow:0 3px 16px rgba(124,92,252,0.55);transform:translateY(-1px)}
-.wz-timer-reset{background:rgba(255,255,255,0.06);color:rgba(240,239,255,0.5);border:1px solid rgba(255,255,255,0.08)}
+.wz-timer-block{margin:10px 4px 4px;padding:14px 12px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px}
+.wz-timer-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.28);margin-bottom:12px;text-align:center}
+.wz-timer-ring-wrap{display:flex;justify-content:center;margin-bottom:11px;position:relative}
+.wz-timer-ring{transform:rotate(-90deg)}
+.wz-timer-ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:4}
+.wz-timer-ring-fill{fill:none;stroke:url(#wzTimerGrad);stroke-width:4;stroke-linecap:round;stroke-dasharray:226;stroke-dashoffset:0;transition:stroke-dashoffset .9s linear}
+.wz-timer-ring-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wz-timer-display{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#f0efff;letter-spacing:1px;line-height:1;transition:color .3s}
+.wz-timer-display.warn{color:#fbbf24}
+.wz-timer-display.danger{color:#f87171;animation:timerPulse .6s infinite alternate}
+.wz-timer-mode-lbl{font-size:9px;color:rgba(240,239,255,0.3);font-weight:600;margin-top:2px}
+.wz-timer-presets{display:flex;gap:4px;margin-bottom:9px}
+.wz-timer-preset{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:4px 2px;font-size:10px;font-weight:700;color:rgba(240,239,255,0.35);cursor:pointer;text-align:center;transition:all .15s}
+.wz-timer-preset:hover,.wz-timer-preset.active{background:rgba(124,92,252,0.18);border-color:#7c5cfc;color:#b494ff}
+.wz-timer-btns{display:flex;gap:5px;margin-bottom:9px}
+.wz-timer-btn{flex:1;padding:8px 0;border:none;border-radius:10px;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s}
+.wz-timer-start{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 10px rgba(124,92,252,0.3)}
+.wz-timer-start:hover{box-shadow:0 3px 16px rgba(124,92,252,0.5);transform:translateY(-1px)}
+.wz-timer-reset{background:rgba(255,255,255,0.06);color:rgba(240,239,255,0.45);border:1px solid rgba(255,255,255,0.08)}
 .wz-timer-reset:hover{background:rgba(255,255,255,0.1);color:#f0efff}
+.wz-timer-custom{display:flex;align-items:center;gap:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.wz-timer-custom-lbl{font-size:9px;font-weight:700;color:rgba(240,239,255,0.28);text-transform:uppercase;white-space:nowrap}
+.wz-timer-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:3px 5px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f0efff;width:36px;text-align:center;outline:none}
+.wz-timer-input:focus{border-color:#7c5cfc}
+.wz-timer-sep{color:rgba(240,239,255,0.25);font-size:13px;font-weight:700}
+.wz-timer-set{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;gap:20px}
 .wz-processing-art{font-size:80px;line-height:1;filter:drop-shadow(0 8px 24px rgba(124,92,252,0.2));animation:wzFloat 3s ease-in-out infinite}
 @keyframes wzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -3978,13 +3995,37 @@ function wzBuildSidebar(methods) {
   <div class="wz-sidebar-divider"></div>
   <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>
   <div class="wz-timer-block" id="wzTimerBlock">
-    <div class="wz-timer-label">⏱ Study Timer</div>
-    <div class="wz-timer-display" id="wzTimerDisplay">00:00</div>
+    <div class="wz-timer-label">Study Timer</div>
+    <div class="wz-timer-ring-wrap">
+      <svg class="wz-timer-ring" width="84" height="84" viewBox="0 0 84 84">
+        <defs><linearGradient id="wzTimerGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#b06ef3"/></linearGradient></defs>
+        <circle class="wz-timer-ring-bg" cx="42" cy="42" r="36"/>
+        <circle class="wz-timer-ring-fill" id="wzTimerRingFill" cx="42" cy="42" r="36"/>
+      </svg>
+      <div class="wz-timer-ring-time">
+        <div class="wz-timer-display" id="wzTimerDisplay">25:00</div>
+        <div class="wz-timer-mode-lbl" id="wzTimerModeLbl">countdown</div>
+      </div>
+    </div>
+    <div class="wz-timer-presets">
+      <div class="wz-timer-preset" onclick="wzTimerPreset(this,5)">5m</div>
+      <div class="wz-timer-preset active" onclick="wzTimerPreset(this,25)">25m</div>
+      <div class="wz-timer-preset" onclick="wzTimerPreset(this,45)">45m</div>
+      <div class="wz-timer-preset" onclick="wzTimerPreset(this,60)">1h</div>
+    </div>
     <div class="wz-timer-btns">
-      <button class="wz-timer-btn wz-timer-start" id="wzTimerStartBtn" onclick="wzTimerToggle()">Start</button>
-      <button class="wz-timer-btn wz-timer-reset" onclick="wzTimerReset()">Reset</button>
+      <button class="wz-timer-btn wz-timer-start" id="wzTimerStartBtn" onclick="wzTimerToggle()">▶ Start</button>
+      <button class="wz-timer-btn wz-timer-reset" onclick="wzTimerReset()">↺</button>
+    </div>
+    <div class="wz-timer-custom">
+      <div class="wz-timer-custom-lbl">Custom</div>
+      <input class="wz-timer-input" id="wzTMins" type="number" min="0" max="999" placeholder="mm">
+      <div class="wz-timer-sep">:</div>
+      <input class="wz-timer-input" id="wzTSecs" type="number" min="0" max="59" placeholder="ss" style="width:32px">
+      <button class="wz-timer-set" onclick="wzTimerCustom()">Set</button>
     </div>
   </div>`;
+  setTimeout(function(){ try { wzTimerRefresh(); } catch(e){} }, 0);
 }
 
 function wzBuildTabbedResult(topic, methods, results) {
@@ -4263,32 +4304,78 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   });
 })();
 
-// ---- Study Timer ----
+// ---- Sidebar Study Timer ----
 (function(){
-  let _sec = 0, _running = false, _interval = null;
+  const CIRC = 2 * Math.PI * 36; // 226.2
+  let _secs = 25*60, _total = 25*60, _running = false, _iv = null;
+
   function _fmt(s) {
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
-    if (h > 0) return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+    const m = Math.floor(s / 60), ss = s % 60;
     return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
   }
-  function _tick() { _sec++; var d = document.getElementById('wzTimerDisplay'); if (d) d.textContent = _fmt(_sec); }
+  function _updateUI() {
+    const d = document.getElementById('wzTimerDisplay');
+    const ring = document.getElementById('wzTimerRingFill');
+    const btn = document.getElementById('wzTimerStartBtn');
+    if (d) {
+      d.textContent = _fmt(_secs);
+      d.className = 'wz-timer-display' + (_secs <= 60 ? ' danger' : _secs <= _total * 0.25 ? ' warn' : '');
+    }
+    if (ring) {
+      const pct = _total > 0 ? _secs / _total : 1;
+      ring.style.strokeDashoffset = CIRC * (1 - pct);
+    }
+    if (btn && !_running) btn.textContent = _secs < _total && _secs > 0 ? '▶ Resume' : '▶ Start';
+  }
+  function _stop(setTotal) {
+    clearInterval(_iv); _iv = null; _running = false;
+    if (setTotal !== undefined) { _total = setTotal; _secs = setTotal; }
+    _updateUI();
+  }
+
   window.wzTimerToggle = function() {
-    _running = !_running;
-    var btn = document.getElementById('wzTimerStartBtn');
     if (_running) {
-      _interval = setInterval(_tick, 1000);
-      if (btn) { btn.textContent = 'Pause'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.boxShadow = 'none'; btn.style.color = 'rgba(240,239,255,0.7)'; }
+      clearInterval(_iv); _iv = null; _running = false;
+      var btn = document.getElementById('wzTimerStartBtn');
+      if (btn) btn.textContent = '▶ Resume';
     } else {
-      clearInterval(_interval);
-      if (btn) { btn.textContent = 'Resume'; btn.style.background = 'linear-gradient(135deg,#7c5cfc,#b06ef3)'; btn.style.boxShadow = '0 2px 10px rgba(124,92,252,0.35)'; btn.style.color = '#fff'; }
+      if (_secs <= 0) { _secs = _total; _updateUI(); return; }
+      _running = true;
+      var btn = document.getElementById('wzTimerStartBtn');
+      if (btn) btn.textContent = '⏸ Pause';
+      _iv = setInterval(function() {
+        _secs--;
+        _updateUI();
+        if (_secs <= 0) {
+          clearInterval(_iv); _iv = null; _running = false;
+          var d = document.getElementById('wzTimerDisplay');
+          if (d) { d.textContent = '🎉'; d.className = 'wz-timer-display'; }
+          var btn2 = document.getElementById('wzTimerStartBtn');
+          if (btn2) btn2.textContent = '▶ Start';
+          try { addXP(10, 'timer'); } catch(e) {}
+          setTimeout(function(){ _secs = _total; _updateUI(); }, 2500);
+        }
+      }, 1000);
     }
   };
-  window.wzTimerReset = function() {
-    clearInterval(_interval); _interval = null; _running = false; _sec = 0;
-    var d = document.getElementById('wzTimerDisplay'); if (d) d.textContent = '00:00';
-    var btn = document.getElementById('wzTimerStartBtn');
-    if (btn) { btn.textContent = 'Start'; btn.style.background = 'linear-gradient(135deg,#7c5cfc,#b06ef3)'; btn.style.boxShadow = '0 2px 10px rgba(124,92,252,0.35)'; btn.style.color = '#fff'; }
+  window.wzTimerReset = function() { _stop(_total); };
+  window.wzTimerPreset = function(el, mins) {
+    document.querySelectorAll('.wz-timer-preset').forEach(function(b){ b.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    _stop(mins * 60);
   };
+  window.wzTimerCustom = function() {
+    var m = parseInt(document.getElementById('wzTMins')?.value) || 0;
+    var s = parseInt(document.getElementById('wzTSecs')?.value) || 0;
+    var total = m * 60 + s;
+    if (!total) return;
+    document.querySelectorAll('.wz-timer-preset').forEach(function(b){ b.classList.remove('active'); });
+    _stop(total);
+    var mi = document.getElementById('wzTMins'), si = document.getElementById('wzTSecs');
+    if (mi) mi.value = ''; if (si) si.value = '';
+  };
+  window.wzTimerRefresh = function(){ _updateUI(); };
+  setTimeout(function(){ _updateUI(); }, 0);
 })();
 
 </script>
