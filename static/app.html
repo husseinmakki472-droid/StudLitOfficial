@@ -2352,6 +2352,7 @@ function loadSession(sid, ssid) {
   const sess = set.sessions.find(s => s.id === ssid);
   if (!sess) return;
   switchTab('workspace');
+  switchWsTab('create');
   lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
   if (sess.tabs && Object.keys(sess.tabs).length) {
     // Restore wizard multi-tab view
