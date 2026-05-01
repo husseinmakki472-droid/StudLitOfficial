@@ -411,24 +411,26 @@ footer{position:relative;z-index:1;text-align:center;padding:40px 28px;border-to
 .btn-ai-clear:hover{background:rgba(255,255,255,0.04);color:#f0efff}
 .ai-wc{font-size:12px;color:rgba(240,239,255,0.35);margin-left:auto}
 .ai-results{animation:fadeUp .4s cubic-bezier(0.22,1,0.36,1) both}
-.ai-meter{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:24px;margin-bottom:16px;text-align:center}
-.ai-meter-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:rgba(240,239,255,0.35);margin-bottom:16px}
-.ai-meter-ring-wrap{position:relative;width:120px;height:120px;margin:0 auto 14px}
+.ai-meter{background:linear-gradient(135deg,rgba(124,92,252,0.08),rgba(176,110,243,0.04));border:1px solid rgba(124,92,252,0.25);border-radius:22px;padding:28px 24px;margin-bottom:14px;text-align:center;position:relative;overflow:hidden}
+.ai-meter::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(124,92,252,0.12),transparent 70%);pointer-events:none}
+.ai-meter-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(240,239,255,0.4);margin-bottom:18px}
+.ai-meter-ring-wrap{position:relative;width:136px;height:136px;margin:0 auto 16px}
 .ai-meter-svg{transform:rotate(-90deg)}
-.ai-meter-track{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:8}
-.ai-meter-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)}
+.ai-meter-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:10}
+.ai-meter-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)}
 .ai-meter-val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ai-meter-pct{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#f0efff}
-.ai-meter-sublabel{font-size:11px;color:rgba(240,239,255,0.35)}
-.ai-verdict{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#f0efff;margin-bottom:6px}
-.ai-verdict-sub{font-size:13px;color:rgba(240,239,255,0.35)}
-.ai-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
-.ai-break-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px;text-align:center}
-.ai-break-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:3px}
-.ai-break-label{font-size:11px;color:rgba(240,239,255,0.35);font-weight:500}
-.ai-flagged-section{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:20px;margin-bottom:16px}
-.ai-flagged-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#f0efff;margin-bottom:12px}
-.ai-flagged-text{font-size:13.5px;color:rgba(240,239,255,0.6);line-height:2;background:rgba(255,255,255,0.06);border-radius:10px;padding:14px 16px}
+.ai-meter-pct{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:#f0efff;line-height:1}
+.ai-meter-sublabel{font-size:11px;color:rgba(240,239,255,0.35);margin-top:3px}
+.ai-verdict{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#f0efff;margin-bottom:4px;letter-spacing:-.3px}
+.ai-verdict-sub{font-size:13px;color:rgba(240,239,255,0.4);line-height:1.5}
+.ai-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.ai-break-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:16px 12px;text-align:center;transition:border-color .2s}
+.ai-break-card:hover{border-color:rgba(255,255,255,0.18)}
+.ai-break-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:4px;line-height:1}
+.ai-break-label{font-size:10.5px;color:rgba(240,239,255,0.35);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.ai-flagged-section{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:18px;padding:20px;margin-bottom:14px}
+.ai-flagged-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#f0efff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
+.ai-flagged-text{font-size:14px;color:rgba(240,239,255,0.65);line-height:2.1;background:rgba(255,255,255,0.04);border-radius:10px;padding:16px}
 .ai-flag-span{background:rgba(248,113,113,0.2);border-bottom:2px solid #f87171;color:#f0efff;border-radius:3px;padding:0 2px}
 .ai-flag-span-med{background:rgba(251,191,36,0.15);border-bottom:2px solid #fbbf24;color:#f0efff}
 .humanizer-output{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:24px;margin-top:16px;animation:fadeUp .4s cubic-bezier(0.22,1,0.36,1) both}
@@ -649,16 +651,21 @@ font-size:12px; font-weight:600; color:rgba(240,239,255,0.6); cursor:pointer;
 white-space:nowrap; transition:all .18s;
 }
 .sl-url-add:hover { background:rgba(124,92,252,0.12); border-color:#7c5cfc; color:#7c5cfc; }
-.paste-text-zone{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:10px 12px;margin:8px 0}
-.paste-text-area{width:100%;background:none;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.7}
-.paste-text-area::placeholder{color:rgba(240,239,255,0.28)}
-.paste-text-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)}
-.paste-char-count{font-size:10.5px;color:rgba(240,239,255,0.25)}
-.paste-add-btn{background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.25);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;color:#b494ff;cursor:pointer;transition:all .15s}
-.paste-add-btn:hover{background:rgba(124,92,252,0.28)}
+.paste-section-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(240,239,255,0.35);margin-bottom:7px}
+.paste-text-zone{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:12px 14px;margin-bottom:10px;transition:border-color .2s}
+.paste-text-zone:focus-within{border-color:rgba(124,92,252,0.4)}
+.paste-text-area{width:100%;background:none;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.75}
+.paste-text-area::placeholder{color:rgba(240,239,255,0.25)}
+.paste-text-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.paste-char-count{font-size:10.5px;color:rgba(240,239,255,0.22)}
+.paste-add-btn{background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.25);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;color:#b494ff;cursor:pointer;transition:all .15s}
+.paste-add-btn:hover{background:rgba(124,92,252,0.3);border-color:rgba(124,92,252,0.5)}
+.paste-actions{display:flex;gap:8px;margin-top:12px}
+.paste-gen-btn{flex:1;padding:12px 0;font-size:14px}
+[data-theme="light"] .paste-section-label{color:rgba(15,14,26,0.4)}
 [data-theme="light"] .paste-text-zone{background:#f5f4ff;border-color:rgba(0,0,0,0.09)}
 [data-theme="light"] .paste-text-area{color:#0f0e1a}
-[data-theme="light"] .paste-text-area::placeholder{color:rgba(15,14,26,0.3)}
+[data-theme="light"] .paste-text-area::placeholder{color:rgba(15,14,26,0.28)}
 [data-theme="light"] .paste-text-footer{border-top-color:rgba(0,0,0,0.07)}
 [data-theme="light"] .paste-add-btn{background:#ece9ff;border-color:rgba(124,92,252,0.2);color:#7c5cfc}
 .sl-file-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
@@ -1760,6 +1767,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </div>
 
 <!-- ===== CREATE SET TAB ===== -->
+<textarea id="studyInput" style="display:none" maxlength="2000"></textarea>
 <div class="ws-section" id="ws-create">
 <div id="slHomeView">
   <div class="sl-hero">
@@ -1833,21 +1841,26 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <!-- Paste/topic panel -->
     <div class="sl-input-panel" id="panelPaste">
       <div class="sl-panel-card">
+        <div class="paste-section-label">🔗 Add a URL</div>
         <div class="sl-url-row">
-          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="Paste a YouTube, article, or website URL..." onkeydown="if(event.key==='Enter')addUrlLesson()">
-          <button class="sl-url-add" onclick="addUrlLesson()">+ Add URL</button>
+          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="YouTube, article, website…" onkeydown="if(event.key==='Enter')addUrlLesson()">
+          <button class="sl-url-add" onclick="addUrlLesson()">Add</button>
         </div>
-        <div class="paste-text-zone" id="pasteTextZone">
+        <div class="paste-section-label" style="margin-top:14px">📝 Paste Text or Notes</div>
+        <div class="paste-text-zone">
           <textarea class="paste-text-area" id="pasteTextInput"
-            placeholder="Or paste notes, copy text from a document…"
-            rows="4" maxlength="20000" oninput="pasteTextCount()"></textarea>
+            placeholder="Paste notes, paragraphs, or any text you want to study…"
+            rows="5" maxlength="20000" oninput="pasteTextCount()"></textarea>
           <div class="paste-text-footer">
             <span class="paste-char-count" id="pasteCharCount">0 / 20000</span>
-            <button class="paste-add-btn" onclick="addPasteText()">+ Add Text</button>
+            <button class="paste-add-btn" onclick="addPasteText()">+ Add</button>
           </div>
         </div>
         <div class="sl-file-list" id="pasteItemList"></div>
-        <button class="wz-next-btn" id="wzPasteNextBtn" onclick="wzGoStep2()" disabled>Choose Study Methods →</button>
+        <div class="paste-actions">
+          <button class="wz-next-btn" id="wzPasteNextBtn" onclick="wzGoStep2()" disabled>Choose Methods →</button>
+          <button class="sl-btn-generate paste-gen-btn" id="pasteGenBtn" onclick="pasteGenerate()" disabled>⚡ Generate</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2841,7 +2854,7 @@ async function handleFileUpload(input){
   const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':isDocx?'Doc':'File';
   const fileObj={name:file.name,type:typeLabel,icon,mimeType:file.type,reading:true};
   uploadedFiles.push(fileObj);renderFileList();
-  if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from: ${file.name}`;updateCharCount();}
+  if(!document.getElementById('studyInput')?.value){const si=document.getElementById('studyInput');if(si){si.value=`Lesson from: ${file.name}`;updateCharCount();}}
   try{
     if(file.type.startsWith('text/')||lname.endsWith('.txt')||lname.endsWith('.md')){
       fileObj.textContent=await file.text();
@@ -2907,10 +2920,42 @@ function renderPasteList(){
   wzUpdatePasteNextBtn();
 }
 function wzUpdatePasteNextBtn(){
-  const btn=document.getElementById('wzPasteNextBtn');
-  if(!btn)return;
   const hasItems=uploadedFiles.some(f=>f.type==='URL'||f.type==='Text');
-  btn.disabled=!hasItems;
+  const nb=document.getElementById('wzPasteNextBtn');
+  const gb=document.getElementById('pasteGenBtn');
+  if(nb)nb.disabled=!hasItems;
+  if(gb)gb.disabled=!hasItems;
+}
+async function pasteGenerate(){
+  if(!uploadedFiles.some(f=>f.type==='URL'||f.type==='Text'))return;
+  const btn=document.getElementById('pasteGenBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
+  // Build topic from pasted items
+  const topic=uploadedFiles.filter(f=>f.type==='URL'||f.type==='Text').map(f=>f.textContent||f.name).join('\n\n').slice(0,3000)||'Uploaded content';
+  const si=document.getElementById('studyInput');if(si&&!si.value)si.value=topic.slice(0,200);
+  // Use default modes from prefs
+  let modes;try{modes=JSON.parse(localStorage.getItem('sl-default-modes')||'[]');}catch(e){modes=[];}
+  if(!modes.length)modes=['notes','quiz','flashcards'];
+  const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
+  const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
+  wzSelectedMethods=new Set(modes);
+  document.getElementById('slStep2View').style.display='none';
+  document.getElementById('slHomeView').style.display='none';
+  document.getElementById('slResultView').style.display='none';
+  const rv=document.getElementById('wzResultView');rv.style.display='flex';
+  setResultMode(true);wzBuildSidebar(modes);
+  document.getElementById('wzResultMain').innerHTML=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
+  const filesPayload=uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
+  const topicStr=(genLang!=='English'?topic+' — Respond in '+genLang+'.':topic);
+  try{
+    const fetches=modes.map(mode=>fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topicStr,modes:[mode],files:filesPayload,urls:[],difficulty:genDiff})}).then(r=>r.json()).catch(()=>null));
+    const responses=await Promise.all(fetches);
+    const combined={};let resolvedTopic=topic;
+    responses.forEach((data,i)=>{if(data&&!data.error&&data.results){if(data.topic)resolvedTopic=data.topic;Object.assign(combined,data.results);}});
+    if(!Object.keys(combined).length){document.getElementById('wzResultMain').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>';return;}
+    wzBuildTabbedResult(resolvedTopic,modes,combined);
+  }catch(err){document.getElementById('wzResultMain').innerHTML=`<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;}
+  finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generate';}}
 }
 function removeFile(i){uploadedFiles.splice(i,1);renderFileList();renderPasteList();}
 function renderFileList(){
@@ -3454,8 +3499,33 @@ function applyAccentColor(accent, accent2) {
     '.lb-upsell-btn:hover,.timer-w-play:hover,.timer-w-set:hover{opacity:.88!important}',
     // Resize handle
     '.wz-resize-handle:hover .wz-resize-handle-line,.wz-resize-handle.dragging .wz-resize-handle-line{background:'+accent+'!important}',
-    // wz result topbar
+    // navbar gradient
     '.navbar::after{background:linear-gradient(90deg,transparent 0%,'+accent+' 30%,'+a2+' 70%,transparent 100%)!important}',
+    // Sidebar timer
+    '.wz-timer-start,.wz-timer-set,.doc-btn-primary,.paste-gen-btn{background:'+grad+'!important}',
+    '.wz-timer-preset.active{background:rgba('+r+',.15)!important;border-color:rgba('+r+',.5)!important;color:'+a2+'!important}',
+    '.wz-timer-input:focus{border-color:rgba('+r+',.5)!important}',
+    '.paste-add-btn{background:rgba('+r+',.15)!important;border-color:rgba('+r+',.25)!important;color:'+a2+'!important}',
+    '.paste-add-btn:hover{background:rgba('+r+',.3)!important}',
+    '.paste-text-zone:focus-within{border-color:rgba('+r+',.4)!important}',
+    // Doc writing page tabs
+    '.doc-mode-tab.active{background:rgba('+r+',.15)!important;color:#f0efff!important}',
+    // Next step buttons
+    '.wz-next-btn:not(:disabled){background:'+grad+'!important;box-shadow:0 4px 16px rgba('+r+',.3)!important}',
+    // Input focus
+    '.sl-url-input:focus,.doc-textarea:focus,.paste-text-area:focus{border-color:rgba('+r+',.5)!important}',
+    // Flashcard & quiz accents
+    '.fc-progress-bar,.quiz-score-ring{background:'+grad+'!important}',
+    '.quiz-option.correct{background:rgba('+r+',.12)!important;border-color:'+accent+'!important}',
+    // AI checker meter purple
+    '.ai-meter{background:linear-gradient(135deg,rgba('+r+',.08),rgba('+r2+',.04))!important;border-color:rgba('+r+',.25)!important}',
+    '.ai-meter::before{background:radial-gradient(ellipse at 50% 0%,rgba('+r+',.12),transparent 70%)!important}',
+    // Color swatch active ring
+    '.color-swatch.active{box-shadow:0 0 0 2px '+accent+',0 0 12px rgba('+r+',.35)!important}',
+    // Set folder hover
+    '.set-folder:hover{border-color:rgba('+r+',.4)!important;box-shadow:0 0 16px rgba('+r+',.12)!important}',
+    // Upload zone hover
+    '.sl-upload-zone:hover,.sl-upload-zone.drag-over{border-color:rgba('+r+',.5)!important}',
   ].join('');
 }
 
@@ -3891,9 +3961,8 @@ async function wzHandleModalFiles(input) {
     const fileObj = { name:file.name, type:typeLabel, icon, mimeType:file.type, reading:true };
     uploadedFiles.push(fileObj);
     wzRenderModalFiles();
-    if (!document.getElementById('studyInput').value) {
-      document.getElementById('studyInput').value = 'Lesson from: ' + file.name;
-      updateCharCount();
+    if (!document.getElementById('studyInput')?.value) {
+      const _si = document.getElementById('studyInput'); if (_si) { _si.value = 'Lesson from: ' + file.name; updateCharCount(); }
     }
     try {
       if (file.type.startsWith('text/') || lname.endsWith('.txt') || lname.endsWith('.md')) {
