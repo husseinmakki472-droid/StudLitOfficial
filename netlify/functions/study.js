@@ -18,7 +18,8 @@ return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) 
 let body;
 try { body = JSON.parse(event.body || '{}'); }
 catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
-const { topic, modes, files, urls } = body;
+const { topic, modes, files, urls, difficulty } = body;
+const difficultyLevel = (difficulty || 'medium').toLowerCase();
 const modesArr = modes || [];
 const filesArr = files || [];
 const urlsArr = urls || [];
@@ -62,7 +63,10 @@ const m = modesArr[i];
 modeStructures += (modeMap[m] || ('"' + m + '":{"content":"study material"}'));
 if (i < modesArr.length - 1) modeStructures += ',\n    ';
 }
-const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate these study modes: ' + modeList + '\n\nReturn this JSON:\n{\n  "topic": "specific topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
+const difficultyModes = ['quiz', 'practicetest', 'fitb'];
+const hasDifficultyMode = modesArr.some(function(m) { return difficultyModes.indexOf(m) !== -1; });
+const difficultyInstruction = hasDifficultyMode ? '\n\nDifficulty level: ' + difficultyLevel + '. For quiz/test/fill-in-the-blank content: easy = straightforward recall questions with obvious answers; medium = conceptual understanding required; hard = analysis, application, and nuanced reasoning required. Tag each quiz question with a "difficulty" field ("Easy", "Medium", or "Hard") matching this level.' : '';
+const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate these study modes: ' + modeList + difficultyInstruction + '\n\nReturn this JSON:\n{\n  "topic": "specific topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
 const imageBlocks = filesArr
 .filter(function(f) { return f.imageData && f.mimeType; })
 .map(function(f) { return { type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }; });

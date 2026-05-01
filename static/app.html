@@ -120,6 +120,9 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .regen-btn:hover{background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.4);color:#f0efff}
 .regen-btn.spinning .regen-icon{display:inline-block;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.regen-diff-select{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(240,239,255,0.75);font-size:12px;font-weight:600;cursor:pointer;outline:none;transition:all .18s}
+.regen-diff-select:hover{border-color:rgba(124,92,252,0.4);background:rgba(124,92,252,0.1)}
+[data-theme="light"] .regen-diff-select{border-color:rgba(0,0,0,0.12);background:rgba(0,0,0,0.04);color:rgba(15,14,26,0.65)}
 .content-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:24px;margin-bottom:16px;animation:cardEntrance .45s cubic-bezier(0.22,1,0.36,1) both;transition:box-shadow .2s,transform .2s}
 .content-card:hover{box-shadow:0 4px 20px rgba(124,92,252,0.2);transform:translateY(-1px)}
 @keyframes cardEntrance{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -2295,7 +2298,7 @@ function showResult(html){document.getElementById('emptyState').style.display='n
 function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><button class="regen-btn" id="regenBtn_${mode}" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Regenerate</button><div class="result-mode-badge">${names[mode]||mode}</div></div></div>`}
+function resultHeader(mode,topic,meta=[],difficulty='medium'){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');const diffModes=['quiz','practicetest','fitb'];const diffSel=diffModes.includes(mode)?`<select class="regen-diff-select" id="diffSelect_${mode}" title="Difficulty"><option value="easy"${difficulty==='easy'?' selected':''}>Easy</option><option value="medium"${difficulty==='medium'?' selected':''}>Medium</option><option value="hard"${difficulty==='hard'?' selected':''}>Hard</option></select>`:'';return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0">${diffSel}<button class="regen-btn" id="regenBtn_${mode}" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Regenerate</button><div class="result-mode-badge">${names[mode]||mode}</div></div></div>`}
 function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
 
 async function regenerateMode(mode) {
@@ -2306,6 +2309,9 @@ async function regenerateMode(mode) {
   const btn = document.getElementById('regenBtn_' + mode);
   if (btn) btn.classList.add('spinning');
 
+  const diffEl = document.getElementById('diffSelect_' + mode);
+  const difficulty = diffEl ? diffEl.value : 'medium';
+
   const input = (document.getElementById('studyInput')?.value || '').trim();
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
 
@@ -2314,7 +2320,7 @@ async function regenerateMode(mode) {
   try {
     const data = await fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:input||'the uploaded content', modes:[mode], files:filesPayload, urls:uploadedUrls||[]})
+      body:JSON.stringify({topic:input||'the uploaded content', modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty})
     }).then(r => r.json().catch(() => null));
 
     if (!data || data.error || !data.results || !data.results[mode]) {
@@ -2360,7 +2366,7 @@ async function generate() {
   if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
   try {
     let res;
-    try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[]})});}
+    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
     catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
     let data;
     try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
@@ -3580,9 +3586,10 @@ async function wzGenerate() {
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   try {
     const topicArg = input || 'the uploaded content';
+    const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
     const fetchMode = mode => fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[]})
+      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
     }).then(r => r.json().catch(() => null)).catch(() => null);
 
     const responses = await Promise.all(methods.map(fetchMode));
