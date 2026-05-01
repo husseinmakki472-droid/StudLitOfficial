@@ -649,6 +649,18 @@ font-size:12px; font-weight:600; color:rgba(240,239,255,0.6); cursor:pointer;
 white-space:nowrap; transition:all .18s;
 }
 .sl-url-add:hover { background:rgba(124,92,252,0.12); border-color:#7c5cfc; color:#7c5cfc; }
+.paste-text-zone{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:10px 12px;margin:8px 0}
+.paste-text-area{width:100%;background:none;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.7}
+.paste-text-area::placeholder{color:rgba(240,239,255,0.28)}
+.paste-text-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06)}
+.paste-char-count{font-size:10.5px;color:rgba(240,239,255,0.25)}
+.paste-add-btn{background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.25);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;color:#b494ff;cursor:pointer;transition:all .15s}
+.paste-add-btn:hover{background:rgba(124,92,252,0.28)}
+[data-theme="light"] .paste-text-zone{background:#f5f4ff;border-color:rgba(0,0,0,0.09)}
+[data-theme="light"] .paste-text-area{color:#0f0e1a}
+[data-theme="light"] .paste-text-area::placeholder{color:rgba(15,14,26,0.3)}
+[data-theme="light"] .paste-text-footer{border-top-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .paste-add-btn{background:#ece9ff;border-color:rgba(124,92,252,0.2);color:#7c5cfc}
 .sl-file-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 .sl-file-item {
 background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
@@ -1822,38 +1834,20 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <div class="sl-input-panel" id="panelPaste">
       <div class="sl-panel-card">
         <div class="sl-url-row">
-          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="Paste a YouTube, article, or lesson URL...">
+          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="Paste a YouTube, article, or website URL..." onkeydown="if(event.key==='Enter')addUrlLesson()">
           <button class="sl-url-add" onclick="addUrlLesson()">+ Add URL</button>
         </div>
-        <textarea class="sl-topic-textarea" id="studyInput"
-          placeholder="Or type your topic, paste notes, or ask a question..."
-          maxlength="2000" oninput="updateCharCount()"></textarea>
-        <div class="sl-chips">
-          <div class="sl-chip" onclick="useChip(this)">Photosynthesis</div>
-          <div class="sl-chip" onclick="useChip(this)">French Revolution</div>
-          <div class="sl-chip" onclick="useChip(this)">Newton's Laws</div>
-          <div class="sl-chip" onclick="useChip(this)">Cold War</div>
-          <div class="sl-chip" onclick="useChip(this)">DNA replication</div>
-          <div class="sl-chip" onclick="useChip(this)">Python loops</div>
+        <div class="paste-text-zone" id="pasteTextZone">
+          <textarea class="paste-text-area" id="pasteTextInput"
+            placeholder="Or paste notes, copy text from a document…"
+            rows="4" maxlength="20000" oninput="pasteTextCount()"></textarea>
+          <div class="paste-text-footer">
+            <span class="paste-char-count" id="pasteCharCount">0 / 20000</span>
+            <button class="paste-add-btn" onclick="addPasteText()">+ Add Text</button>
+          </div>
         </div>
-        <div class="sl-modes-label" style="margin-top:14px">Choose a mode <span class="sl-modes-hint">tap multiple to combine</span></div>
-        <div class="sl-modes-grid">
-          <button class="sl-mode-btn selected" data-mode="solve" onclick="toggleMode2(this)"><span class="sl-mode-icon">🔍</span><span class="sl-mode-name">Solve</span></button>
-          <button class="sl-mode-btn" data-mode="flashcards" onclick="toggleMode2(this)"><span class="sl-mode-icon">🃏</span><span class="sl-mode-name">Flashcards</span><span class="sl-mode-badge pop">★</span></button>
-          <button class="sl-mode-btn" data-mode="quiz" onclick="toggleMode2(this)"><span class="sl-mode-icon">📝</span><span class="sl-mode-name">Quiz</span></button>
-          <button class="sl-mode-btn" data-mode="summary" onclick="toggleMode2(this)"><span class="sl-mode-icon">📋</span><span class="sl-mode-name">Summary</span></button>
-          <button class="sl-mode-btn" data-mode="notes" onclick="toggleMode2(this)"><span class="sl-mode-icon">📓</span><span class="sl-mode-name">Notes</span></button>
-          <button class="sl-mode-btn" data-mode="tutor" onclick="toggleMode2(this)"><span class="sl-mode-icon">🧑‍🏫</span><span class="sl-mode-name">Tutor</span><span class="sl-mode-badge rec">AI</span></button>
-          <button class="sl-mode-btn" data-mode="practicetest" onclick="toggleMode2(this)"><span class="sl-mode-icon">🎯</span><span class="sl-mode-name">Practice Test</span></button>
-          <button class="sl-mode-btn" data-mode="fitb" onclick="toggleMode2(this)"><span class="sl-mode-icon">✏️</span><span class="sl-mode-name">Fill Blanks</span></button>
-          <button class="sl-mode-btn" data-mode="keyconcepts" onclick="toggleMode2(this)"><span class="sl-mode-icon">🔑</span><span class="sl-mode-name">Concepts</span></button>
-          <button class="sl-mode-btn" data-mode="studyplan" onclick="toggleMode2(this)"><span class="sl-mode-icon">📊</span><span class="sl-mode-name">Study Plan</span></button>
-        </div>
-        <div class="sl-action-row">
-          <button class="sl-btn-generate" id="generateBtn2" onclick="generate()">⚡ Generate Study Set</button>
-          <button class="sl-btn-sec" onclick="generatePodcast()">🎙️</button>
-          <button class="sl-btn-sec" onclick="randomPrompt()">🎲</button>
-        </div>
+        <div class="sl-file-list" id="pasteItemList"></div>
+        <button class="wz-next-btn" id="wzPasteNextBtn" onclick="wzGoStep2()" disabled>Choose Study Methods →</button>
       </div>
     </div>
   </div>
@@ -1896,21 +1890,6 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       </div>
     </div>
     <div class="wz-lang-row">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:18px">🇺🇸</span>
-        <select class="wz-lang-select" id="wzLangSelect">
-          <option value="English" selected>English</option>
-          <option value="Spanish">Spanish</option>
-          <option value="French">French</option>
-          <option value="German">German</option>
-          <option value="Portuguese">Portuguese</option>
-          <option value="Arabic">Arabic</option>
-          <option value="Chinese">Chinese</option>
-          <option value="Japanese">Japanese</option>
-          <option value="Korean">Korean</option>
-          <option value="Hindi">Hindi</option>
-        </select>
-      </div>
       <button class="wz-generate-btn" id="wzGenerateBtn" style="flex:0;padding:13px 32px" onclick="wzGenerate()">Generate</button>
     </div>
   </div>
@@ -2577,7 +2556,7 @@ async function generate() {
   if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
   try {
     let res;
-    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
+    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:(genLang!=='English'?input+' — Respond in '+genLang+'.':input),modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
     catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
     let data;
     try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
@@ -2889,12 +2868,58 @@ async function handleFileUpload(input){
   }catch(e){fileObj.readError=e.message||'Read failed';console.warn('File read error:',e);}
   fileObj.reading=false;renderFileList();
 }
-function addUrlLesson(){const input=document.getElementById('lessonUrlInput');const url=input.value.trim();if(!url)return;let icon='🔗';if(url.includes('youtube.com')||url.includes('youtu.be'))icon='▶️';uploadedFiles.push({name:url,type:'URL',icon,data:null});if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=`Lesson from URL: ${url}`;updateCharCount()}input.value='';renderFileList()}
-function removeFile(i){uploadedFiles.splice(i,1);renderFileList()}
+function addUrlLesson(){
+  const input=document.getElementById('lessonUrlInput');
+  const url=input.value.trim();
+  if(!url)return;
+  let icon='🔗';
+  if(url.includes('youtube.com')||url.includes('youtu.be'))icon='▶️';
+  else if(url.includes('twitter.com')||url.includes('x.com'))icon='🐦';
+  uploadedFiles.push({name:url,type:'URL',icon,textContent:'URL:'+url});
+  input.value='';
+  renderFileList();
+  renderPasteList();
+}
+function addPasteText(){
+  const ta=document.getElementById('pasteTextInput');
+  const text=(ta.value||'').trim();
+  if(!text||text.length<10)return;
+  const preview=text.slice(0,60)+(text.length>60?'…':'');
+  uploadedFiles.push({name:preview,type:'Text',icon:'📝',textContent:text});
+  ta.value='';
+  document.getElementById('pasteCharCount').textContent='0 / 20000';
+  renderPasteList();
+}
+function pasteTextCount(){
+  const ta=document.getElementById('pasteTextInput');
+  const el=document.getElementById('pasteCharCount');
+  if(el&&ta)el.textContent=(ta.value.length)+' / 20000';
+}
+function renderPasteList(){
+  const list=document.getElementById('pasteItemList');
+  if(!list)return;
+  const pasteItems=uploadedFiles.filter(f=>f.type==='URL'||f.type==='Text');
+  if(!pasteItems.length){list.innerHTML='';wzUpdatePasteNextBtn();return;}
+  list.innerHTML=pasteItems.map((f)=>{
+    const i=uploadedFiles.indexOf(f);
+    return`<div class="upload-file-item"><span class="upload-file-icon">${f.icon}</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;overflow:hidden"><span class="upload-file-name">${escHtml(f.name)}</span><span class="upload-file-type">${f.type}</span><span style="color:#4ade80;font-size:10px;font-weight:700">✓ ready</span></div><div class="upload-file-progress"><div class="upload-file-progress-fill ready"></div></div></div><button class="upload-file-remove" onclick="removeFile(${i})">✕</button></div>`;
+  }).join('');
+  wzUpdatePasteNextBtn();
+}
+function wzUpdatePasteNextBtn(){
+  const btn=document.getElementById('wzPasteNextBtn');
+  if(!btn)return;
+  const hasItems=uploadedFiles.some(f=>f.type==='URL'||f.type==='Text');
+  btn.disabled=!hasItems;
+}
+function removeFile(i){uploadedFiles.splice(i,1);renderFileList();renderPasteList();}
 function renderFileList(){
   const list=document.getElementById('uploadFileList');
-  if(!uploadedFiles.length){list.innerHTML='';wzUpdateNextBtn();return;}
-  list.innerHTML=uploadedFiles.map((f,i)=>{
+  if(!list)return;
+  const fileItems=uploadedFiles.filter(f=>f.type!=='URL'&&f.type!=='Text');
+  if(!fileItems.length){list.innerHTML='';wzUpdateNextBtn();return;}
+  list.innerHTML=fileItems.map((f)=>{
+    const i=uploadedFiles.indexOf(f);
     let statusLabel='';let barClass='';
     if(f.reading){statusLabel='<span style="color:#f59e0b;font-size:10px;font-weight:700">⏳ reading…</span>';barClass='reading';}
     else if(f.readError){statusLabel=`<span style="color:#f87171;font-size:10px;font-weight:700" title="${escHtml(f.readError)}">⚠ error</span>`;barClass='error';}
@@ -3278,6 +3303,7 @@ function saveSettings() {
       username: document.getElementById('settingsUsername') ? document.getElementById('settingsUsername').value : '',
       email: document.getElementById('settingsEmail') ? document.getElementById('settingsEmail').value : '',
       school: document.getElementById('settingsSchool') ? document.getElementById('settingsSchool').value : '',
+      language: document.getElementById('langSelect') ? document.getElementById('langSelect').value : 'English',
       difficulty: document.getElementById('difficultySelect') ? document.getElementById('difficultySelect').value : 'medium',
       quizLength: document.getElementById('quizLengthSelect') ? document.getElementById('quizLengthSelect').value : '8',
       flashcardCount: document.getElementById('flashcardCountSelect') ? document.getElementById('flashcardCountSelect').value : '10',
@@ -3316,6 +3342,7 @@ function loadSettingsFromStorage() {
     if (prefs.username) { var el2=document.getElementById('settingsUsername'); if(el2) el2.value=prefs.username; }
     if (prefs.email) { var el3=document.getElementById('settingsEmail'); if(el3) el3.value=prefs.email; var de=document.getElementById('settingsDisplayEmail'); if(de) de.textContent=prefs.email; }
     if (prefs.school) { var el4=document.getElementById('settingsSchool'); if(el4) el4.value=prefs.school; }
+    if (prefs.language) { var el4b=document.getElementById('langSelect'); if(el4b) el4b.value=prefs.language; }
     if (prefs.difficulty) { var el5=document.getElementById('difficultySelect'); if(el5) el5.value=prefs.difficulty; }
     if (prefs.quizLength) { var el6=document.getElementById('quizLengthSelect'); if(el6) el6.value=prefs.quizLength; }
     if (prefs.flashcardCount) { var el7=document.getElementById('flashcardCountSelect'); if(el7) el7.value=prefs.flashcardCount; }
@@ -3955,7 +3982,7 @@ function wzToggleMethod(el, mode) {
 // ---- Wizard Generate (standalone, builds 3-panel result) ----
 async function wzGenerate() {
   if (wzSelectedMethods.size === 0) return;
-  const lang = document.getElementById('wzLangSelect')?.value || 'English';
+  const lang = (function(){ try { return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English'; } catch(e){ return 'English'; } })();
   const methods = [...wzSelectedMethods];
   document.getElementById('slStep2View').style.display = 'none';
   document.getElementById('slHomeView').style.display = 'none';
@@ -4598,6 +4625,24 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
 
     <div class="settings-section">
       <div class="settings-section-label">Difficulty & Content</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">Response Language</div>
+          <div class="settings-row-sub">AI will generate all study content in this language</div>
+        </div>
+        <select class="settings-select" id="langSelect">
+          <option value="English">English</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Arabic">Arabic</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Korean">Korean</option>
+          <option value="Hindi">Hindi</option>
+        </select>
+      </div>
       <div class="settings-row">
         <div class="settings-row-left">
           <div class="settings-row-title">Default Difficulty</div>
