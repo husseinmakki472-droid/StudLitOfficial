@@ -226,6 +226,20 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .test-header-strip{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border:1px solid rgba(124,92,252,0.25);border-radius:22px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .test-header-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff}
 .test-timer-badge{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700}
+.pt-answer-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;margin-bottom:18px;flex-wrap:wrap}
+.pt-answer-bar-text{font-size:13px;font-weight:600;color:rgba(240,239,255,0.5)}
+.pt-reveal-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;border:1px solid rgba(124,92,252,0.4);background:rgba(124,92,252,0.1);color:#b06ef3;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap}
+.pt-reveal-btn:hover{background:rgba(124,92,252,0.2);border-color:#7c5cfc;color:#d4a8ff}
+.pt-question-block{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.pt-question-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.pt-question-text{font-size:14.5px;color:rgba(240,239,255,0.88);line-height:1.6;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+.pt-q-num{flex-shrink:0;background:rgba(124,92,252,0.2);color:#b06ef3;border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700;margin-top:1px}
+.pt-answer-input{width:100%;min-height:80px;resize:vertical;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.09);border-radius:14px;padding:12px 14px;color:rgba(240,239,255,0.8);font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.6;outline:none;transition:border-color .18s;box-sizing:border-box}
+.pt-answer-input:focus{border-color:rgba(124,92,252,0.5);background:rgba(124,92,252,0.04)}
+.pt-answer-input::placeholder{color:rgba(240,239,255,0.22)}
+.pt-answer-block{margin-top:12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 16px;animation:fadeUp .25s cubic-bezier(0.22,1,0.36,1) both}
+.pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
+.pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
 .roadmap-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;animation:cardEntrance .4s cubic-bezier(0.22,1,0.36,1) both}
 .step-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(124,92,252,0.2)}
 .step-content{flex:1}
@@ -2623,20 +2637,45 @@ function renderTutorHTML(topic, d){
   return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}</div><div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
 }
 
+function ptToggleAnswers(show){
+  document.querySelectorAll('.pt-answer-block').forEach(el=>el.style.display=show?'block':'none');
+  document.querySelectorAll('.pt-reveal-btn').forEach(btn=>{
+    btn.style.display = btn.dataset.role==='show' ? (show?'none':'inline-flex') : (show?'inline-flex':'none');
+  });
+}
 function renderPracticeTestHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No practice test data returned.</div></div>';
   const sections=(d.sections||[]);
   if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No test sections returned.</div></div>';
+  let qNum=0;
   let sHtml='';
   sections.forEach((sec,si)=>{
     const qs=(sec.questions||[]);
-    const qHtml=qs.map((q,qi)=>`<div style="margin-bottom:14px"><strong>Q${qi+1}.</strong> ${escHtml(q.question||'')}${q.sampleAnswer?`<div class="highlight-block" style="margin-top:8px">Sample answer: ${escHtml(q.sampleAnswer)}</div>`:''}</div>`).join('');
     const secType=(sec.type||'Questions').replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
+    const qHtml=qs.map(q=>{
+      qNum++;
+      return`<div class="pt-question-block">
+        <div class="pt-question-text"><span class="pt-q-num">Q${qNum}</span>${escHtml(q.question||'')}</div>
+        <textarea class="pt-answer-input" placeholder="Write your answer here…" rows="3"></textarea>
+        <div class="pt-answer-block" style="display:none">
+          <div class="pt-answer-label">✅ Sample Answer</div>
+          <div class="pt-answer-text">${escHtml(q.sampleAnswer||'')}</div>
+        </div>
+      </div>`;
+    }).join('');
     sHtml+=`<div class="content-card" style="animation-delay:${si*.05}s"><div class="card-label">Section ${si+1} — ${escHtml(secType)}</div><div class="card-body">${qHtml}</div></div>`;
   });
-  const timeEst=sections.reduce((a,s)=>a+(s.questions||[]).length*3,0)||10;
-  return`${resultHeader('practicetest',t,[{text:'🎯 Practice Test',accent:true},{text:sections.length+' Sections'}])}<div class="test-header-strip"><div class="test-header-title">📋 ${escHtml(t)} — Practice Assessment</div><div class="test-timer-badge">⏱ ~${timeEst} min</div></div>${sHtml}`;
+  const totalQ=qNum;
+  const timeEst=Math.max(totalQ*3,5);
+  const answerBar=`<div class="pt-answer-bar">
+    <span class="pt-answer-bar-text">📝 ${totalQ} question${totalQ!==1?'s':''}</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="pt-reveal-btn" data-role="show" onclick="ptToggleAnswers(true)">👁 Show Answer Sheet</button>
+      <button class="pt-reveal-btn" data-role="hide" style="display:none" onclick="ptToggleAnswers(false)">🙈 Hide Answers</button>
+    </div>
+  </div>`;
+  return`${resultHeader('practicetest',t,[{text:'🎯 Practice Test',accent:true},{text:totalQ+' Questions'}])}<div class="test-header-strip"><div class="test-header-title">📋 ${escHtml(t)} — Practice Assessment</div><div class="test-timer-badge">⏱ ~${timeEst} min</div></div>${answerBar}${sHtml}`;
 }
 
 let fitbBlanks=[];
