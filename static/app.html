@@ -1333,6 +1333,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .add-method-card-icon{font-size:22px;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);border-radius:10px}
 .add-method-card-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
 .add-method-card-desc{font-size:11px;color:var(--text-3);margin-top:2px}
+.save-set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);transition:all .15s}
+.save-set-row:hover{border-color:rgba(124,92,252,0.35);background:rgba(124,92,252,0.07)}
+.save-set-row-name{font-size:13px;font-weight:600;color:var(--text)}
+.save-set-row-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.save-set-row-btn{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s;flex-shrink:0}
+.save-set-row-btn:hover{opacity:.85}
 .wz-modal-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#f0efff;margin-bottom:4px}
 .wz-modal-sub{font-size:13px;color:rgba(240,239,255,0.4);margin-bottom:18px}
 .wz-modal-file-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;margin-bottom:9px}
@@ -1833,9 +1839,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <button class="wz-result-topbar-back" onclick="slShowHome()" title="New set">‹</button>
     <div class="wz-result-topbar-title" id="wzResultTitleEl">Study Set</div>
     <div class="wz-result-topbar-save">
-      <select class="sl-save-select" id="saveSetSelect"><option value="">— save —</option></select>
-      <button class="sl-btn-save" onclick="saveSession()">💾</button>
-      <span class="sl-save-confirm" id="saveConfirm">✓</span>
+      <button class="sl-btn-save" onclick="openSaveModal()">💾 Save</button>
     </div>
   </div>
   <div class="wz-result-3panel">
@@ -1881,9 +1885,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <button class="sl-result-back-btn" onclick="slShowHome()">← New Set</button>
       </div>
       <div class="sl-result-save-row">
-        <select class="sl-save-select" id="saveSetSelectPaste"><option value="">— save to set —</option></select>
-        <button class="sl-btn-save" onclick="saveSession()">💾 Save</button>
-        <span class="sl-save-confirm" id="saveConfirmPaste">✓ Saved!</span>
+        <button class="sl-btn-save" onclick="openSaveModal()">💾 Save</button>
       </div>
     </div>
     <div class="sl-result-layout">
@@ -2275,9 +2277,102 @@ function openNewSetModal(){document.getElementById('newSetModal').classList.add(
 function closeNewSetModal(){document.getElementById('newSetModal').classList.remove('open');document.getElementById('newSetName').value='';document.getElementById('newSetDesc').value=''}
 function createNewSet(){const n=document.getElementById('newSetName').value.trim();if(!n){document.getElementById('newSetName').focus();return}studySets.unshift({id:Date.now().toString(),name:n,desc:document.getElementById('newSetDesc').value.trim(),sessions:[]});saveSets();renderSets();closeNewSetModal()}
 function deleteSet(id){if(!confirm('Delete this study set?'))return;studySets=studySets.filter(s=>s.id!==id);saveSets();renderSets()}
-function updateSaveSelect(){const opts='<option value="">— save —</option>'+studySets.map(s=>'<option value="'+s.id+'">'+escHtml(s.name)+'</option>').join('');['saveSetSelect','saveSetSelectPaste'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});}
-function saveSession(){const selEl=document.getElementById('saveSetSelect');const selEl2=document.getElementById('saveSetSelectPaste');const id=(selEl&&selEl.value)||(selEl2&&selEl2.value)||'';if(!id||!lastResult)return;const set=studySets.find(s=>s.id===id);if(!set)return;set.sessions.unshift({id:Date.now().toString(),topic:lastResult.topic,modes:lastResult.modes,html:lastResult.html,date:new Date().toLocaleDateString()});saveSets();renderSets();['saveConfirm','saveConfirmPaste'].forEach(cid=>{const c=document.getElementById(cid);if(c){c.classList.add('show');setTimeout(()=>c.classList.remove('show'),2000);}});}
-function loadSession(sid,ssid){const set=studySets.find(s=>s.id===sid);if(!set)return;const sess=set.sessions.find(s=>s.id===ssid);if(!sess)return;switchTab('workspace');showResult(sess.html);lastResult={topic:sess.topic,modes:sess.modes,html:sess.html};document.getElementById('saveBar').classList.add('visible')}
+function updateSaveSelect(){}  // no-op: replaced by modal
+
+function openSaveModal() {
+  if (!lastResult) { showInfoToast('Nothing to save yet — generate content first.'); return; }
+  const input = document.getElementById('saveModalNewName');
+  if (input) input.value = '';
+  const list = document.getElementById('saveModalSetsList');
+  const empty = document.getElementById('saveModalEmpty');
+  const subtitle = document.getElementById('saveModalSubtitle');
+  if (subtitle) subtitle.textContent = 'Saving: ' + (lastResult.topic || 'Study Set');
+  if (list) {
+    if (!studySets.length) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      list.innerHTML = studySets.map(s => {
+        const count = (s.sessions||[]).length;
+        return `<div class="save-set-row">
+          <div><div class="save-set-row-name">${escHtml(s.name)}</div><div class="save-set-row-meta">${count} saved session${count!==1?'s':''}</div></div>
+          <button class="save-set-row-btn" onclick="saveToSet('${s.id}')">Save Here</button>
+        </div>`;
+      }).join('');
+    }
+  }
+  document.getElementById('saveModal').classList.add('open');
+  setTimeout(()=>{ const i=document.getElementById('saveModalNewName'); if(i)i.focus(); }, 120);
+}
+
+function closeSaveModal() {
+  document.getElementById('saveModal').classList.remove('open');
+}
+
+function buildSessionData() {
+  const wzView = document.getElementById('wzResultView');
+  const isWizard = wzView && wzView.style.display !== 'none';
+  return {
+    id: Date.now().toString(),
+    topic: lastResult.topic,
+    modes: lastResult.modes,
+    html: lastResult.html,
+    tabs: isWizard ? Object.assign({}, wzResultTabs) : null,
+    date: new Date().toLocaleDateString()
+  };
+}
+
+function saveToSet(setId) {
+  const set = studySets.find(s => s.id === setId);
+  if (!set || !lastResult) return;
+  set.sessions.unshift(buildSessionData());
+  saveSets(); renderSets(); renderSlSets();
+  closeSaveModal();
+  showInfoToast('Saved to "' + set.name + '"!');
+}
+
+function saveToNewSetFromModal() {
+  const nameEl = document.getElementById('saveModalNewName');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { if (nameEl) nameEl.focus(); return; }
+  const newSet = { id: Date.now().toString(), name, desc: '', sessions: [] };
+  if (lastResult) newSet.sessions.push(buildSessionData());
+  studySets.unshift(newSet);
+  saveSets(); renderSets(); renderSlSets();
+  closeSaveModal();
+  showInfoToast('Saved to "' + name + '"!');
+}
+
+function saveSession() { openSaveModal(); }  // legacy compat
+
+function loadSession(sid, ssid) {
+  const set = studySets.find(s => s.id === sid);
+  if (!set) return;
+  const sess = set.sessions.find(s => s.id === ssid);
+  if (!sess) return;
+  switchTab('workspace');
+  lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
+  if (sess.tabs && Object.keys(sess.tabs).length) {
+    // Restore wizard multi-tab view
+    Object.assign(wzResultTabs, sess.tabs);
+    const methods = Object.keys(sess.tabs);
+    document.getElementById('slHomeView').style.display = 'none';
+    document.getElementById('slResultView').style.display = 'none';
+    document.getElementById('slStep2View').style.display = 'none';
+    const rv = document.getElementById('wzResultView');
+    rv.style.display = 'block';
+    document.querySelector('.studley-layout')?.classList.add('result-mode');
+    document.getElementById('wzResultTitleEl').textContent = sess.topic || 'Study Set';
+    wzBuildSidebar(methods);
+    document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
+      if (wzResultTabs[el.dataset.mode]) el.classList.add('loaded');
+    });
+    wzShowTab(methods[0]);
+  } else {
+    showResult(sess.html);
+  }
+}
 
 function showPricingModal(){document.getElementById('pricingModal').classList.add('open')}
 function hidePricingModal(){document.getElementById('pricingModal').classList.remove('open')}
@@ -2834,10 +2929,7 @@ function renderSlSets(filter = '') {
 function slOpenSet(setId) {
   const set = studySets.find(s => s.id === setId);
   if (!set || !set.sessions?.length) return;
-  const sess = set.sessions[0];
-  showResult(sess.html);
-  lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
-  updateSaveSelect();
+  loadSession(set.id, set.sessions[0].id);
 }
 
 // Override renderSets to also update sl grid
@@ -4394,6 +4486,34 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
 <div class="xp-toast" id="xpToast"></div>
 
 <!-- UPLOAD MODAL -->
+<div class="wz-modal-overlay" id="saveModal" onclick="if(event.target===this)closeSaveModal()">
+  <div class="modal-box" style="max-width:460px">
+    <button class="modal-close" onclick="closeSaveModal()">✕</button>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:800;margin-bottom:4px">Save Study Set</div>
+    <div style="font-size:13px;color:var(--text-3);margin-bottom:20px" id="saveModalSubtitle">Choose where to save your results</div>
+
+    <!-- New set input -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-3);margin-bottom:8px">Create New Set</div>
+      <div style="display:flex;gap:8px">
+        <input class="new-set-input" id="saveModalNewName" placeholder="Set name e.g. Biology Chapter 4…" maxlength="60" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')saveToNewSetFromModal()">
+        <button class="sl-btn-save" onclick="saveToNewSetFromModal()" style="white-space:nowrap;flex-shrink:0">+ Create & Save</button>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--text-3);font-weight:600">OR ADD TO EXISTING</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <!-- Existing sets list -->
+    <div id="saveModalSetsList" style="display:flex;flex-direction:column;gap:7px;max-height:220px;overflow-y:auto"></div>
+    <div id="saveModalEmpty" style="display:none;text-align:center;padding:20px 0;font-size:13px;color:var(--text-3)">No existing sets yet — create one above.</div>
+  </div>
+</div>
+
 <div class="wz-modal-overlay" id="addMethodModal" onclick="if(event.target===this)closeAddMethodModal()">
   <div class="modal-box" style="max-width:520px">
     <button class="modal-close" onclick="closeAddMethodModal()">✕</button>
