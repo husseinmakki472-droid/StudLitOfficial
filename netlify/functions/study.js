@@ -65,7 +65,7 @@ if (i < modesArr.length - 1) modeStructures += ',\n    ';
 }
 const difficultyModes = ['quiz', 'practicetest', 'fitb'];
 const hasDifficultyMode = modesArr.some(function(m) { return difficultyModes.indexOf(m) !== -1; });
-const difficultyInstruction = hasDifficultyMode ? '\n\nDifficulty level: ' + difficultyLevel + '. For quiz/test/fill-in-the-blank content: easy = straightforward recall questions with obvious answers; medium = conceptual understanding required; hard = analysis, application, and nuanced reasoning required. Tag each quiz question with a "difficulty" field ("Easy", "Medium", or "Hard") matching this level.' : '';
+const difficultyInstruction = hasDifficultyMode ? '\n\nDIFFICULTY REQUIREMENT (strictly follow this): ' + difficultyLevel.toUpperCase() + '.\n- easy: simple recall, single-concept questions, obvious answers from the text, very short fill-in-the-blanks\n- medium: requires understanding and inference, multi-step reasoning, moderate vocabulary\n- hard: analysis, synthesis, edge cases, application to new scenarios, nuanced distinctions\nEvery question MUST match this difficulty. Tag each quiz question "difficulty" field as "' + (difficultyLevel.charAt(0).toUpperCase()+difficultyLevel.slice(1)) + '".' : '';
 const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate these study modes: ' + modeList + difficultyInstruction + '\n\nReturn this JSON:\n{\n  "topic": "specific topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
 const imageBlocks = filesArr
 .filter(function(f) { return f.imageData && f.mimeType; })

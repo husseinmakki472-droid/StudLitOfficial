@@ -641,31 +641,22 @@ box-shadow:0 4px 14px rgba(124,92,252,0.2);
 .sl-btn-new-set:hover { opacity:.85; transform:translateY(-1px); }
 .sl-sets-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .sl-set-card {
-background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12);
-border-radius:16px; padding:20px; cursor:pointer;
-transition:all .2s cubic-bezier(0.22,1,0.36,1);
+  background:var(--bg-2); border:1.5px solid var(--border);
+  border-radius:20px; padding:22px 20px; cursor:pointer;
+  transition:all .2s cubic-bezier(0.22,1,0.36,1); display:flex; flex-direction:column; gap:14px;
 }
-.sl-set-card:hover { border-color:#7c5cfc; box-shadow:0 4px 20px rgba(124,92,252,0.2); transform:translateY(-2px); }
-.sl-set-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
-.sl-set-card-title { font-family:‘Syne’,sans-serif; font-size:15px; font-weight:700; color:#f0efff; flex:1; margin-right:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sl-set-card-menu { background:none; border:none; color:rgba(240,239,255,0.35); cursor:pointer; font-size:16px; padding:0 4px; }
-.sl-set-stat-row { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
-.sl-set-stat { display:flex; align-items:center; gap:10px; }
-.sl-set-stat-num { font-family:‘Syne’,sans-serif; font-size:15px; font-weight:700; color:#f0efff; width:32px; text-align:right; flex-shrink:0; }
-.sl-set-stat-bar-wrap { flex:1; height:8px; background:rgba(255,255,255,0.04); border-radius:999px; overflow:hidden; }
-.sl-set-stat-bar { height:100%; border-radius:999px; }
-.sl-set-stat-label { font-size:11px; font-weight:600; width:68px; flex-shrink:0; }
-.stat-unfamiliar { background:#f87171; } .stat-unfamiliar-label { color:#f87171; }
-.stat-learning { background:#fbbf24; } .stat-learning-label { color:#fbbf24; }
-.stat-familiar { background:#60a5fa; } .stat-familiar-label { color:#60a5fa; }
-.stat-mastered { background:#4ade80; } .stat-mastered-label { color:#4ade80; }
-.sl-set-card-footer { font-size:12px; color:rgba(240,239,255,0.35); display:flex; align-items:center; justify-content:space-between; }
-.sl-set-path-label { font-size:11.5px; font-weight:600; color:rgba(240,239,255,0.6); margin-bottom:6px; }
-.sl-set-progress-bar { height:4px; background:rgba(255,255,255,0.04); border-radius:999px; overflow:hidden; margin-bottom:10px; }
-.sl-set-progress-fill { height:100%; background:linear-gradient(90deg,#7c5cfc,#b06ef3); border-radius:999px; }
-.sl-set-mode-icons { display:flex; gap:6px; }
-.sl-set-mode-icon { width:26px; height:26px; background:rgba(255,255,255,0.04); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; }
-.sl-sets-empty { text-align:center; padding:40px 20px; color:rgba(240,239,255,0.35); }
+.sl-set-card:hover { border-color:rgba(124,92,252,0.5); box-shadow:0 8px 32px rgba(124,92,252,0.15); transform:translateY(-2px); }
+.sl-set-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.sl-set-card-title { font-family:’Syne’,sans-serif; font-size:15px; font-weight:800; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sl-set-card-menu { background:none; border:none; color:var(--text-3); cursor:pointer; font-size:18px; padding:0 2px; border-radius:6px; transition:color .15s; }
+.sl-set-card-menu:hover { color:var(--text); }
+.sl-set-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.sl-set-meta-chip { display:inline-flex; align-items:center; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:3px 9px; font-size:11px; font-weight:600; color:var(--text-2); }
+.sl-set-modes-row { display:flex; gap:5px; flex-wrap:wrap; }
+.sl-set-mode-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; background:rgba(124,92,252,0.1); border:1px solid rgba(124,92,252,0.2); color:rgba(124,92,252,0.9); }
+.sl-set-card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--border); }
+.sl-set-open-btn { font-size:12px; font-weight:700; color:#7c5cfc; display:flex; align-items:center; gap:4px; }
+.sl-sets-empty { text-align:center; padding:48px 20px; color:var(--text-3); }
 .sl-sets-empty-icon { font-size:40px; margin-bottom:14px; }
 .sl-sets-empty-text { font-size:14px; line-height:1.7; }
 
@@ -885,9 +876,11 @@ LIGHT MODE — complete override, !important on all visuals
 /* ── Study sets ── */
 [data-theme=“light”] .sl-sets-heading { color: #0f0e1a !important; }
 [data-theme=“light”] .sl-sets-header { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=“light”] .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
-[data-theme=“light”] .sl-set-card:hover { border-color: #7c5cfc !important; box-shadow: 0 4px 16px rgba(124,92,252,0.12) !important; }
-[data-theme=“light”] .sl-set-card-title { color: #0f0e1a !important; }
+[data-theme=”light”] .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
+[data-theme=”light”] .sl-set-card:hover { border-color: #7c5cfc !important; box-shadow: 0 4px 16px rgba(124,92,252,0.12) !important; }
+[data-theme=”light”] .sl-set-card-title { color: #0f0e1a !important; }
+[data-theme=”light”] .sl-set-mode-pill { background: rgba(124,92,252,0.08) !important; color: #7c5cfc !important; }
+[data-theme=”light”] .sl-set-meta-chip { background: rgba(0,0,0,0.04) !important; color: rgba(15,14,26,0.6) !important; }
 [data-theme=“light”] .sl-sets-empty { color: rgba(15,14,26,0.45) !important; }
 [data-theme=“light”] .sets-title { color: #0f0e1a !important; }
 [data-theme=“light”] .set-folder { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
@@ -2441,6 +2434,9 @@ async function regenerateMode(mode) {
     }
     wzResultTabs[mode] = html;
     wzShowTab(mode);
+    // Restore chosen difficulty on the freshly rendered select
+    const newDiffEl = document.getElementById('diffSelect_' + mode);
+    if (newDiffEl) newDiffEl.value = difficulty;
   } catch(err) {
     document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;
   }
@@ -2876,52 +2872,38 @@ function slQuickMode(mode) {
 function renderSlSets(filter = '') {
   const grid = document.getElementById('slSetsGrid');
   if (!grid) return;
+  const modeIcons = {notes:'📓',quiz:'📝',flashcards:'🃏',tutor:'🧑‍🏫',practicetest:'🎯',fitb:'✏️',summary:'📋',keyconcepts:'🔑',studyplan:'📊',solve:'🔍'};
+  const modeNames = {notes:'Notes',quiz:'Quiz',flashcards:'Cards',tutor:'Tutor',practicetest:'Test',fitb:'Fill',summary:'Summary',keyconcepts:'Concepts',studyplan:'Plan',solve:'Solve'};
   const f = studySets.filter(s => s.name.toLowerCase().includes((filter||'').toLowerCase()));
   if (!f.length) {
-    grid.innerHTML = '<div class="sl-sets-empty"><div class="sl-sets-empty-icon">📚</div><div class="sl-sets-empty-text">No study sets yet.<br>Generate your first one above!</div></div>';
+    grid.innerHTML = '<div class="sl-sets-empty"><div style="font-size:36px;margin-bottom:12px">📚</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">No study sets yet</div><div style="font-size:13px">Generate content and save it to a set to see it here.</div></div>';
     return;
   }
   grid.innerHTML = f.map(set => {
-    const sess = set.sessions || [];
-    const total = Math.max(sess.length * 20, 10);
+    const sessions = set.sessions || [];
+    const lastSess = sessions[0];
+    const lastDate = lastSess ? lastSess.date : null;
+    const allModes = new Set();
+    sessions.forEach(s => {
+      if (s.tabs) Object.keys(s.tabs).forEach(m => allModes.add(m));
+      else if (s.modes) s.modes.split('+').forEach(m => { if(m) allModes.add(m.trim().toLowerCase().replace(/\s/g,'')); });
+    });
+    const modePills = [...allModes].slice(0,5).map(m =>
+      `<span class="sl-set-mode-pill">${modeIcons[m]||'📄'} ${modeNames[m]||m}</span>`
+    ).join('');
     return `<div class="sl-set-card" onclick="slOpenSet('${set.id}')">
       <div class="sl-set-card-header">
         <div class="sl-set-card-title">${escHtml(set.name)}</div>
-        <button class="sl-set-card-menu" onclick="event.stopPropagation();deleteSet('${set.id}')">···</button>
+        <button class="sl-set-card-menu" onclick="event.stopPropagation();deleteSet('${set.id}')" title="Delete">🗑</button>
       </div>
-      <div class="sl-set-stat-row">
-        <div class="sl-set-stat">
-          <div class="sl-set-stat-num">${total}</div>
-          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-unfamiliar" style="width:100%"></div></div>
-          <div class="sl-set-stat-label stat-unfamiliar-label">Unfamiliar</div>
-        </div>
-        <div class="sl-set-stat">
-          <div class="sl-set-stat-num">0</div>
-          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-learning" style="width:0%"></div></div>
-          <div class="sl-set-stat-label stat-learning-label">Learning</div>
-        </div>
-        <div class="sl-set-stat">
-          <div class="sl-set-stat-num">0</div>
-          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-familiar" style="width:0%"></div></div>
-          <div class="sl-set-stat-label stat-familiar-label">Familiar</div>
-        </div>
-        <div class="sl-set-stat">
-          <div class="sl-set-stat-num">0</div>
-          <div class="sl-set-stat-bar-wrap"><div class="sl-set-stat-bar stat-mastered" style="width:0%"></div></div>
-          <div class="sl-set-stat-label stat-mastered-label">Mastered</div>
-        </div>
+      <div class="sl-set-card-meta">
+        <span class="sl-set-meta-chip">📁 ${sessions.length} session${sessions.length!==1?'s':''}</span>
+        ${lastDate ? `<span class="sl-set-meta-chip">🕒 ${lastDate}</span>` : ''}
       </div>
-      <div class="sl-set-path-label">Your path to mastery</div>
-      <div class="sl-set-progress-bar"><div class="sl-set-progress-fill" style="width:0%"></div></div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:11.5px;color:var(--text-3)">0%</div>
-        <div class="sl-set-mode-icons">
-          <div class="sl-set-mode-icon">🃏</div>
-          <div class="sl-set-mode-icon">📝</div>
-          <div class="sl-set-mode-icon">🎯</div>
-          <div class="sl-set-mode-icon">📋</div>
-          <div class="sl-set-mode-icon">🎙️</div>
-        </div>
+      ${modePills ? `<div class="sl-set-modes-row">${modePills}</div>` : ''}
+      <div class="sl-set-card-footer">
+        <div style="font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${lastSess ? escHtml(lastSess.topic||'') : 'No sessions yet'}</div>
+        <div class="sl-set-open-btn">Open →</div>
       </div>
     </div>`;
   }).join('');
@@ -3305,7 +3287,7 @@ function addXP(amount, reason) {
   if (reason === 'timer') s.timerSessions = (s.timerSessions||0) + 1;
   lbCheckBadges(s);
   lbSaveStats(s);
-  showXPToast(amount);
+  // XP tracked silently; badge unlocks still notify
 }
 
 function lbCheckBadges(s) {
