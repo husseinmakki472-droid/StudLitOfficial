@@ -1431,7 +1431,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .upload-file-progress-fill.error{width:100%;background:#f87171}
 @keyframes progressPulse{from{opacity:.5}to{opacity:1}}
 /* 3-panel result layout */
-#wzResultView{display:none;flex-direction:column;height:100%;overflow:hidden}
+#wzResultView{display:none;flex-direction:column;flex:1;height:0;overflow:hidden}
 .wz-result-topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);background:var(--bg-2)}
 .wz-result-topbar-back{background:none;border:none;color:rgba(240,239,255,0.5);font-size:20px;cursor:pointer;padding:4px;line-height:1;transition:color .15s;flex-shrink:0}
 .wz-result-topbar-back:hover{color:#f0efff}
@@ -1457,6 +1457,15 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-sidebar-divider{height:1px;background:rgba(255,255,255,0.06);margin:10px 4px}
 .wz-sidebar-add{display:flex;align-items:center;gap:6px;padding:9px 12px;color:rgba(240,239,255,0.35);font-size:11.5px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:color .15s;text-transform:uppercase}
 .wz-sidebar-add:hover{color:#7c5cfc}
+.wz-timer-block{margin:10px 4px 4px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px}
+.wz-timer-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.3);margin-bottom:10px}
+.wz-timer-display{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;color:#f0efff;letter-spacing:2px;margin-bottom:12px;line-height:1}
+.wz-timer-btns{display:flex;gap:6px}
+.wz-timer-btn{flex:1;padding:7px 0;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.wz-timer-start{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 10px rgba(124,92,252,0.35)}
+.wz-timer-start:hover{box-shadow:0 3px 16px rgba(124,92,252,0.55);transform:translateY(-1px)}
+.wz-timer-reset{background:rgba(255,255,255,0.06);color:rgba(240,239,255,0.5);border:1px solid rgba(255,255,255,0.08)}
+.wz-timer-reset:hover{background:rgba(255,255,255,0.1);color:#f0efff}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;gap:20px}
 .wz-processing-art{font-size:80px;line-height:1;filter:drop-shadow(0 8px 24px rgba(124,92,252,0.2));animation:wzFloat 3s ease-in-out infinite}
 @keyframes wzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -2965,9 +2974,11 @@ function setResultMode(on) {
   if (on) {
     layout?.classList.add('result-mode');
     if (sidebar) sidebar.style.display = 'none';
+    document.querySelectorAll('.ws-section').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
   } else {
     layout?.classList.remove('result-mode');
     if (sidebar) sidebar.style.display = '';
+    document.querySelectorAll('.ws-section').forEach(s => { s.style.display = ''; });
   }
 }
 
@@ -3960,7 +3971,15 @@ function wzBuildSidebar(methods) {
     <span>Content</span>
   </div>
   <div class="wz-sidebar-divider"></div>
-  <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>`;
+  <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>
+  <div class="wz-timer-block" id="wzTimerBlock">
+    <div class="wz-timer-label">⏱ Study Timer</div>
+    <div class="wz-timer-display" id="wzTimerDisplay">00:00</div>
+    <div class="wz-timer-btns">
+      <button class="wz-timer-btn wz-timer-start" id="wzTimerStartBtn" onclick="wzTimerToggle()">Start</button>
+      <button class="wz-timer-btn wz-timer-reset" onclick="wzTimerReset()">Reset</button>
+    </div>
+  </div>`;
 }
 
 function wzBuildTabbedResult(topic, methods, results) {
@@ -4237,6 +4256,34 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   });
+})();
+
+// ---- Study Timer ----
+(function(){
+  let _sec = 0, _running = false, _interval = null;
+  function _fmt(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+    if (h > 0) return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+    return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  }
+  function _tick() { _sec++; var d = document.getElementById('wzTimerDisplay'); if (d) d.textContent = _fmt(_sec); }
+  window.wzTimerToggle = function() {
+    _running = !_running;
+    var btn = document.getElementById('wzTimerStartBtn');
+    if (_running) {
+      _interval = setInterval(_tick, 1000);
+      if (btn) { btn.textContent = 'Pause'; btn.style.background = 'rgba(255,255,255,0.1)'; btn.style.boxShadow = 'none'; btn.style.color = 'rgba(240,239,255,0.7)'; }
+    } else {
+      clearInterval(_interval);
+      if (btn) { btn.textContent = 'Resume'; btn.style.background = 'linear-gradient(135deg,#7c5cfc,#b06ef3)'; btn.style.boxShadow = '0 2px 10px rgba(124,92,252,0.35)'; btn.style.color = '#fff'; }
+    }
+  };
+  window.wzTimerReset = function() {
+    clearInterval(_interval); _interval = null; _running = false; _sec = 0;
+    var d = document.getElementById('wzTimerDisplay'); if (d) d.textContent = '00:00';
+    var btn = document.getElementById('wzTimerStartBtn');
+    if (btn) { btn.textContent = 'Start'; btn.style.background = 'linear-gradient(135deg,#7c5cfc,#b06ef3)'; btn.style.boxShadow = '0 2px 10px rgba(124,92,252,0.35)'; btn.style.color = '#fff'; }
+  };
 })();
 
 </script>
