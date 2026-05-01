@@ -116,6 +116,10 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .meta-tag{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:4px 10px;font-size:11.5px;color:rgba(240,239,255,0.6);font-weight:500}
 .meta-tag.accent{background:rgba(124,92,252,0.12);border-color:rgba(124,92,252,0.3);color:#7c5cfc}
 .result-mode-badge{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.regen-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(240,239,255,0.7);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.regen-btn:hover{background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.4);color:#f0efff}
+.regen-btn.spinning .regen-icon{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .content-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:24px;margin-bottom:16px;animation:cardEntrance .45s cubic-bezier(0.22,1,0.36,1) both;transition:box-shadow .2s,transform .2s}
 .content-card:hover{box-shadow:0 4px 20px rgba(124,92,252,0.2);transform:translateY(-1px)}
 @keyframes cardEntrance{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -902,7 +906,9 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .card-body * { color: rgba(15,14,26,0.72) !important; }
 [data-theme=“light”] .result-header { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
 [data-theme=“light”] .result-title { color: #0f0e1a !important; }
-[data-theme=“light”] .meta-tag { background: #eae9ff !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.65) !important; }
+[data-theme=”light”] .meta-tag { background: #eae9ff !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.65) !important; }
+[data-theme=”light”] .regen-btn { border-color: rgba(0,0,0,0.12) !important; background: rgba(0,0,0,0.04) !important; color: rgba(15,14,26,0.6) !important; }
+[data-theme=”light”] .regen-btn:hover { background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.35) !important; color: #7c5cfc !important; }
 [data-theme=“light”] .highlight-block { background: rgba(124,92,252,0.07) !important; color: #0f0e1a !important; }
 [data-theme=“light”] .shimmer-block { background: linear-gradient(90deg,rgba(0,0,0,0.05) 25%,rgba(0,0,0,0.09) 50%,rgba(0,0,0,0.05) 75%) !important; background-size: 200% 100% !important; }
 [data-theme=“light”] .error-card { background: rgba(248,113,113,0.07) !important; border-color: rgba(248,113,113,0.2) !important; }
@@ -2284,8 +2290,54 @@ function showResult(html){document.getElementById('emptyState').style.display='n
 function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${names[mode]||mode}</div></div>`}
+function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0"><button class="regen-btn" id="regenBtn_${mode}" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Regenerate</button><div class="result-mode-badge">${names[mode]||mode}</div></div></div>`}
 function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
+
+async function regenerateMode(mode) {
+  const wzView = document.getElementById('wzResultView');
+  const isWizard = wzView && wzView.style.display !== 'none';
+  if (!isWizard) { generate(); return; }
+
+  const btn = document.getElementById('regenBtn_' + mode);
+  if (btn) btn.classList.add('spinning');
+
+  const input = (document.getElementById('studyInput')?.value || '').trim();
+  const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
+
+  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Regenerating…</p></div>`;
+
+  try {
+    const data = await fetch('/.netlify/functions/study', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({topic:input||'the uploaded content', modes:[mode], files:filesPayload, urls:uploadedUrls||[]})
+    }).then(r => r.json().catch(() => null));
+
+    if (!data || data.error || !data.results || !data.results[mode]) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data?.error||'Could not regenerate. Try again.')}</div></div>`;
+      return;
+    }
+    const topic = data.topic || input || 'Study Set';
+    const d = data.results[mode];
+    let html = '';
+    switch(mode) {
+      case 'notes': html=renderNotesHTML(topic,d); break;
+      case 'quiz': html=renderQuizHTML(topic,d); break;
+      case 'flashcards': html=renderFlashcardsHTML(topic,d); break;
+      case 'tutor': html=renderTutorHTML(topic,d); break;
+      case 'practicetest': html=renderPracticeTestHTML(topic,d); break;
+      case 'fitb': html=renderFITBHTML(topic,d); break;
+      case 'summary': html=renderSummaryHTML(topic,d); break;
+      case 'keyconcepts': html=renderKeyConceptsHTML(topic,d); break;
+      case 'studyplan': html=renderStudyPlanHTML(topic,d); break;
+      case 'solve': html=renderSolveHTML(topic,d); break;
+      default: html=`<div class="card-body">${escHtml(JSON.stringify(d))}</div>`;
+    }
+    wzResultTabs[mode] = html;
+    wzShowTab(mode);
+  } catch(err) {
+    document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;
+  }
+}
 
 async function generate() {
   const input = getInput();
