@@ -761,6 +761,17 @@ box-shadow:0 4px 14px rgba(124,92,252,0.2);
 .sl-sets-empty-icon { font-size:40px; margin-bottom:14px; }
 .sl-sets-empty-text { font-size:14px; line-height:1.7; }
 
+/* Home sets section */
+.sl-home-sets-section { max-width:740px; margin:32px auto 0; padding:0 4px 40px; }
+.sl-home-sets-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.sl-home-sets-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--text); }
+.sl-home-sets-all { background:none; border:none; color:#7c5cfc; font-size:13px; font-weight:700; cursor:pointer; padding:0; }
+.sl-home-sets-all:hover { opacity:.75; }
+.sl-home-sets-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.sl-home-sets-empty { display:flex; flex-direction:column; align-items:center; padding:28px 16px; gap:8px; border:1.5px dashed var(--border); border-radius:16px; }
+.sl-home-sets-empty-icon { font-size:28px; }
+.sl-home-sets-empty-text { font-size:12.5px; color:var(--text-3); text-align:center; line-height:1.6; }
+
 /* Result view inside sl-main */
 .sl-result-view { padding:0 40px 40px; width:100%; }
 .sl-result-topbar {
@@ -1673,8 +1684,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <div class="nav-wordmark">Stud<span>Lit</span></div>
   </a>
   <div class="page-tabs">
-    <button class="page-tab active" id="tab-home" onclick="switchTab('home')">Home</button>
-    <button class="page-tab" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
+    <button class="page-tab" id="tab-home" onclick="switchTab('home')">Home</button>
+    <button class="page-tab active" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
     <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">🤖 AI Checker</button>
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
   </div>
@@ -1687,7 +1698,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   </div>
 </nav>
 
-<div class="page-view active" id="view-home">
+<div class="page-view" id="view-home">
 <section class="hero">
   <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 2-Day Free Trial</div>
   <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
@@ -1720,7 +1731,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </section>
 </div>
 
-<div class="page-view" id="view-workspace">
+<div class="page-view active" id="view-workspace">
 <div class="studley-layout">
 
   <!-- LEFT SIDEBAR NAV -->
@@ -1728,13 +1739,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <aside class="sl-sidebar">
     <div class="sl-sidebar-logo"><div class="sl-sidebar-logo-mark">SL</div>Stud<span>Lit</span></div>
     <nav class="sl-nav">
-      <button class="sl-nav-item" id="wstab-create" onclick="switchWsTab('create')">
+      <button class="sl-nav-item active" id="wstab-create" onclick="switchWsTab('create')">
         <span class="sl-nav-item-icon">✏️</span> Create Set
       </button>
       <button class="sl-nav-item" id="wstab-solve" onclick="switchWsTab('solve')">
         <span class="sl-nav-item-icon">⚡</span> Solve
       </button>
-      <button class="sl-nav-item active" id="wstab-sets" onclick="switchWsTab('sets')">
+      <button class="sl-nav-item" id="wstab-sets" onclick="switchWsTab('sets')">
         <span class="sl-nav-item-icon">📚</span> Study Sets
       </button>
     </nav>
@@ -1756,7 +1767,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <main class="sl-main">
 
 <!-- ===== STUDY SETS TAB ===== -->
-<div class="ws-section active" id="ws-sets">
+<div class="ws-section" id="ws-sets">
   <div class="ws-header">
     <div class="ws-title">Your Study Sets</div>
     <button class="sl-btn-new-set" onclick="openNewSetModal()">+ New Set</button>
@@ -1802,11 +1813,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 <!-- ===== CREATE SET TAB ===== -->
 <textarea id="studyInput" style="display:none" maxlength="2000"></textarea>
-<div class="ws-section" id="ws-create">
+<div class="ws-section active" id="ws-create">
 <div id="slHomeView">
   <div class="sl-hero">
-    <div class="sl-hero-greeting" id="heroGreeting">Welcome back! 👋</div>
-    <div class="sl-hero-sub">Upload your content and get instant AI-powered study tools</div>
+    <div class="sl-hero-greeting" id="heroGreeting">Hey, what do you want to master today?</div>
+    <div class="sl-hero-sub">Upload, paste, or type anything — get instant AI study tools in seconds</div>
 
     <!-- Three input cards -->
     <div class="sl-input-cards">
@@ -1896,6 +1907,19 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
           <button class="sl-btn-generate paste-gen-btn" id="pasteGenBtn" onclick="pasteGenerate()" disabled>⚡ Generate</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Recent Study Sets on home -->
+  <div class="sl-home-sets-section" id="slHomeSetsSection">
+    <div class="sl-home-sets-header">
+      <div class="sl-home-sets-title">Recent Sets</div>
+      <button class="sl-home-sets-all" onclick="switchWsTab('sets')">View all →</button>
+    </div>
+    <div class="sl-home-sets-grid" id="slSetsGridHome"></div>
+    <div class="sl-home-sets-empty" id="slSetsGridHomeEmpty" style="display:none">
+      <div class="sl-home-sets-empty-icon">📚</div>
+      <div class="sl-home-sets-empty-text">No study sets yet — generate your first one above!</div>
     </div>
   </div>
 
@@ -2044,7 +2068,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div id="setsEmpty" style="display:none"></div>
 </div>
 
-<div class="page-view active" id="view-home-extra">
+<div class="page-view" id="view-home-extra">
 <section class="features-section" id="features">
   <div class="features-heading">Everything you need to ace your studies</div>
   <div class="features-sub">Powered by AI — built for students who want results</div>
@@ -2419,7 +2443,7 @@ function filterSets(v){renderSets(v)}
 function openNewSetModal(){document.getElementById('newSetModal').classList.add('open');setTimeout(()=>document.getElementById('newSetName').focus(),100)}
 function closeNewSetModal(){document.getElementById('newSetModal').classList.remove('open');document.getElementById('newSetName').value='';document.getElementById('newSetDesc').value=''}
 function createNewSet(){const n=document.getElementById('newSetName').value.trim();if(!n){document.getElementById('newSetName').focus();return}studySets.unshift({id:Date.now().toString(),name:n,desc:document.getElementById('newSetDesc').value.trim(),sessions:[]});saveSets();renderSets();closeNewSetModal()}
-function deleteSet(id){if(!confirm('Delete this study set?'))return;studySets=studySets.filter(s=>s.id!==id);saveSets();renderSets()}
+function deleteSet(id){if(!confirm('Delete this study set?'))return;studySets=studySets.filter(s=>s.id!==id);saveSets();renderSets();try{renderSlSets();}catch(e){}}
 function updateSaveSelect(){}  // no-op: replaced by modal
 
 function openSaveModal() {
@@ -3194,6 +3218,7 @@ function renderSlSets(filter = '') {
   const f = studySets.filter(s => s.name.toLowerCase().includes((filter||'').toLowerCase()));
   if (!f.length) {
     grid.innerHTML = '<div class="sl-sets-empty"><div style="font-size:36px;margin-bottom:12px">📚</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">No study sets yet</div><div style="font-size:13px">Generate content and save it to a set to see it here.</div></div>';
+    renderSlSetsHome();
     return;
   }
   grid.innerHTML = f.map(set => {
@@ -3220,6 +3245,45 @@ function renderSlSets(filter = '') {
       ${modePills ? `<div class="sl-set-modes-row">${modePills}</div>` : ''}
       <div class="sl-set-card-footer">
         <div style="font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${lastSess ? escHtml(lastSess.topic||'') : 'No sessions yet'}</div>
+        <div class="sl-set-open-btn">Open →</div>
+      </div>
+    </div>`;
+  }).join('');
+  renderSlSetsHome();
+}
+
+function renderSlSetsHome() {
+  const homeGrid = document.getElementById('slSetsGridHome');
+  const homeEmpty = document.getElementById('slSetsGridHomeEmpty');
+  if (!homeGrid) return;
+  const recent = studySets.slice(0, 4);
+  if (!recent.length) {
+    homeGrid.innerHTML = '';
+    if (homeEmpty) homeEmpty.style.display = 'flex';
+    return;
+  }
+  if (homeEmpty) homeEmpty.style.display = 'none';
+  const modeIcons = {notes:'📓',quiz:'📝',flashcards:'🃏',tutor:'🧑‍🏫',practicetest:'🎯',fitb:'✏️',summary:'📋',keyconcepts:'🔑',studyplan:'📊',solve:'🔍'};
+  homeGrid.innerHTML = recent.map(set => {
+    const sessions = set.sessions || [];
+    const lastSess = sessions[0];
+    const allModes = new Set();
+    sessions.forEach(s => {
+      if (s.tabs) Object.keys(s.tabs).forEach(m => allModes.add(m));
+      else if (s.modes) s.modes.split('+').forEach(m => { if(m) allModes.add(m.trim().toLowerCase().replace(/\s/g,'')); });
+    });
+    const modeStr = [...allModes].slice(0,3).map(m => modeIcons[m]||'📄').join(' ');
+    return `<div class="sl-set-card" onclick="slOpenSet('${set.id}')">
+      <div class="sl-set-card-header">
+        <div class="sl-set-card-title">${escHtml(set.name)}</div>
+        <button class="sl-set-card-menu" onclick="event.stopPropagation();deleteSet('${set.id}')" title="Delete">🗑</button>
+      </div>
+      <div class="sl-set-card-meta">
+        <span class="sl-set-meta-chip">📁 ${sessions.length} session${sessions.length!==1?'s':''}</span>
+      </div>
+      ${modeStr ? `<div style="font-size:15px">${modeStr}</div>` : ''}
+      <div class="sl-set-card-footer">
+        <div style="font-size:11.5px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${lastSess ? escHtml(lastSess.topic||'') : 'No sessions yet'}</div>
         <div class="sl-set-open-btn">Open →</div>
       </div>
     </div>`;
@@ -3323,6 +3387,7 @@ function selectSingleMode(mode) {
 
 // Init
 try{renderSlSets();}catch(e){}
+try{renderSlSetsHome();}catch(e){}
 
 
 // ============================================================
@@ -3355,7 +3420,7 @@ function applyDisplayName(name) {
   var displayName = document.getElementById('settingsDisplayName');
   if (displayName) displayName.textContent = name;
   var greeting = document.getElementById('heroGreeting');
-  if (greeting) greeting.textContent = 'Welcome back, ' + name + '! 👋';
+  if (greeting) greeting.textContent = 'Hey ' + name + ', what do you want to master today?';
   var chatWelcome = document.getElementById('chatWelcomeName');
   if (chatWelcome) chatWelcome.textContent = 'Hey ' + name + '!';
 }
