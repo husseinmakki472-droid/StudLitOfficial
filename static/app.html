@@ -3682,21 +3682,25 @@ async function wzGenerate() {
     const fetchMode = mode => fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
-    }).then(r => r.json().catch(() => null)).catch(() => null);
+    }).then(r => r.json().catch(() => ({error: r.ok ? 'Invalid response from server.' : 'Request timed out. Try selecting fewer modes or a shorter topic.'}))).catch(() => ({error: 'Network error. Check your connection and try again.'}));
 
     const responses = await Promise.all(methods.map(fetchMode));
 
     const combinedResults = {};
     let resolvedTopic = input || 'Study Set';
+    let firstError = null;
     responses.forEach(data => {
       if (data && !data.error && data.results) {
         if (data.topic && data.topic !== 'the uploaded content') resolvedTopic = data.topic;
         Object.assign(combinedResults, data.results);
+      } else if (data && data.error && !firstError) {
+        firstError = data.error;
       }
     });
 
     if (!Object.keys(combinedResults).length) {
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate content. Check your connection and try again.</div></div>`;
+      const msg = firstError || 'The request timed out. Try selecting fewer modes or a shorter topic, then generate again.';
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`;
       return;
     }
     wzBuildTabbedResult(resolvedTopic, methods, combinedResults);
