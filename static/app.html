@@ -1325,6 +1325,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-upload-modal{background:#111128;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px 26px 24px;width:100%;max-width:460px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,0.6);animation:wzFadeIn .25s var(--ease) both}
 .wz-modal-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(240,239,255,0.5);width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .wz-modal-close:hover{background:rgba(255,255,255,0.1);color:#f0efff}
+.add-method-card{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .18s;text-align:left}
+.add-method-card:hover{background:rgba(124,92,252,0.12);border-color:rgba(124,92,252,0.35);transform:translateY(-1px)}
+.add-method-card-icon{font-size:22px;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);border-radius:10px}
+.add-method-card-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.add-method-card-desc{font-size:11px;color:var(--text-3);margin-top:2px}
 .wz-modal-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#f0efff;margin-bottom:4px}
 .wz-modal-sub{font-size:13px;color:rgba(240,239,255,0.4);margin-bottom:18px}
 .wz-modal-file-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;margin-bottom:9px}
@@ -3685,16 +3690,28 @@ function wzShowTab(mode) {
   document.getElementById('wzResultMain').innerHTML = html;
 }
 
+const WZ_MODE_DESCS = {notes:'Organized section-by-section notes',quiz:'Multiple choice questions & answers',flashcards:'Active recall flip cards',tutor:'In-depth guided lesson',practicetest:'Written short-answer assessment',fitb:'Fill-in-the-blank sentences',summary:'Overview, key points & takeaway',keyconcepts:'Glossary of important terms',studyplan:'Day-by-day study roadmap',solve:'Step-by-step problem breakdown'};
+
 function wzAddMethod() {
   const available = Object.keys(WZ_MODE_NAMES).filter(m => !wzResultTabs[m]);
   if (!available.length) { showInfoToast('All methods already added!'); return; }
-  const picked = window.prompt('Add method:\n' + available.map((m,i) => (i+1)+'. '+WZ_MODE_NAMES[m]).join('\n') + '\n\nType the number:');
-  const idx = parseInt(picked) - 1;
-  if (idx >= 0 && idx < available.length) {
-    const mode = available[idx];
-    wzSelectedMethods.add(mode);
-    wzGenerate();
-  }
+  const grid = document.getElementById('addMethodGrid');
+  grid.innerHTML = available.map(m => `
+    <button class="add-method-card" onclick="wzPickMethod('${m}')">
+      <div class="add-method-card-icon">${WZ_MODE_ICONS[m]||'📄'}</div>
+      <div><div class="add-method-card-name">${WZ_MODE_NAMES[m]||m}</div><div class="add-method-card-desc">${WZ_MODE_DESCS[m]||''}</div></div>
+    </button>`).join('');
+  document.getElementById('addMethodModal').classList.add('open');
+}
+
+function closeAddMethodModal() {
+  document.getElementById('addMethodModal').classList.remove('open');
+}
+
+function wzPickMethod(mode) {
+  closeAddMethodModal();
+  wzSelectedMethods.add(mode);
+  wzGenerate();
 }
 
 function wzSwitchRightTab(tab) {
@@ -4370,6 +4387,15 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
 <div class="xp-toast" id="xpToast"></div>
 
 <!-- UPLOAD MODAL -->
+<div class="wz-modal-overlay" id="addMethodModal" onclick="if(event.target===this)closeAddMethodModal()">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-close" onclick="closeAddMethodModal()">✕</button>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:800;margin-bottom:6px">Add a Study Method</div>
+    <div style="font-size:13px;color:var(--text-3);margin-bottom:20px">Pick a mode to add to your current study set</div>
+    <div id="addMethodGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+  </div>
+</div>
+
 <div class="wz-modal-overlay" id="wzUploadModal" onclick="wzModalOutsideClick(event)">
   <div class="wz-upload-modal" id="wzUploadModalCard">
     <button class="wz-modal-close" onclick="wzCloseModal()">✕</button>
