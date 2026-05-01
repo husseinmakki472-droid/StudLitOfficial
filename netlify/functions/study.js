@@ -44,7 +44,7 @@ fileCtx += '\n\nURLs:\n';
 for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
 }
 const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
-const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON matching the schema exactly — no markdown, no backticks. Be comprehensive and detailed: for notes generate at least 8 sections each with 4-6 detailed bullet points; for quiz generate at least 10 questions covering different concepts; for flashcards generate at least 18 cards. Cover every major concept from the content. Never leave arrays empty. Fill every field.';
+const systemPrompt = 'You are StudLit AI, an expert study material generator. Return ONLY valid JSON matching the schema exactly — no markdown, no backticks. Be concise but complete: for notes generate 5-6 focused sections with 3-4 bullets each; for quiz generate 8 questions; for flashcards generate 12 cards; for tutor generate 4-5 sections with 2 clear paragraphs each. Quality over quantity — cover the key concepts clearly. Never leave arrays empty. Fill every field.';
 const modeMap = {
 flashcards: '"flashcards":{"cards":[{"front":"term or question","back":"detailed definition or full answer"}]}',
 quiz: '"quiz":{"questions":[{"question":"specific, clear question about a key concept","options":["A) first option","B) second option","C) third option","D) fourth option"],"correct":0,"explanation":"clear explanation of why the correct answer is right"}]}',
@@ -80,7 +80,7 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
 const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan'];
-const maxTokens = modesArr.some(function(m){ return heavyModes.indexOf(m) !== -1; }) ? 8000 : 4096;
+const maxTokens = modesArr.some(function(m){ return heavyModes.indexOf(m) !== -1; }) ? 5500 : 3500;
 body: JSON.stringify({
 model: 'gpt-4o-mini', max_tokens: maxTokens, temperature: 0.3,
 response_format: { type: 'json_object' },
