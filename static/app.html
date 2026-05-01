@@ -5,6 +5,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudLit — AI Study Platform</title>
+<meta name="description" content="StudLit transforms your notes, textbooks, and lectures into flashcards, quizzes, summaries, and more — powered by AI.">
+<meta property="og:title" content="StudLit — AI Study Platform">
+<meta property="og:description" content="Turn any content into smart study tools instantly. Flashcards, quizzes, summaries, and 10 AI study modes.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#7c5cfc">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
@@ -1559,9 +1564,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <span class="sl-nav-item-icon">⚙️</span> Settings
       </button>
       <div class="sl-user-info">
-        <div class="sl-user-avatar sl-user-name">H</div>
+        <div class="sl-user-avatar" id="sidebarUserAvatar">S</div>
         <div>
-          <div class="sl-user-name">Hussein</div>
+          <div class="sl-user-name" id="sidebarUserName">Student</div>
           <div class="sl-user-plan">Free Plan</div>
         </div>
       </div>
@@ -1595,7 +1600,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <div class="solve-chat-messages" id="chatMessages">
       <div class="chat-welcome">
         <div class="chat-welcome-icon">🧑‍🏫</div>
-        <div class="chat-welcome-text"><strong>Hey Hussein!</strong> Ask me anything — I'll explain concepts, solve problems, and quiz you.</div>
+        <div class="chat-welcome-text"><strong id="chatWelcomeName">Hey there!</strong> Ask me anything — I'll explain concepts, solve problems, and quiz you.</div>
       </div>
     </div>
     <div class="solve-chat-input-row">
@@ -1643,7 +1648,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div class="ws-section" id="ws-create">
 <div id="slHomeView">
   <div class="sl-hero">
-    <div class="sl-hero-greeting">Welcome back, Hussein! 👋</div>
+    <div class="sl-hero-greeting" id="heroGreeting">Welcome back! 👋</div>
     <div class="sl-hero-sub">Upload your content and get instant AI-powered study tools</div>
 
     <!-- Three input cards -->
@@ -1696,7 +1701,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
             <button class="sl-mode-btn" data-mode="summary" onclick="toggleMode(this)"><span class="sl-mode-icon">📋</span><span class="sl-mode-name">Summary</span></button>
             <button class="sl-mode-btn" data-mode="notes" onclick="toggleMode(this)"><span class="sl-mode-icon">📓</span><span class="sl-mode-name">Notes</span></button>
             <button class="sl-mode-btn" data-mode="tutor" onclick="toggleMode(this)"><span class="sl-mode-icon">🧑‍🏫</span><span class="sl-mode-name">Tutor</span><span class="sl-mode-badge rec">AI</span></button>
-            <button class="sl-mode-btn" data-mode="practicetest" onclick="toggleMode(this)"><span class="sl-mode-icon">🎯</span><span class="sl-mode-name">Practice</span></button>
+            <button class="sl-mode-btn" data-mode="practicetest" onclick="toggleMode(this)"><span class="sl-mode-icon">🎯</span><span class="sl-mode-name">Practice Test</span></button>
             <button class="sl-mode-btn" data-mode="fitb" onclick="toggleMode(this)"><span class="sl-mode-icon">✏️</span><span class="sl-mode-name">Fill Blanks</span></button>
             <button class="sl-mode-btn" data-mode="keyconcepts" onclick="toggleMode(this)"><span class="sl-mode-icon">🔑</span><span class="sl-mode-name">Concepts</span></button>
             <button class="sl-mode-btn" data-mode="studyplan" onclick="toggleMode(this)"><span class="sl-mode-icon">📊</span><span class="sl-mode-name">Study Plan</span></button>
@@ -1736,7 +1741,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
           <button class="sl-mode-btn" data-mode="summary" onclick="toggleMode2(this)"><span class="sl-mode-icon">📋</span><span class="sl-mode-name">Summary</span></button>
           <button class="sl-mode-btn" data-mode="notes" onclick="toggleMode2(this)"><span class="sl-mode-icon">📓</span><span class="sl-mode-name">Notes</span></button>
           <button class="sl-mode-btn" data-mode="tutor" onclick="toggleMode2(this)"><span class="sl-mode-icon">🧑‍🏫</span><span class="sl-mode-name">Tutor</span><span class="sl-mode-badge rec">AI</span></button>
-          <button class="sl-mode-btn" data-mode="practicetest" onclick="toggleMode2(this)"><span class="sl-mode-icon">🎯</span><span class="sl-mode-name">Practice</span></button>
+          <button class="sl-mode-btn" data-mode="practicetest" onclick="toggleMode2(this)"><span class="sl-mode-icon">🎯</span><span class="sl-mode-name">Practice Test</span></button>
           <button class="sl-mode-btn" data-mode="fitb" onclick="toggleMode2(this)"><span class="sl-mode-icon">✏️</span><span class="sl-mode-name">Fill Blanks</span></button>
           <button class="sl-mode-btn" data-mode="keyconcepts" onclick="toggleMode2(this)"><span class="sl-mode-icon">🔑</span><span class="sl-mode-name">Concepts</span></button>
           <button class="sl-mode-btn" data-mode="studyplan" onclick="toggleMode2(this)"><span class="sl-mode-icon">📊</span><span class="sl-mode-name">Study Plan</span></button>
@@ -2595,7 +2600,7 @@ async function generatePodcast() {
   }catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
 }
 
-function podToggle(){if(!('speechSynthesis'in window)){alert('Your browser does not support text-to-speech. Try Chrome or Edge.');return}if(podcastPlaying){speechSynthesis.pause();podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'}else{if(speechSynthesis.paused){speechSynthesis.resume()}else{speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(podcastScript);podcastUtterance.rate=podcastSpeed;podcastUtterance.lang='en-US';const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes('Google')&&v.lang==='en-US')||voices.find(v=>v.lang==='en-US');if(pref)podcastUtterance.voice=pref;podcastUtterance.onboundary=(e)=>{if(e.name==='word'){const pct=(e.charIndex/podcastScript.length)*100;const p=document.getElementById('podProgress');if(p)p.style.width=pct+'%'}};podcastUtterance.onend=()=>{podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'};speechSynthesis.speak(podcastUtterance)}podcastPlaying=true;const b=document.getElementById('podPlayBtn');if(b)b.textContent='⏸'}}
+function podToggle(){if(!('speechSynthesis'in window)){showInfoToast('Text-to-speech is not supported in this browser. Try Chrome or Edge.');return}if(podcastPlaying){speechSynthesis.pause();podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'}else{if(speechSynthesis.paused){speechSynthesis.resume()}else{speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(podcastScript);podcastUtterance.rate=podcastSpeed;podcastUtterance.lang='en-US';const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes('Google')&&v.lang==='en-US')||voices.find(v=>v.lang==='en-US');if(pref)podcastUtterance.voice=pref;podcastUtterance.onboundary=(e)=>{if(e.name==='word'){const pct=(e.charIndex/podcastScript.length)*100;const p=document.getElementById('podProgress');if(p)p.style.width=pct+'%'}};podcastUtterance.onend=()=>{podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶'};speechSynthesis.speak(podcastUtterance)}podcastPlaying=true;const b=document.getElementById('podPlayBtn');if(b)b.textContent='⏸'}}
 function podRewind(){speechSynthesis.cancel();podcastPlaying=false;const b=document.getElementById('podPlayBtn');if(b)b.textContent='▶';const p=document.getElementById('podProgress');if(p)p.style.width='0%'}
 function podFastForward(){podToggle();podToggle()}
 function podCycleSpeed(){const speeds=[0.75,1,1.25,1.5,2];const idx=speeds.indexOf(podcastSpeed);podcastSpeed=speeds[(idx+1)%speeds.length];const b=document.getElementById('podSpeedBtn');if(b)b.textContent=podcastSpeed+'x';if(podcastPlaying){speechSynthesis.cancel();podcastPlaying=false;podToggle()}}
@@ -2827,19 +2832,37 @@ function switchSettingsPanel(panel, btn) {
   btn.classList.add('active');
 }
 
+function applyDisplayName(name) {
+  var initial = name.charAt(0).toUpperCase();
+  var sidebarName = document.getElementById('sidebarUserName');
+  if (sidebarName) sidebarName.textContent = name;
+  var sidebarAv = document.getElementById('sidebarUserAvatar');
+  if (sidebarAv) sidebarAv.textContent = initial;
+  var displayName = document.getElementById('settingsDisplayName');
+  if (displayName) displayName.textContent = name;
+  var greeting = document.getElementById('heroGreeting');
+  if (greeting) greeting.textContent = 'Welcome back, ' + name + '! 👋';
+  var chatWelcome = document.getElementById('chatWelcomeName');
+  if (chatWelcome) chatWelcome.textContent = 'Hey ' + name + '!';
+}
+
+function showInfoToast(msg) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:11px 20px;font-size:13px;color:#f0efff;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5);pointer-events:none;animation:fadeUp .3s ease both';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(function(){d.remove();},300); }, 2500);
+}
+
 function saveSettings() {
   try {
     // Profile
     var name = document.getElementById('settingsName') ? document.getElementById('settingsName').value.trim() : '';
-    if (!name) name = 'Hussein';
+    if (!name) name = 'Student';
     localStorage.setItem('sl-name', name);
-
-    // Update name everywhere on page
-    document.querySelectorAll('.sl-user-name, .settings-display-name, #settingsDisplayName').forEach(function(el){ el.textContent = name; });
+    applyDisplayName(name);
     var av = document.getElementById('settingsAvatar');
     if (av) av.textContent = name.charAt(0).toUpperCase();
-    var sav = document.querySelector('.sl-user-avatar');
-    if (sav) sav.textContent = name.charAt(0).toUpperCase();
 
     // Appearance - dark mode
     var dark = document.getElementById('darkModeToggle') ? document.getElementById('darkModeToggle').checked : true;
@@ -2865,6 +2888,8 @@ function saveSettings() {
       reduceMotion: document.getElementById('reduceMotionToggle') ? document.getElementById('reduceMotionToggle').checked : false,
     };
     localStorage.setItem('sl-prefs', JSON.stringify(prefs));
+    var de = document.getElementById('settingsDisplayEmail');
+    if (de) de.textContent = prefs.email || '';
 
     // Default modes
     var defaultModes = [];
@@ -2883,12 +2908,14 @@ function loadSettingsFromStorage() {
     var prefs = {};
     try { prefs = JSON.parse(localStorage.getItem('sl-prefs') || '{}'); } catch(e){}
 
-    if (prefs.name) {
+    var displayName = prefs.name || '';
+    if (displayName) {
       var el = document.getElementById('settingsName');
-      if (el) el.value = prefs.name;
+      if (el) el.value = displayName;
     }
+    applyDisplayName(displayName || 'Student');
     if (prefs.username) { var el2=document.getElementById('settingsUsername'); if(el2) el2.value=prefs.username; }
-    if (prefs.email) { var el3=document.getElementById('settingsEmail'); if(el3) el3.value=prefs.email; }
+    if (prefs.email) { var el3=document.getElementById('settingsEmail'); if(el3) el3.value=prefs.email; var de=document.getElementById('settingsDisplayEmail'); if(de) de.textContent=prefs.email; }
     if (prefs.school) { var el4=document.getElementById('settingsSchool'); if(el4) el4.value=prefs.school; }
     if (prefs.difficulty) { var el5=document.getElementById('difficultySelect'); if(el5) el5.value=prefs.difficulty; }
     if (prefs.quizLength) { var el6=document.getElementById('quizLengthSelect'); if(el6) el6.value=prefs.quizLength; }
@@ -3021,7 +3048,7 @@ function exportData() {
 function clearAllData() {
   if (!confirm('This will permanently delete all your study sets. Are you sure?')) return;
   studySets = []; saveSets(); renderSlSets();
-  alert('All study sets cleared.');
+  showInfoToast('All study sets cleared.');
 }
 
 // Load settings on page start
@@ -3167,7 +3194,8 @@ function switchLbTab(tab, btn) {
 
 function renderLb() {
   var s = lbLoadStats();
-  var me = {name:'Hussein',xp:s.xp||0,sets:s.sets||0,streak:s.streak||0,color:'#7c5cfc',isMe:true};
+  var meName = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').name||'You';}catch(e){return 'You';}}());
+  var me = {name:meName,xp:s.xp||0,sets:s.sets||0,streak:s.streak||0,color:'#7c5cfc',isMe:true};
   var board = LB_MOCK.concat([me]).sort(function(a,b){return b.xp-a.xp;});
   var myRank = board.findIndex(function(u){return u.isMe;}) + 1;
   var medals = ['🥇','🥈','🥉'];
@@ -3607,7 +3635,7 @@ function wzShowTab(mode) {
 
 function wzAddMethod() {
   const available = Object.keys(WZ_MODE_NAMES).filter(m => !wzResultTabs[m]);
-  if (!available.length) { alert('All methods already added!'); return; }
+  if (!available.length) { showInfoToast('All methods already added!'); return; }
   const picked = window.prompt('Add method:\n' + available.map((m,i) => (i+1)+'. '+WZ_MODE_NAMES[m]).join('\n') + '\n\nType the number:');
   const idx = parseInt(picked) - 1;
   if (idx >= 0 && idx < available.length) {
@@ -3769,8 +3797,8 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
       <div class="settings-avatar-row">
         <div class="settings-avatar" id="settingsAvatar">H</div>
         <div class="settings-avatar-info">
-          <div class="settings-avatar-name" id="settingsDisplayName">Hussein Makki</div>
-          <div class="settings-avatar-email">hussein@studlit.ai</div>
+          <div class="settings-avatar-name" id="settingsDisplayName">Student</div>
+          <div class="settings-avatar-email" id="settingsDisplayEmail"></div>
         </div>
         <button class="btn-settings-change">Change Photo</button>
       </div>
@@ -3779,21 +3807,21 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
           <div class="settings-row-title">Full Name</div>
           <div class="settings-row-sub">Shown in your profile and study sets</div>
         </div>
-        <input class="settings-input settings-input-sm" id="settingsName" value="Hussein Makki" placeholder="Your name">
+        <input class="settings-input settings-input-sm" id="settingsName" value="" placeholder="Your name">
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
           <div class="settings-row-title">Username</div>
           <div class="settings-row-sub">Your unique @handle on StudLit</div>
         </div>
-        <input class="settings-input settings-input-sm" id="settingsUsername" value="@husseinmakki" placeholder="@username">
+        <input class="settings-input settings-input-sm" id="settingsUsername" value="" placeholder="@username">
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
           <div class="settings-row-title">Email</div>
           <div class="settings-row-sub">Used for login and notifications</div>
         </div>
-        <input class="settings-input settings-input-sm" id="settingsEmail" value="hussein@studlit.ai" placeholder="email@example.com">
+        <input class="settings-input settings-input-sm" id="settingsEmail" value="" placeholder="email@example.com">
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
