@@ -1430,7 +1430,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-resize-handle-line{width:2px;height:40px;border-radius:999px;background:rgba(255,255,255,0.1);transition:background .15s,height .15s}
 .wz-resize-handle:hover .wz-resize-handle-line,.wz-resize-handle.dragging .wz-resize-handle-line{background:#7c5cfc;height:60px}
 .wz-panel-sidebar{width:220px;flex-shrink:0;padding:16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
-.wz-sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;color:rgba(240,239,255,0.5);font-size:13px;font-weight:500;user-select:none;position:relative}
+.wz-sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .15s;color:rgba(240,239,255,0.5);font-size:13px;font-weight:500;user-select:none;position:relative;padding-right:28px}
+.wz-sidebar-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(240,239,255,0.2);font-size:11px;cursor:pointer;padding:3px 5px;border-radius:6px;opacity:0;transition:opacity .15s,color .15s,background .15s;line-height:1}
+.wz-sidebar-item:hover .wz-sidebar-del{opacity:1}
+.wz-sidebar-del:hover{color:#f87171!important;background:rgba(248,113,113,0.12);opacity:1!important}
+.wz-autosave-badge{font-size:11.5px;font-weight:600;color:#4ade80;opacity:0;transition:opacity .4s;white-space:nowrap}
 .wz-sidebar-item:hover{background:rgba(255,255,255,0.04);color:#f0efff}
 .wz-sidebar-item.active{background:rgba(124,92,252,0.1);color:#f0efff;border-left:3px solid #7c5cfc;padding-left:9px}
 .wz-sidebar-circle{display:none}
@@ -1866,10 +1870,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <!-- WIZARD RESULT VIEW — 3-panel layout -->
 <div id="wzResultView" style="display:none">
   <div class="wz-result-topbar">
-    <button class="wz-result-topbar-back" onclick="slShowHome()" title="New set">‹</button>
+    <button class="wz-result-topbar-back" id="wzTopbarBack" onclick="slShowHome()" title="New set">‹</button>
     <div class="wz-result-topbar-title" id="wzResultTitleEl">Study Set</div>
-    <div class="wz-result-topbar-save">
-      <button class="sl-btn-save" onclick="openSaveModal()">💾 Save</button>
+    <div class="wz-result-topbar-save" style="display:flex;align-items:center;gap:10px">
+      <span class="wz-autosave-badge" id="wzAutoSaveIndicator"></span>
+      <button class="sl-btn-save" id="wzSaveBtn" onclick="openSaveModal()">💾 Save</button>
     </div>
   </div>
   <div class="wz-result-3panel">
@@ -2384,12 +2389,12 @@ function loadSession(sid, ssid) {
   if (!set) return;
   const sess = set.sessions.find(s => s.id === ssid);
   if (!sess) return;
+  wzResultTabs = {};
   switchTab('workspace');
   switchWsTab('create');
   lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
   wzFullContent = sess.sourceContent || '';
   if (sess.tabs && Object.keys(sess.tabs).length) {
-    // Restore wizard multi-tab view
     Object.assign(wzResultTabs, sess.tabs);
     const methods = Object.keys(sess.tabs);
     document.getElementById('slHomeView').style.display = 'none';
@@ -2398,13 +2403,13 @@ function loadSession(sid, ssid) {
     const rv = document.getElementById('wzResultView');
     rv.style.display = 'flex';
     document.querySelector('.studley-layout')?.classList.add('result-mode');
-    document.getElementById('wzResultTitleEl').textContent = sess.topic || 'Study Set';
     wzBuildSidebar(methods);
     document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
       if (wzResultTabs[el.dataset.mode]) el.classList.add('loaded');
     });
     wzShowTab(methods[0]);
     wzInitChat(wzFullContent);
+    wzApplySetContext();
   } else {
     showResult(sess.html);
   }
@@ -2443,7 +2448,7 @@ async function regenerateMode(mode) {
   const diffEl = document.getElementById('diffSelect_' + mode);
   const difficulty = diffEl ? diffEl.value : 'medium';
 
-  const input = (document.getElementById('studyInput')?.value || '').trim();
+  const input = (document.getElementById('studyInput')?.value || '').trim() || (lastResult && lastResult.topic) || '';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
 
   document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Regenerating…</p></div>`;
@@ -2475,10 +2480,13 @@ async function regenerateMode(mode) {
       default: html=`<div class="card-body">${escHtml(JSON.stringify(d))}</div>`;
     }
     wzResultTabs[mode] = html;
+    // Rebuild sidebar so new mode shows as loaded
+    wzBuildSidebar(Object.keys(wzResultTabs));
     wzShowTab(mode);
     // Restore chosen difficulty on the freshly rendered select
     const newDiffEl = document.getElementById('diffSelect_' + mode);
     if (newDiffEl) newDiffEl.value = difficulty;
+    if (activeSetContext) autoSaveSetContext();
   } catch(err) {
     document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;
   }
@@ -2598,6 +2606,7 @@ function notesSaveEdits(){
   }));
   const newHtml=renderNotesHTML(topic,{sections});
   wzResultTabs['notes']=newHtml;
+  if(activeSetContext) autoSaveSetContext();
 }
 function notesCopyAll(){
   const body=document.getElementById('notesEditorBody');if(!body)return;
@@ -2938,12 +2947,15 @@ function slOpenPanel(name) {
 }
 
 function slShowHome() {
+  activeSetContext = null;
+  wzResultTabs = {};
   document.getElementById('slHomeView').style.display = 'block';
   document.getElementById('slResultView').style.display = 'none';
   document.getElementById('slStep2View').style.display = 'none';
   document.getElementById('wzResultView').style.display = 'none';
   document.querySelector('.studley-layout')?.classList.remove('result-mode');
   switchWsTab('create');
+  wzApplySetContext();
 }
 
 function slShowSolve() {
@@ -3013,8 +3025,67 @@ function renderSlSets(filter = '') {
 
 function slOpenSet(setId) {
   const set = studySets.find(s => s.id === setId);
-  if (!set || !set.sessions?.length) return;
-  loadSession(set.id, set.sessions[0].id);
+  if (!set || !set.sessions?.length) { showInfoToast('This set has no sessions yet.'); return; }
+  const sess = set.sessions[0];
+  activeSetContext = { setId: set.id, sessionId: sess.id, setName: set.name };
+  loadSession(set.id, sess.id);
+}
+
+function wzLeaveSet() {
+  activeSetContext = null;
+  wzResultTabs = {};
+  lastResult = null;
+  document.getElementById('wzResultView').style.display = 'none';
+  document.querySelector('.studley-layout')?.classList.remove('result-mode');
+  switchTab('workspace');
+  switchWsTab('sets');
+}
+
+function autoSaveSetContext() {
+  if (!activeSetContext) return;
+  const set = studySets.find(s => s.id === activeSetContext.setId);
+  if (!set) return;
+  const sess = set.sessions.find(s => s.id === activeSetContext.sessionId);
+  if (!sess) return;
+  sess.tabs = Object.assign({}, wzResultTabs);
+  sess.topic = (lastResult && lastResult.topic) || sess.topic;
+  saveSets();
+  const ind = document.getElementById('wzAutoSaveIndicator');
+  if (ind) {
+    ind.textContent = '✓ Saved';
+    ind.style.opacity = '1';
+    clearTimeout(ind._t);
+    ind._t = setTimeout(() => { ind.style.opacity = '0'; }, 2000);
+  }
+}
+
+function wzApplySetContext() {
+  const backBtn = document.getElementById('wzTopbarBack');
+  const saveBtn = document.getElementById('wzSaveBtn');
+  const autoInd = document.getElementById('wzAutoSaveIndicator');
+  if (activeSetContext) {
+    if (backBtn) { backBtn.onclick = wzLeaveSet; backBtn.title = 'Back to Sets'; }
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (autoInd) autoInd.style.display = 'inline';
+    document.getElementById('wzResultTitleEl').textContent = activeSetContext.setName || 'Study Set';
+  } else {
+    if (backBtn) { backBtn.onclick = slShowHome; backBtn.title = 'New set'; }
+    if (saveBtn) saveBtn.style.display = '';
+    if (autoInd) autoInd.style.display = 'none';
+  }
+}
+
+function wzDeleteMode(e, mode) {
+  e.stopPropagation();
+  delete wzResultTabs[mode];
+  const remaining = Object.keys(wzResultTabs);
+  if (!remaining.length) {
+    if (activeSetContext) { wzLeaveSet(); } else { slShowHome(); }
+    return;
+  }
+  wzBuildSidebar(remaining);
+  wzShowTab(remaining[0]);
+  if (activeSetContext) autoSaveSetContext();
 }
 
 // Override renderSets to also update sl grid
@@ -3624,6 +3695,7 @@ let wzChatHistory = [];
 let wzChatContext = '';
 let wzChatHistory2 = [];
 let wzChatContext2 = '';
+let activeSetContext = null; // { setId, sessionId, setName } when editing a saved set
 
 const WZ_MODE_NAMES = {notes:'Notes',quiz:'Multiple Choice',flashcards:'Flashcards',tutor:'Tutor Lesson',practicetest:'Written Tests',fitb:'Fill in the Blanks',summary:'Summary',keyconcepts:'Key Concepts',studyplan:'Study Plan',solve:'Solve'};
 const WZ_MODE_ICONS = {notes:'📓',quiz:'📝',flashcards:'🃏',tutor:'🧑‍🏫',practicetest:'🎯',fitb:'✏️',summary:'📋',keyconcepts:'🔑',studyplan:'📊',solve:'🔍'};
@@ -3803,7 +3875,8 @@ function wzBuildSidebar(methods) {
   sidebar.innerHTML = methods.map((m,i) =>
     `<div class="wz-sidebar-item${i===0?' active':''}" data-mode="${m}" onclick="wzShowTab('${m}')">
       <div class="wz-sidebar-icon">${WZ_MODE_ICONS[m]||'📄'}</div>
-      <span>${WZ_MODE_NAMES[m]||m}</span>
+      <span style="flex:1">${WZ_MODE_NAMES[m]||m}</span>
+      <button class="wz-sidebar-del" onclick="wzDeleteMode(event,'${m}')" title="Remove mode">✕</button>
     </div>`
   ).join('') +
   `<div class="wz-sidebar-divider"></div>
@@ -3841,6 +3914,7 @@ function wzBuildTabbedResult(topic, methods, results) {
   wzShowTab(methods[0]);
   lastResult = { topic, modes: methods.join('+'), html: wzResultTabs[methods[0]] || '' };
   updateSaveSelect();
+  wzApplySetContext();
   try { addXP(25,'set'); } catch(e) {}
 }
 
@@ -3904,8 +3978,22 @@ function closeAddMethodModal() {
 
 function wzPickMethod(mode) {
   closeAddMethodModal();
-  wzSelectedMethods.add(mode);
-  wzGenerate();
+  // If already in result view, add just this one mode without regenerating everything
+  const inResultView = document.getElementById('wzResultView')?.style.display !== 'none';
+  if (inResultView) {
+    wzResultTabs[mode] = '';
+    const allModes = Object.keys(wzResultTabs);
+    wzBuildSidebar(allModes);
+    document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div style="font-size:36px;margin-bottom:16px">⏳</div><div class="wz-processing-text">Generating ${WZ_MODE_NAMES[mode]||mode}…</div></div>`;
+    document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
+      if (el.dataset.mode === mode) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+    regenerateMode(mode);
+  } else {
+    wzSelectedMethods.add(mode);
+    wzGenerate();
+  }
 }
 
 function wzSwitchRightTab(tab) {
