@@ -3494,20 +3494,28 @@ async function wzGenerate() {
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   try {
-    const res = await fetch('/.netlify/functions/study', {
+    const topicArg = input || 'the uploaded content';
+    const fetchMode = mode => fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:input||'the uploaded content', modes:methods, files:filesPayload, urls:uploadedUrls||[]})
+      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[]})
+    }).then(r => r.json().catch(() => null)).catch(() => null);
+
+    const responses = await Promise.all(methods.map(fetchMode));
+
+    const combinedResults = {};
+    let resolvedTopic = input || 'Study Set';
+    responses.forEach(data => {
+      if (data && !data.error && data.results) {
+        if (data.topic && data.topic !== 'the uploaded content') resolvedTopic = data.topic;
+        Object.assign(combinedResults, data.results);
+      }
     });
-    let data;
-    try { data = await res.json(); } catch(e) {
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>`;
+
+    if (!Object.keys(combinedResults).length) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate content. Check your connection and try again.</div></div>`;
       return;
     }
-    if (!res.ok || data.error) {
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data.error||'Server error')}</div></div>`;
-      return;
-    }
-    wzBuildTabbedResult(data.topic || input || 'Study Set', methods, data.results || {});
+    wzBuildTabbedResult(resolvedTopic, methods, combinedResults);
     const fileCtx = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent).join('\n\n');
     wzFullContent = fileCtx || input || '';
     wzInitChat(wzFullContent);
