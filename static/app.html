@@ -2971,14 +2971,19 @@ function slOpenPanel(name) {
 function setResultMode(on) {
   const layout = document.querySelector('.studley-layout');
   const sidebar = document.querySelector('.sl-sidebar');
+  const wsCreate = document.getElementById('ws-create');
   if (on) {
     layout?.classList.add('result-mode');
     if (sidebar) sidebar.style.display = 'none';
-    document.querySelectorAll('.ws-section').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+    document.querySelectorAll('.ws-section').forEach(s => {
+      if (s.id !== 'ws-create') { s.classList.remove('active'); s.style.display = 'none'; }
+    });
+    if (wsCreate) { wsCreate.style.cssText = 'display:flex!important;flex-direction:column;padding:0;height:100%;overflow:hidden'; }
   } else {
     layout?.classList.remove('result-mode');
     if (sidebar) sidebar.style.display = '';
-    document.querySelectorAll('.ws-section').forEach(s => { s.style.display = ''; });
+    document.querySelectorAll('.ws-section').forEach(s => { if (s.id !== 'ws-create') s.style.display = ''; });
+    if (wsCreate) { wsCreate.style.cssText = ''; }
   }
 }
 
@@ -4818,36 +4823,7 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   </div>
 </div>
 
-<!-- TIMER -->
-
-<button class="timer-fab" id="timerFab" onclick="toggleTimer()">⏱</button>
-
-<div class="timer-widget" id="timerWidget">
-  <div class="timer-w-header">
-    <div class="timer-w-label">⏱ Study Timer</div>
-    <button class="timer-w-close" onclick="toggleTimer()">✕</button>
-  </div>
-  <div class="timer-w-display" id="timerDisplay">25:00</div>
-  <div class="timer-w-prog"><div class="timer-w-prog-fill" id="timerFill"></div></div>
-  <div class="timer-w-controls">
-    <button class="timer-w-play" id="timerPlayBtn" onclick="timerToggle()">▶ Start</button>
-    <button class="timer-w-reset" onclick="timerReset()">↺</button>
-  </div>
-  <div class="timer-w-presets">
-    <div class="timer-w-preset active" onclick="timerPreset(this,5)">5m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,10)">10m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,25)">25m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,45)">45m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,60)">1h</div>
-  </div>
-  <div class="timer-w-custom">
-    <div class="timer-w-custom-lbl">Custom:</div>
-    <input class="timer-w-input" id="tMins" type="number" min="0" max="999" placeholder="mm">
-    <div class="timer-w-sep">:</div>
-    <input class="timer-w-input" id="tSecs" type="number" min="0" max="59" placeholder="ss" style="width:40px">
-    <button class="timer-w-set" onclick="timerCustom()">Set</button>
-  </div>
-</div>
+<!-- TIMER FAB removed - timer is now in the result sidebar -->
 <div class="xp-toast" id="xpToast"></div>
 
 <!-- UPLOAD MODAL -->
