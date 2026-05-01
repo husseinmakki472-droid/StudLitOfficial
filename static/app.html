@@ -2312,6 +2312,7 @@ function buildSessionData() {
     modes: lastResult.modes,
     html: lastResult.html,
     tabs: isWizard ? Object.assign({}, wzResultTabs) : null,
+    sourceContent: wzFullContent || '',
     date: new Date().toLocaleDateString()
   };
 }
@@ -2347,6 +2348,7 @@ function loadSession(sid, ssid) {
   switchTab('workspace');
   switchWsTab('create');
   lastResult = { topic: sess.topic, modes: sess.modes, html: sess.html };
+  wzFullContent = sess.sourceContent || '';
   if (sess.tabs && Object.keys(sess.tabs).length) {
     // Restore wizard multi-tab view
     Object.assign(wzResultTabs, sess.tabs);
@@ -2363,6 +2365,7 @@ function loadSession(sid, ssid) {
       if (wzResultTabs[el.dataset.mode]) el.classList.add('loaded');
     });
     wzShowTab(methods[0]);
+    wzInitChat(wzFullContent);
   } else {
     showResult(sess.html);
   }
