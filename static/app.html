@@ -3498,7 +3498,11 @@ async function wzGenerate() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({topic:input||'the uploaded content', modes:methods, files:filesPayload, urls:uploadedUrls||[]})
     });
-    const data = await res.json();
+    let data;
+    try { data = await res.json(); } catch(e) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>`;
+      return;
+    }
     if (!res.ok || data.error) {
       document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data.error||'Server error')}</div></div>`;
       return;
