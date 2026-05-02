@@ -2600,18 +2600,11 @@ function previewMode(mode){var btn=document.querySelector('[data-mode="'+mode+'"
 function demoMode(){document.getElementById('studyInput').value='Photosynthesis';updateCharCount();selectMode(document.querySelector('[data-mode="flashcards"]'));switchTab('workspace');setTimeout(generate,300)}
 
 function switchWsTab(tab){
-  // Clear any inline display overrides left by setResultMode
-  setResultMode(false);
   document.querySelectorAll('.ws-section').forEach(s=>{s.classList.remove('active');s.style.display='';});
   var el=document.getElementById('ws-'+tab);if(el)el.classList.add('active');
   document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));
   var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');
   if(tab==='sets')try{renderSlSets();}catch(e){}
-  if(tab==='create'){
-    var hv=document.getElementById('slHomeView');
-    var rv=document.getElementById('wzResultView');
-    if(hv&&(!rv||rv.style.display==='none'))hv.style.display='block';
-  }
 }
 function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';}
 function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';setResultMode(true);switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');const nb=document.getElementById('notesEditorBody');if(nb)nb.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el=>el.addEventListener('input',notesSaveEdits));}
@@ -4403,7 +4396,6 @@ function wzBuildTabbedResult(topic, methods, results) {
     var _seen=((_s.topicHistory||{})[_tk]||[]).filter(function(d){return d===_today;}).length;
     scoreEventServer('set_generate',{topicSeenToday:_seen}).then(function(g){if(g.xp>0)addXP(g.xp,'set',{topic:_tk});});
   }catch(e){}
-}
 }
 
 function wzShowTab(mode) {
