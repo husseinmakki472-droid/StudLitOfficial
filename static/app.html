@@ -580,41 +580,59 @@ overflow:hidden; height:100%;
 
 /* Hero area */
 .sl-hero {
-padding:48px 52px 32px; text-align:center; width:100%;
+padding:52px 48px 28px; text-align:center; width:100%;
 }
 .sl-hero-greeting {
-font-family:‘Syne’,sans-serif; font-size:clamp(26px,3.5vw,38px);
-font-weight:800; color:#f0efff; letter-spacing:-.8px; margin-bottom:8px;
+font-family:’Syne’,sans-serif; font-size:clamp(28px,4vw,46px);
+font-weight:800; color:#f0efff; letter-spacing:-1.2px; margin-bottom:10px; line-height:1.15;
 }
-.sl-hero-sub { font-size:15px; color:rgba(240,239,255,0.35); margin-bottom:32px; }
+.sl-hero-sub { font-size:15px; color:rgba(240,239,255,0.38); margin-bottom:36px; font-weight:400; }
 
 /* Input cards row */
 .sl-input-cards {
 display:grid; grid-template-columns:1fr 1fr 1fr;
-gap:12px; margin-bottom:10px;
+gap:10px; margin-bottom:16px; max-width:680px; margin-left:auto; margin-right:auto;
 }
 .sl-input-card {
-background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12);
-border-radius:16px; padding:20px 18px;
-cursor:pointer; transition:all .22s cubic-bezier(0.22,1,0.36,1);
-display:flex; flex-direction:column; gap:6px; text-align:left;
+background:rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.09);
+border-radius:20px; padding:22px 16px 18px;
+cursor:pointer; transition:all .22s cubic-bezier(0.34,1.56,0.64,1);
+display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
 }
 .sl-input-card:hover {
-background:rgba(255,255,255,0.04); border-color:#7c5cfc;
-transform:translateY(-3px); box-shadow:0 8px 28px rgba(124,92,252,0.2);
+background:rgba(255,255,255,0.08); border-color:rgba(124,92,252,0.45);
+transform:scale(1.035); box-shadow:0 14px 36px rgba(0,0,0,0.28);
 }
-.sl-input-card.active-card { border-color:#7c5cfc; background:rgba(124,92,252,0.07); }
-.sl-input-card-icon { font-size:22px; margin-bottom:4px; }
-.sl-input-card-title { font-family:‘Syne’,sans-serif; font-size:15px; font-weight:700; color:#f0efff; }
-.sl-input-card-sub { font-size:12px; color:rgba(240,239,255,0.35); }
+.sl-input-card.active-card { border-color:rgba(124,92,252,0.65); background:rgba(124,92,252,0.1); box-shadow:0 0 0 3px rgba(124,92,252,0.18); }
+.sl-input-card-icon {
+width:46px; height:46px; border-radius:14px; margin-bottom:4px;
+background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+display:flex; align-items:center; justify-content:center; font-size:21px;
+}
+.sl-input-card-title { font-family:’Syne’,sans-serif; font-size:14px; font-weight:700; color:#f0efff; }
+.sl-input-card-sub { font-size:11.5px; color:rgba(240,239,255,0.35); line-height:1.45; }
 
 /* Expanded input panels */
-.sl-input-panel { display:none; animation:fadeUp .3s cubic-bezier(0.22,1,0.36,1) both; }
+.sl-input-panel { display:none; animation:fadeUp .28s cubic-bezier(0.22,1,0.36,1) both; max-width:680px; margin:0 auto; }
 .sl-input-panel.open { display:block; }
 .sl-panel-card {
-background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12);
-border-radius:16px; padding:22px 24px; margin-bottom:12px;
+background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+border-radius:22px; padding:24px 26px; margin-bottom:12px;
+backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
 }
+/* Podcast panel */
+.pod-heading{font-family:’Syne’,sans-serif;font-size:17px;font-weight:800;color:#f0efff;margin-bottom:3px}
+.pod-sub{font-size:13px;color:rgba(240,239,255,0.38);margin-bottom:18px}
+.pod-topic-input{width:100%;min-height:90px;resize:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:13px 16px;font-family:’DM Sans’,sans-serif;font-size:14.5px;color:#f0efff;line-height:1.7;outline:none;transition:border-color .18s,box-shadow .18s;margin-bottom:16px;box-sizing:border-box}
+.pod-topic-input::placeholder{color:rgba(240,239,255,0.22)}
+.pod-topic-input:focus{border-color:rgba(124,92,252,0.5);box-shadow:0 0 0 3px rgba(124,92,252,0.13)}
+.pod-style-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(240,239,255,0.35);margin-bottom:9px}
+.pod-styles{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.pod-style-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 16px;font-family:’DM Sans’,sans-serif;font-size:13px;font-weight:600;color:rgba(240,239,255,0.55);cursor:pointer;transition:all .15s}
+.pod-style-btn.active{background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.45);color:#c4a6ff}
+.pod-style-btn:hover:not(.active){background:rgba(255,255,255,0.09);color:#f0efff}
+.pod-gen-btn{width:100%;padding:13px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:none;border-radius:14px;font-family:’Syne’,sans-serif;font-size:14px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .18s,transform .15s;box-shadow:0 4px 18px rgba(124,92,252,0.3)}
+.pod-gen-btn:hover{opacity:.9;transform:translateY(-1px)}
 .sl-topic-textarea {
 width:100%; min-height:120px; resize:none;
 padding:14px 16px; border-radius:16px;
@@ -1848,7 +1866,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <div class="sl-input-card-title">Paste</div>
         <div class="sl-input-card-sub">YouTube, website, text</div>
       </div>
-      <div class="sl-input-card" id="cardRecord" onclick="slOpenPanel('paste')">
+      <div class="sl-input-card" id="cardPodcast" onclick="slOpenPanel('podcast')">
         <div class="sl-input-card-icon">🎙️</div>
         <div class="sl-input-card-title">Podcast</div>
         <div class="sl-input-card-sub">AI-narrated lesson</div>
@@ -1897,6 +1915,23 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
             <button class="sl-btn-sec" onclick="randomPrompt()">🎲</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Podcast panel -->
+    <div class="sl-input-panel" id="panelPodcast">
+      <div class="sl-panel-card">
+        <div class="pod-heading">🎙️ AI Podcast</div>
+        <div class="pod-sub">Describe your topic — StudLit will narrate a full lesson for you</div>
+        <textarea class="pod-topic-input" id="podcastTopicInput" placeholder="e.g. The French Revolution, how photosynthesis works, machine learning basics…" maxlength="1000"></textarea>
+        <div class="pod-style-label">Style</div>
+        <div class="pod-styles">
+          <button class="pod-style-btn active" onclick="podSelectStyle(this)">🎓 Educational</button>
+          <button class="pod-style-btn" onclick="podSelectStyle(this)">😄 Casual</button>
+          <button class="pod-style-btn" onclick="podSelectStyle(this)">📰 Interview</button>
+          <button class="pod-style-btn" onclick="podSelectStyle(this)">⚡ Quick Recap</button>
+        </div>
+        <button class="pod-gen-btn" onclick="generatePodcastFromPanel()">🎙️ Generate Podcast</button>
       </div>
     </div>
 
@@ -3228,7 +3263,7 @@ function slOpenPanel(name) {
     activePanel = null; return;
   }
   // Close all panels
-  ['Upload','Paste'].forEach(p => {
+  ['Upload','Paste','Podcast'].forEach(p => {
     document.getElementById('panel'+p)?.classList.remove('open');
   });
   document.querySelectorAll('.sl-input-card').forEach(c => c.classList.remove('active-card'));
@@ -3238,6 +3273,31 @@ function slOpenPanel(name) {
   if (panel) panel.classList.add('open');
   if (card) card.classList.add('active-card');
   activePanel = name;
+}
+
+function podSelectStyle(btn) {
+  btn.closest('.pod-styles').querySelectorAll('.pod-style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function generatePodcastFromPanel() {
+  const topic = (document.getElementById('podcastTopicInput')?.value || '').trim();
+  if (!topic) { document.getElementById('podcastTopicInput')?.focus(); return; }
+  const styleBtn = document.querySelector('.pod-styles .pod-style-btn.active');
+  const style = styleBtn ? styleBtn.textContent.replace(/^[^\s]+\s/,'') : 'Educational';
+  showLoading();
+  try {
+    const res = await fetch('/.netlify/functions/podcast', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, style, context: '' })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">' + escHtml(data.error || 'Failed') + '</div></div>'); return; }
+    podcastScript = data.script || '';
+    const minEst = Math.ceil(podcastScript.split(/\s+/).length / 130);
+    showResult(`<div class="podcast-bar"><div class="podcast-header"><div class="podcast-art">🎙️</div><div class="podcast-info"><div class="podcast-title">StudLit Podcast: ${escHtml(topic)}</div><div class="podcast-subtitle">${escHtml(style)} · ~${minEst} min</div></div></div><div class="podcast-controls"><button class="pod-play-btn" id="podPlayBtn" onclick="podToggle()">▶</button><button class="pod-speed-btn" id="podSpeedBtn" onclick="podCycleSpeed()">${podcastSpeed}x</button></div><div class="podcast-script">${escHtml(podcastScript.slice(0, 300))}...</div></div>`);
+    lastResult = { topic, modes: 'Podcast', html: '' };
+  } catch (err) { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">' + escHtml(err.message) + '</div></div>'); }
 }
 
 function setResultMode(on) {
