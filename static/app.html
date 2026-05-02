@@ -1701,7 +1701,6 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <div class="nav-wordmark">Stud<span>Lit</span></div>
   </a>
   <div class="page-tabs">
-    <button class="page-tab" id="tab-home" onclick="switchTab('home')">Home</button>
     <button class="page-tab active" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
     <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">🤖 AI Checker</button>
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
@@ -1711,19 +1710,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <span id="themeLabel" style="font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none">🌙 Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
   </div>
-    <button class="btn-cta" onclick="switchTab('workspace')">▶ <span>Start Studying</span></button>
   </div>
 </nav>
 
-<div class="page-view" id="view-home">
+<div class="page-view" id="view-home" style="display:none!important">
 <section class="hero">
-  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 2-Day Free Trial</div>
-  <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
-  <p class="hero-sub">StudLit uses AI to transform your notes, books, and lectures into smarter summaries, quizzes, and study tools.</p>
-  <div class="hero-actions">
-    <button class="btn-hero" onclick="showPricingModal()">Get Started Free →</button>
-    <button class="btn-hero-ghost" onclick="switchTab('workspace')">Explore Features</button>
-  </div>
   <div class="hero-social-proof">
     <div class="hero-avatars">
       <div class="hero-avatar">A</div>
@@ -2085,7 +2076,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div id="setsEmpty" style="display:none"></div>
 </div>
 
-<div class="page-view" id="view-home-extra">
+<div class="page-view" id="view-home-extra" style="display:none!important">
 <section class="features-section" id="features">
   <div class="features-heading">Everything you need to ace your studies</div>
   <div class="features-sub">Powered by AI — built for students who want results</div>
@@ -2425,7 +2416,17 @@ function applyTheme(theme) {
   }
 }
 
-function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));var tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');['home','workspace','writing','leaderboard'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});var hx=document.getElementById('view-home-extra');if(hx)hx.classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'});try{if(t==='leaderboard')renderLb();}catch(e){};if(t==='workspace')try{switchWsTab('create');}catch(e){};if(t!=='workspace')setResultMode(false);}
+function switchTab(t){
+  document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));
+  var tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');
+  ['workspace','writing','leaderboard'].forEach(v=>{
+    const el=document.getElementById('view-'+v);
+    if(el)el.classList.toggle('active',v===t);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+  try{if(t==='leaderboard')renderLb();}catch(e){}
+  if(t!=='workspace')setResultMode(false);
+}
 
 function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(selectedModes.size===1)return;selectedModes.delete(m);btn.classList.remove('selected')}else{selectedModes.add(m);btn.classList.add('selected')}updateModesBar()}
 function updateModesBar(){var bar=document.getElementById('selectedModesBar');if(!bar)return;var names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'};if(selectedModes.size>1){bar.style.display='flex';bar.innerHTML='<span style="font-size:11px;font-weight:600">Generating:</span>'+[...selectedModes].map(function(m){return '<span class="sel-mode-tag">'+(names[m]||m)+'</span>';}).join('');}else{bar.style.display='none';}}
@@ -2587,7 +2588,20 @@ function randomPrompt(){document.getElementById('studyInput').value=randomPrompt
 function previewMode(mode){var btn=document.querySelector('[data-mode="'+mode+'"]');if(btn)selectMode(btn);if(!document.getElementById('studyInput').value){document.getElementById('studyInput').value=randomPrompts[Math.floor(Math.random()*randomPrompts.length)];updateCharCount();}switchTab('workspace');generate();}
 function demoMode(){document.getElementById('studyInput').value='Photosynthesis';updateCharCount();selectMode(document.querySelector('[data-mode="flashcards"]'));switchTab('workspace');setTimeout(generate,300)}
 
-function switchWsTab(tab){document.querySelectorAll('.ws-section').forEach(s=>s.classList.remove('active'));var el=document.getElementById('ws-'+tab);if(el)el.classList.add('active');document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');if(tab==='sets')try{renderSlSets();}catch(e){}}
+function switchWsTab(tab){
+  // Clear any inline display overrides left by setResultMode
+  setResultMode(false);
+  document.querySelectorAll('.ws-section').forEach(s=>{s.classList.remove('active');s.style.display='';});
+  var el=document.getElementById('ws-'+tab);if(el)el.classList.add('active');
+  document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));
+  var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');
+  if(tab==='sets')try{renderSlSets();}catch(e){}
+  if(tab==='create'){
+    var hv=document.getElementById('slHomeView');
+    var rv=document.getElementById('wzResultView');
+    if(hv&&(!rv||rv.style.display==='none'))hv.style.display='block';
+  }
+}
 function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';}
 function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';setResultMode(true);switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');const nb=document.getElementById('notesEditorBody');if(nb)nb.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el=>el.addEventListener('input',notesSaveEdits));}
 function getInput(){return document.getElementById('studyInput').value.trim()}
