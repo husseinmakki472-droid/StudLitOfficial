@@ -1701,6 +1701,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <div class="nav-wordmark">Stud<span>Lit</span></div>
   </a>
   <div class="page-tabs">
+    <button class="page-tab" id="tab-home" onclick="switchTab('home')">Home</button>
     <button class="page-tab active" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
     <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">🤖 AI Checker</button>
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
@@ -1710,11 +1711,19 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <span id="themeLabel" style="font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none">🌙 Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
   </div>
+    <button class="btn-cta" onclick="switchTab('workspace')">▶ <span>Start Studying</span></button>
   </div>
 </nav>
 
-<div class="page-view" id="view-home" style="display:none!important">
+<div class="page-view" id="view-home">
 <section class="hero">
+  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 2-Day Free Trial</div>
+  <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
+  <p class="hero-sub">StudLit uses AI to transform your notes, books, and lectures into smarter summaries, quizzes, and study tools.</p>
+  <div class="hero-actions">
+    <button class="btn-hero" onclick="showPricingModal()">Get Started Free →</button>
+    <button class="btn-hero-ghost" onclick="switchTab('workspace')">Explore Features</button>
+  </div>
   <div class="hero-social-proof">
     <div class="hero-avatars">
       <div class="hero-avatar">A</div>
@@ -2076,7 +2085,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div id="setsEmpty" style="display:none"></div>
 </div>
 
-<div class="page-view" id="view-home-extra" style="display:none!important">
+<div class="page-view" id="view-home-extra">
 <section class="features-section" id="features">
   <div class="features-heading">Everything you need to ace your studies</div>
   <div class="features-sub">Powered by AI — built for students who want results</div>
@@ -2419,10 +2428,12 @@ function applyTheme(theme) {
 function switchTab(t){
   document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));
   var tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');
-  ['workspace','writing','leaderboard'].forEach(v=>{
-    const el=document.getElementById('view-'+v);
+  ['home','workspace','writing','leaderboard'].forEach(function(v){
+    var el=document.getElementById('view-'+v);
     if(el)el.classList.toggle('active',v===t);
   });
+  var hx=document.getElementById('view-home-extra');
+  if(hx)hx.classList.toggle('active',t==='home');
   window.scrollTo({top:0,behavior:'smooth'});
   try{if(t==='leaderboard')renderLb();}catch(e){}
   if(t!=='workspace')setResultMode(false);
