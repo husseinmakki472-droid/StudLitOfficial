@@ -15,12 +15,12 @@ export default function App() {
       <div className="mesh-orb-2" />
       <Navbar dark={dark} setDark={setDark} />
       <main style={{ position: 'relative', zIndex: 1 }}>
-        <Hero />
-        <Features />
-        <HowItWorks />
-        <Pricing />
+        <Hero dark={dark} />
+        <Features dark={dark} />
+        <HowItWorks dark={dark} />
+        <Pricing dark={dark} />
       </main>
-      <Footer />
+      <Footer dark={dark} />
     </div>
   )
 }
