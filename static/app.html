@@ -445,39 +445,56 @@ footer{position:relative;z-index:1;text-align:center;padding:40px 28px;border-to
 .writing-sub{font-size:14px;color:rgba(240,239,255,0.35);margin-bottom:28px;line-height:1.6}
 /* Document-style writing page */
 .doc-page{display:flex;flex-direction:column;height:calc(100vh - 64px);background:var(--bg)}
-.doc-topbar{display:flex;align-items:center;padding:14px 32px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);flex-shrink:0}
-.doc-mode-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:3px}
-.doc-mode-tab{background:none;border:none;border-radius:9px;padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(240,239,255,0.45);cursor:pointer;transition:all .18s}
-.doc-mode-tab.active{background:rgba(255,255,255,0.1);color:#f0efff;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
-.doc-split{display:flex;flex:1;height:0;overflow:hidden}
+.doc-topbar{display:flex;align-items:center;gap:16px;padding:0 24px;height:64px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.015);flex-shrink:0}
+.doc-topbar-icon{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,rgba(124,92,252,0.2),rgba(176,110,243,0.12));border:1px solid rgba(124,92,252,0.25);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-topbar-info{flex:1}
+.doc-topbar-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f0efff;line-height:1.2}
+.doc-topbar-sub{font-size:11px;color:rgba(240,239,255,0.35);margin-top:1px}
+.doc-topbar-back{background:none;border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:rgba(240,239,255,0.45);cursor:pointer;transition:all .18s;flex-shrink:0}
+.doc-topbar-back:hover{border-color:rgba(255,255,255,0.22);color:#f0efff}
+.doc-mode-tabs{display:flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:3px;flex-shrink:0}
+.doc-mode-tab{background:none;border:none;border-radius:9px;padding:7px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(240,239,255,0.45);cursor:pointer;transition:all .18s;white-space:nowrap}
+.doc-mode-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 12px rgba(124,92,252,0.35)}
+.doc-split{display:flex;flex:1;height:0;overflow:hidden;padding:16px;gap:12px}
 .ai-panel.active{display:flex;flex-direction:column;flex:1;overflow:hidden}
-.doc-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:24px 32px}
-.doc-divider{width:1px;background:rgba(255,255,255,0.06);flex-shrink:0;margin:20px 0}
-.doc-pane-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.doc-pane-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.3)}
-.doc-pane-wc{font-size:11px;color:rgba(240,239,255,0.22)}
-.doc-textarea{flex:1;width:100%;resize:none;background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;color:#f0efff;line-height:1.8;padding:0;min-height:0}
-.doc-textarea::placeholder{color:rgba(240,239,255,0.2)}
-.doc-pane-actions{display:flex;gap:8px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto;flex-shrink:0}
+.doc-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:20px 22px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:20px}
+.doc-divider{display:none}
+.doc-pane-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.doc-pane-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.45)}
+.doc-pane-wc{font-size:11px;color:rgba(240,239,255,0.25);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:2px 8px}
+.doc-textarea{flex:1;width:100%;resize:none;background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;color:#f0efff;line-height:1.85;padding:0;min-height:0}
+.doc-textarea::placeholder{color:rgba(240,239,255,0.18)}
+.doc-pane-actions{display:flex;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto;flex-shrink:0}
 .doc-btn-primary{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:10px;padding:9px 22px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;box-shadow:0 3px 12px rgba(124,92,252,0.25)}
 .doc-btn-primary:hover{opacity:.88;transform:translateY(-1px)}
-.doc-btn-ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:rgba(240,239,255,0.5);cursor:pointer;transition:background .18s,color .18s}
-.doc-btn-ghost:hover{background:rgba(255,255,255,0.09);color:#f0efff}
+.doc-btn-ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:rgba(240,239,255,0.45);cursor:pointer;transition:all .18s}
+.doc-btn-ghost:hover{background:rgba(255,255,255,0.09);color:#f0efff;border-color:rgba(255,255,255,0.15)}
 .doc-results-area{flex:1;overflow-y:auto;min-height:0}
-.doc-results-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:rgba(240,239,255,0.18);font-size:13px;text-align:center}
-.doc-results-empty-icon{font-size:32px;opacity:.4}
+.doc-results-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:rgba(240,239,255,0.2);font-size:13px;text-align:center;padding:20px}
+.doc-results-empty-icon{font-size:40px;opacity:.5;margin-bottom:4px}
+.doc-results-empty-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:rgba(240,239,255,0.3)}
+.doc-results-empty-sub{font-size:12.5px;color:rgba(240,239,255,0.18);line-height:1.6;max-width:200px}
 .humanizer-output{margin-top:0;background:none;border:none;border-radius:0;padding:0;animation:fadeUp .4s cubic-bezier(0.22,1,0.36,1) both}
-.humanizer-text{font-size:15px;color:#f0efff;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.humanizer-text{font-size:15px;color:#f0efff;line-height:1.85;white-space:pre-wrap;word-break:break-word}
 .humanizer-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)}
-[data-theme="light"] .doc-page{background:#fafaf8}
-[data-theme="light"] .doc-topbar{background:rgba(0,0,0,0.02);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .doc-page{background:#f6f5ff}
+[data-theme="light"] .doc-topbar{background:rgba(255,255,255,0.8);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .doc-topbar-back{border-color:rgba(0,0,0,0.12);color:rgba(15,14,26,0.45)}
+[data-theme="light"] .doc-topbar-back:hover{border-color:rgba(0,0,0,0.25);color:#0f0e1a}
 [data-theme="light"] .doc-mode-tabs{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.08)}
-[data-theme="light"] .doc-mode-tab.active{background:#fff;color:#0f0e1a}
-[data-theme="light"] .doc-divider{background:rgba(0,0,0,0.07)}
-[data-theme="light"] .doc-pane-label{color:rgba(15,14,26,0.35)}
+[data-theme="light"] .doc-pane{background:rgba(255,255,255,0.9);border-color:rgba(0,0,0,0.08)}
+[data-theme="light"] .doc-pane-header{border-bottom-color:rgba(0,0,0,0.06)}
+[data-theme="light"] .doc-pane-label{color:rgba(15,14,26,0.45)}
+[data-theme="light"] .doc-pane-wc{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.07);color:rgba(15,14,26,0.4)}
 [data-theme="light"] .doc-textarea{color:#0f0e1a}
-[data-theme="light"] .doc-textarea::placeholder{color:rgba(15,14,26,0.25)}
+[data-theme="light"] .doc-textarea::placeholder{color:rgba(15,14,26,0.22)}
 [data-theme="light"] .doc-pane-actions{border-top-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .doc-btn-ghost{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.5)}
+[data-theme="light"] .doc-results-empty{color:rgba(15,14,26,0.22)}
+[data-theme="light"] .doc-results-empty-title{color:rgba(15,14,26,0.3)}
+[data-theme="light"] .humanizer-text{color:#0f0e1a}
+[data-theme="light"] .humanizer-actions{border-top-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .doc-topbar-icon{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border-color:rgba(124,92,252,0.2)}
 [data-theme="light"] .doc-btn-ghost{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.08);color:rgba(15,14,26,0.5)}
 [data-theme="light"] .humanizer-text{color:#0f0e1a}
 @media(max-width:1100px){.workspace-3col{grid-template-columns:1fr}}
@@ -2110,9 +2127,15 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <div class="page-view" id="view-writing">
 <div class="doc-page">
   <div class="doc-topbar">
+    <button class="doc-topbar-back" onclick="switchTab('workspace')">‹ Workspace</button>
+    <div class="doc-topbar-icon">🤖</div>
+    <div class="doc-topbar-info">
+      <div class="doc-topbar-title">AI Tools</div>
+      <div class="doc-topbar-sub">Detect and humanize AI-generated text</div>
+    </div>
     <div class="doc-mode-tabs">
-      <button class="doc-mode-tab active" id="subtab-checker" onclick="switchAITab('checker')">AI Detector</button>
-      <button class="doc-mode-tab" id="subtab-humanizer" onclick="switchAITab('humanizer')">Humanizer</button>
+      <button class="doc-mode-tab active" id="subtab-checker" onclick="switchAITab('checker')">🔍 AI Detector</button>
+      <button class="doc-mode-tab" id="subtab-humanizer" onclick="switchAITab('humanizer')">✍️ Humanizer</button>
     </div>
   </div>
   <div class="ai-panel active" id="panel-checker">
@@ -2128,11 +2151,14 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
           <button class="doc-btn-ghost" onclick="clearChecker()">Clear</button>
         </div>
       </div>
-      <div class="doc-divider"></div>
       <div class="doc-pane">
         <div class="doc-pane-header"><span class="doc-pane-label">Analysis</span></div>
         <div class="doc-results-area" id="checkerResults">
-          <div class="doc-results-empty"><div class="doc-results-empty-icon">🔍</div><div>Results will appear here</div></div>
+          <div class="doc-results-empty">
+            <div class="doc-results-empty-icon">🔍</div>
+            <div class="doc-results-empty-title">No analysis yet</div>
+            <div class="doc-results-empty-sub">Paste your text on the left and hit Check for AI</div>
+          </div>
         </div>
       </div>
     </div>
@@ -2150,11 +2176,14 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
           <button class="doc-btn-ghost" onclick="clearHumanizer()">Clear</button>
         </div>
       </div>
-      <div class="doc-divider"></div>
       <div class="doc-pane">
         <div class="doc-pane-header"><span class="doc-pane-label">Human Version</span></div>
         <div class="doc-results-area" id="humanizerResults">
-          <div class="doc-results-empty"><div class="doc-results-empty-icon">✍️</div><div>Your rewritten text will appear here</div></div>
+          <div class="doc-results-empty">
+            <div class="doc-results-empty-icon">✍️</div>
+            <div class="doc-results-empty-title">Nothing rewritten yet</div>
+            <div class="doc-results-empty-sub">Paste AI text on the left and hit Humanize</div>
+          </div>
         </div>
       </div>
     </div>
