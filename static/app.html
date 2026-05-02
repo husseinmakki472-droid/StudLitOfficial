@@ -1938,12 +1938,23 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <!-- Paste/topic panel -->
     <div class="sl-input-panel" id="panelPaste">
       <div class="sl-panel-card">
-        <div class="paste-section-label">🔗 Add a URL</div>
+        <div class="paste-section-label">🔗 URL</div>
         <div class="sl-url-row">
-          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="YouTube, article, website…" onkeydown="if(event.key==='Enter')addUrlLesson()">
+          <input class="sl-url-input" id="lessonUrlInput" type="url" placeholder="Paste a URL…" onkeydown="if(event.key==='Enter')addUrlLesson()">
           <button class="sl-url-add" onclick="addUrlLesson()">Add</button>
         </div>
+        <div class="paste-section-label" style="margin-top:14px">📝 Notes</div>
+        <div class="paste-text-zone">
+          <textarea class="paste-text-area" id="pasteTextInput"
+            placeholder="Paste notes, paragraphs, or any text you want to study…"
+            rows="5" maxlength="20000" oninput="pasteTextCount()"></textarea>
+          <div class="paste-text-footer">
+            <span class="paste-char-count" id="pasteCharCount">0 / 20000</span>
+            <button class="paste-add-btn" onclick="addPasteText()">+ Add</button>
+          </div>
+        </div>
         <div class="sl-file-list" id="pasteItemList"></div>
+        <button class="wz-next-btn" id="wzPasteNextBtn" onclick="wzGoStep2()" disabled>Choose Study Methods →</button>
       </div>
     </div>
   </div>
@@ -3068,7 +3079,6 @@ function addUrlLesson(){
   input.value='';
   renderFileList();
   renderPasteList();
-  wzGoStep2();
 }
 function addPasteText(){
   const ta=document.getElementById('pasteTextInput');
