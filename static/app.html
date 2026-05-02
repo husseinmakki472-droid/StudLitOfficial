@@ -2227,7 +2227,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <script>
 let selectedModes=new Set(['solve']);
 let fcCards=[],fcIndex=0,fcFlipped=false;
-let quizData=[],quizCurrent=0,quizScore=0;
+let quizData=[],quizCurrent=0,quizScore=0,quizAnswers=[],quizQStart=0;
 let fitbData=[];
 let studySets=(function(){try{return JSON.parse(localStorage.getItem('sl-sets')||'[]')}catch(e){return []}})();
 let lastResult=null;
@@ -2698,7 +2698,11 @@ async function generate() {
     showResult(combined);
     lastResult={topic,modes:modeLabel,html:combined};
     updateSaveSelect();
-    try{addXP(25,'set');}catch(e){}
+    try{
+      var _s=lbLoadStats(),_today=new Date().toDateString(),_tk=(topic||'').toLowerCase().slice(0,60);
+      var _seen=((_s.topicHistory||{})[_tk]||[]).filter(function(d){return d===_today;}).length;
+      scoreEventServer('set_generate',{topicSeenToday:_seen}).then(function(g){if(g.xp>0)addXP(g.xp,'set',{topic:_tk});});
+    }catch(e){}
   } catch(err){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>');}
   finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generate Study Set';}}
 }
@@ -2729,7 +2733,7 @@ function renderQuizHTML(topic, d){
   const questions=(d&&d.questions)||[];
   if(!questions.length)return'<div class="error-card"><div class="error-card-label">⚠ Quiz unavailable</div><div class="error-card-body">No questions were generated. Try selecting only Quiz mode (not combined with other modes) so the AI can focus its full response on questions.</div></div>';
   quizData=questions.map(q=>({q:q.question||'',opts:q.options||[],correct:typeof q.correct==='number'?q.correct:0,difficulty:q.difficulty||'Medium',explanation:q.explanation||''}));
-  quizCurrent=0;quizScore=0;
+  quizCurrent=0;quizScore=0;quizAnswers=[];quizQStart=Date.now();
   return`${resultHeader('quiz',t,[{text:'📝 '+quizData.length+' Questions',accent:true},{text:'Multiple Choice'}])}<div id="quizBody">${renderQuizQuestion()}</div>`;
 }
 
@@ -2905,9 +2909,44 @@ function fcNext(){fcIndex=(fcIndex+1)%fcCards.length;fcUpdateCard()}
 function fcPrev(){fcIndex=(fcIndex-1+fcCards.length)%fcCards.length;fcUpdateCard()}
 function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
 
-function renderQuizQuestion(){if(quizCurrent>=quizData.length)return renderQuizScore();const q=quizData[quizCurrent];const letters=['A','B','C','D'];return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div class="quiz-difficulty">${q.difficulty}</div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`}
-function quizSelect(el,picked,correct){document.querySelectorAll('.quiz-option').forEach(o=>{o.onclick=null});const fb=document.getElementById('quizFeedback');const expl=quizData[quizCurrent]&&quizData[quizCurrent].explanation?' — '+quizData[quizCurrent].explanation:'';if(picked===correct){el.classList.add('correct');quizScore++;fb.textContent='✅ Correct!'+expl;fb.className='quiz-feedback correct'}else{el.classList.add('wrong');document.querySelectorAll('.quiz-option')[correct].classList.add('correct');fb.textContent='✗ Correct: "'+quizData[quizCurrent].opts[correct]+'"'+expl;fb.className='quiz-feedback wrong'}setTimeout(()=>{quizCurrent++;document.getElementById('quizBody').innerHTML=renderQuizQuestion()},1800)}
-function renderQuizScore(){const pct=Math.round(quizScore/quizData.length*100);const msg=pct>=75?'🎉 Great work!':pct>=50?'👍 Solid effort!':'📚 Keep studying!';return`<div class="quiz-score-section"><div class="quiz-score-ring" style="--pct:${pct}%"><div class="quiz-score-num">${pct}%</div></div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px">${msg}</div><div style="font-size:14px;color:var(--text-3);margin-bottom:24px">You got ${quizScore} of ${quizData.length} correct</div><button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="generate()">Retake Quiz</button></div>`}
+function renderQuizQuestion(){
+  if(quizCurrent>=quizData.length)return renderQuizScore();
+  quizQStart=Date.now();
+  const q=quizData[quizCurrent];const letters=['A','B','C','D'];
+  return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div class="quiz-difficulty">${q.difficulty}</div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`;
+}
+function quizSelect(el,picked,correct){
+  const timeMs=Date.now()-quizQStart;
+  document.querySelectorAll('.quiz-option').forEach(o=>{o.onclick=null});
+  const fb=document.getElementById('quizFeedback');
+  const q=quizData[quizCurrent];
+  const expl=q&&q.explanation?' — '+q.explanation:'';
+  const isCorrect=picked===correct;
+  if(isCorrect){el.classList.add('correct');quizScore++;fb.textContent='✅ Correct!'+expl;fb.className='quiz-feedback correct';}
+  else{el.classList.add('wrong');document.querySelectorAll('.quiz-option')[correct].classList.add('correct');fb.textContent='✗ Correct: "'+q.opts[correct]+'"'+expl;fb.className='quiz-feedback wrong';}
+  quizAnswers.push({difficulty:q.difficulty||'Medium',correct:isCorrect,timeMs});
+  setTimeout(()=>{quizCurrent++;document.getElementById('quizBody').innerHTML=renderQuizQuestion();},1800);
+}
+function renderQuizScore(){
+  const pct=Math.round(quizScore/quizData.length*100);
+  const msg=pct>=75?'🎉 Great work!':pct>=50?'👍 Solid effort!':'📚 Keep studying!';
+  const topic=(lastResult&&lastResult.topic)||'';
+  const s=lbLoadStats();
+  const topicHistory=s.topicHistory||{};
+  const todayStr=new Date().toDateString();
+  const topicKey=(topic||'').toLowerCase().slice(0,60);
+  const topicSeenToday=(topicHistory[topicKey]||[]).filter(d=>d===todayStr).length;
+  // Submit to server for validated XP
+  scoreEventServer('quiz_complete',{answers:quizAnswers,topic:topicKey,topicSeenToday,streakDays:s.streak||0})
+    .then(grant=>{
+      if(grant.xp>0){
+        addXP(grant.xp,'quiz',{topic:topicKey});
+        const xpEl=document.getElementById('quizXPEarned');
+        if(xpEl){xpEl.textContent='+'+grant.xp+' XP';xpEl.style.display='inline-block';}
+      }
+    }).catch(()=>{});
+  return`<div class="quiz-score-section"><div class="quiz-score-ring" style="--pct:${pct}%"><div class="quiz-score-num">${pct}%</div></div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px">${msg}</div><div style="font-size:14px;color:var(--text-3);margin-bottom:16px">You got ${quizScore} of ${quizData.length} correct</div><div id="quizXPEarned" style="display:none;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border-radius:999px;padding:5px 16px;font-size:13px;font-weight:700;margin-bottom:20px"></div><button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="quizAnswers=[];generate()">Retake Quiz</button></div>`;
+}
 
 function revealFITB(i,answer){const el=document.getElementById('fitb-'+i);if(el&&!el.classList.contains('revealed')){el.textContent=answer;el.classList.add('revealed')}}
 function revealFITB2(si,pi){const key=si+'-'+pi;const entry=fitbBlanks.find(b=>b.id===key);const el=document.getElementById('fitb-'+key);if(el&&entry&&!el.classList.contains('revealed')){el.textContent=entry.blank;el.classList.add('revealed')}}
@@ -3817,24 +3856,55 @@ function lbLoadStats() {
 }
 function lbSaveStats(s) { try { localStorage.setItem('sl-stats', JSON.stringify(s)); } catch(e) {} }
 
-function addXP(amount, reason) {
+// Badges worth notifying — only meaningful milestones
+var LB_NOTABLE_BADGES = new Set(['streak7','xp500','legend']);
+
+async function scoreEventServer(type, data) {
+  try {
+    const res = await fetch('/.netlify/functions/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data })
+    });
+    if (!res.ok) return { xp: 0, flags: [] };
+    return await res.json();
+  } catch(e) {
+    return { xp: 0, flags: [] };
+  }
+}
+
+function addXP(amount, reason, meta) {
+  if (!amount || amount <= 0) return;
   var s = lbLoadStats();
+  var today = new Date().toDateString();
   s.xp = (s.xp||0) + amount;
-  if (reason === 'set') {
-    s.sets = (s.sets||0) + 1;
-    var today = new Date().toDateString();
+
+  // Topic history tracking for repetition penalty
+  if (meta && meta.topic) {
+    if (!s.topicHistory) s.topicHistory = {};
+    var key = meta.topic;
+    if (!s.topicHistory[key]) s.topicHistory[key] = [];
+    s.topicHistory[key].push(today);
+    // Trim old entries (keep last 20)
+    if (s.topicHistory[key].length > 20) s.topicHistory[key] = s.topicHistory[key].slice(-20);
+  }
+
+  if (reason === 'set' || reason === 'quiz') {
+    if (reason === 'set') s.sets = (s.sets||0) + 1;
     if (s.lastStudy !== today) {
-      s.streak = (s.lastStudy === new Date(Date.now()-86400000).toDateString()) ? (s.streak||0)+1 : 1;
+      var yesterday = new Date(Date.now()-86400000).toDateString();
+      s.streak = (s.lastStudy === yesterday) ? (s.streak||0)+1 : 1;
       s.lastStudy = today;
     }
     if (!s.history) s.history = [];
-    s.history.unshift({date:new Date().toLocaleDateString(),xp:amount,type:'Study Set'});
-    if (s.history.length > 20) s.history.pop();
+    var label = reason === 'quiz' ? 'Quiz' : 'Study Set';
+    s.history.unshift({ date: new Date().toLocaleDateString(), xp: amount, type: label });
+    if (s.history.length > 30) s.history.pop();
   }
   if (reason === 'timer') s.timerSessions = (s.timerSessions||0) + 1;
+
   lbCheckBadges(s);
   lbSaveStats(s);
-  // XP tracked silently; badge unlocks still notify
 }
 
 function lbCheckBadges(s) {
@@ -3842,24 +3912,17 @@ function lbCheckBadges(s) {
     if (!s.earnedBadges) s.earnedBadges = [];
     if (s.earnedBadges.indexOf(b.id) !== -1) return;
     var earned = (b.type==='sets'&&s.sets>=b.req)||(b.type==='streak'&&s.streak>=b.req)||(b.type==='xp'&&s.xp>=b.req)||(b.type==='timer'&&(s.timerSessions||0)>=b.req);
-    if (earned) { s.earnedBadges.push(b.id); setTimeout(function(){showBadgeToast(b);},600); }
+    // Only pop a toast for meaningful milestones
+    if (earned) { s.earnedBadges.push(b.id); if(LB_NOTABLE_BADGES.has(b.id)) setTimeout(function(){showBadgeToast(b);},800); }
   });
-}
-
-function showXPToast(amount) {
-  var t = document.getElementById('xpToast');
-  if (!t) return;
-  t.textContent = '+' + amount + ' XP ⚡';
-  t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 2200);
 }
 
 function showBadgeToast(badge) {
   var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;bottom:240px;right:28px;background:#0d0d1f;border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .4s ease both;min-width:200px';
-  d.innerHTML = '<div style="font-size:26px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:#fff">Badge Unlocked!</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+badge.name+'</div></div>';
+  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#0d0d1f;border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 20px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .4s ease both;';
+  d.innerHTML = '<div style="font-size:22px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:#fff">'+escHtml(badge.name)+'</div><div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:1px">Badge unlocked</div></div>';
   document.body.appendChild(d);
-  setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .4s'; setTimeout(function(){d.remove();},400); }, 3000);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .4s'; setTimeout(function(){d.remove();},400); }, 3500);
 }
 
 function lbGetLevel(xp) {
@@ -3976,7 +4039,7 @@ function timerToggle() {
         if (d) { d.textContent = '🎉 Done!'; d.className = 'timer-w-display'; }
         var btn2 = document.getElementById('timerPlayBtn');
         if (btn2) btn2.textContent = '▶ Start';
-        try { addXP(10, 'timer'); } catch(e) {}
+        try{scoreEventServer('timer_complete',{minutes:Math.round((timerTotal||1500)/60)}).then(function(g){if(g.xp>0)addXP(g.xp,'timer');});}catch(e){}
         setTimeout(timerReset, 2500);
       }
     }, 1000);
@@ -4310,7 +4373,12 @@ function wzBuildTabbedResult(topic, methods, results) {
   lastResult = { topic, modes: methods.join('+'), html: wzResultTabs[methods[0]] || '' };
   updateSaveSelect();
   wzApplySetContext();
-  try { addXP(25,'set'); } catch(e) {}
+  try{
+    var _s=lbLoadStats(),_today=new Date().toDateString(),_tk=(topic||'').toLowerCase().slice(0,60);
+    var _seen=((_s.topicHistory||{})[_tk]||[]).filter(function(d){return d===_today;}).length;
+    scoreEventServer('set_generate',{topicSeenToday:_seen}).then(function(g){if(g.xp>0)addXP(g.xp,'set',{topic:_tk});});
+  }catch(e){}
+}
 }
 
 function wzShowTab(mode) {
@@ -4626,7 +4694,7 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
           if (d) { d.textContent = '🎉'; d.className = 'wz-timer-display'; }
           var btn2 = document.getElementById('wzTimerStartBtn');
           if (btn2) btn2.textContent = '▶ Start';
-          try { addXP(10, 'timer'); } catch(e) {}
+          try{scoreEventServer('timer_complete',{minutes:Math.round((timerTotal||1500)/60)}).then(function(g){if(g.xp>0)addXP(g.xp,'timer');});}catch(e){}
           setTimeout(function(){ _secs = _total; _updateUI(); }, 2500);
         }
       }, 1000);
