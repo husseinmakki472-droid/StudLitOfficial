@@ -4414,6 +4414,9 @@ async function wzGenerate() {
   rv.style.display = 'flex';
   setResultMode(true);
   switchWsTab('create');
+  // switchWsTab clears inline display; re-apply so the flex 3-panel layout has height
+  const _wsc = document.getElementById('ws-create');
+  if (_wsc) _wsc.style.display = 'flex';
   // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
   document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
