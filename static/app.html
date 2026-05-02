@@ -1200,6 +1200,85 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .podcast-progress-bar-bg { background: rgba(0,0,0,0.1) !important; }
 [data-theme=“light”] .podcast-times { color: rgba(15,14,26,0.45) !important; }
 
+/* ── Theme label in navbar ── */
+.theme-label{font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none}
+[data-theme="light"] .theme-label{color:rgba(15,14,26,0.45) !important}
+
+/* ── Processing / loading text (overrides inline styles) ── */
+[data-theme="light"] .wz-processing p{color:rgba(15,14,26,0.45) !important}
+[data-theme="light"] #checkerResults > div,[data-theme="light"] #humanizerResults > div{color:rgba(15,14,26,0.45) !important}
+
+/* ── Chat messages (overrides JS inline styles) ── */
+[data-theme="light"] .wz-chat-msgs > div > div:last-child:not([class]){background:rgba(0,0,0,0.04) !important;border-color:rgba(0,0,0,0.08) !important;color:rgba(15,14,26,0.75) !important}
+[data-theme="light"] .wz-chat-msgs > div [style*="rgba(240"]{color:rgba(15,14,26,0.72) !important}
+
+/* ── MISSING LIGHT MODE OVERRIDES ── */
+
+/* Empty states */
+[data-theme="light"] .empty-title{color:#0f0e1a !important}
+[data-theme="light"] .empty-sub{color:rgba(15,14,26,0.5) !important}
+[data-theme="light"] .empty-preview-card{background:#fff !important;border:1.5px solid rgba(0,0,0,0.1) !important;box-shadow:0 2px 8px rgba(0,0,0,0.06) !important}
+[data-theme="light"] .empty-preview-card:hover{background:#f0eeff !important;border-color:#7c5cfc !important}
+[data-theme="light"] .preview-text-title{color:#0f0e1a !important}
+[data-theme="light"] .preview-text-sub{color:rgba(15,14,26,0.45) !important}
+
+/* Panel heading/sub (old 3-col layout) */
+[data-theme="light"] .panel-heading{color:#0f0e1a !important}
+[data-theme="light"] .panel-sub{color:rgba(15,14,26,0.45) !important}
+[data-theme="light"] .chips-label,[data-theme="light"] .modes-label{color:rgba(15,14,26,0.45) !important}
+
+/* Chips */
+[data-theme="light"] .chip{background:#eae9ff !important;border-color:rgba(0,0,0,0.1) !important;color:rgba(15,14,26,0.65) !important}
+[data-theme="light"] .chip:hover{background:#e0dcff !important;border-color:#7c5cfc !important;color:#5b3fd4 !important}
+
+/* Secondary button */
+[data-theme="light"] .btn-secondary{background:#fff !important;border-color:rgba(0,0,0,0.13) !important;color:rgba(15,14,26,0.65) !important}
+[data-theme="light"] .btn-secondary:hover{background:#f0eeff !important;color:#0f0e1a !important;border-color:#7c5cfc !important}
+
+/* Input label / char count */
+[data-theme="light"] .input-label{color:rgba(15,14,26,0.6) !important}
+[data-theme="light"] .char-count{color:rgba(15,14,26,0.38) !important}
+
+/* Study textarea */
+[data-theme="light"] .study-textarea{background:#fff !important;border-color:rgba(0,0,0,0.13) !important;color:#0f0e1a !important}
+[data-theme="light"] .study-textarea::placeholder{color:rgba(15,14,26,0.32) !important}
+
+/* Old mode buttons (3-col workspace) */
+[data-theme="light"] .mode-btn{background:#fff !important;border-color:rgba(0,0,0,0.12) !important}
+[data-theme="light"] .mode-btn:hover{background:#f0eeff !important;border-color:#7c5cfc !important}
+[data-theme="light"] .mode-btn.selected{background:rgba(124,92,252,0.1) !important;border-color:#7c5cfc !important}
+[data-theme="light"] .mode-name{color:rgba(15,14,26,0.72) !important}
+
+/* Quiz score ring & number */
+[data-theme="light"] .quiz-score-ring::after{background:#fff !important}
+[data-theme="light"] .quiz-score-num{color:#0f0e1a !important}
+[data-theme="light"] .quiz-progress-num{color:rgba(15,14,26,0.6) !important}
+
+/* Tutor followup */
+[data-theme="light"] .tutor-followup{background:#f0eeff !important;border-color:rgba(124,92,252,0.15) !important;color:rgba(15,14,26,0.7) !important}
+
+/* Solve tab */
+[data-theme="light"] .solve-point{border-bottom-color:rgba(0,0,0,0.07) !important}
+
+/* Home sets */
+[data-theme="light"] .sl-home-sets-header{border-bottom-color:rgba(0,0,0,0.07) !important}
+
+/* Navbar */
+[data-theme="light"] .page-tabs{background:rgba(0,0,0,0.05) !important;border-color:rgba(0,0,0,0.1) !important}
+
+/* Upload zone drag over */
+[data-theme="light"] .sl-upload-zone.drag-over{border-color:#7c5cfc !important;background:rgba(124,92,252,0.05) !important}
+
+/* Wz result sidebar background */
+[data-theme="light"] .wz-panel-sidebar{background:#ededfa !important}
+[data-theme="light"] .wz-panel-right{background:#fff !important}
+
+/* Save button secondary */
+[data-theme="light"] .wz-result-topbar{background:#f0eeff !important}
+
+/* Solve wrapper */
+[data-theme="light"] .solve-wrap{background:#fff !important}
+
 /* BODY CLASS BACKUP — works if attribute selector fails */
 body.light-mode,
 body[data-theme=“light”] { background: #f0efff !important; color: #0f0e1a !important; }
@@ -1843,7 +1922,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   </div>
   <div class="nav-right">
     <div style="display:flex;align-items:center;gap:7px">
-    <span id="themeLabel" style="font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none">🌙 Dark</span>
+    <span id="themeLabel" class="theme-label">🌙 Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
   </div>
     <button class="btn-cta" onclick="switchTab('workspace')">▶ <span>Start Studying</span></button>
