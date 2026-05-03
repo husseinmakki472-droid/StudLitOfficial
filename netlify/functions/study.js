@@ -79,7 +79,7 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. Be EXHAUSTIVE: extract and cover EVERY concept, term, topic, and detail present in the content. Do not summarise or skip anything. For notes: generate a section for every major topic with 5-7 detailed bullets each. For quiz: generate 1 question per key concept — aim for 15-25 questions. For flashcards: generate 1 card per term/concept — aim for 25-40 cards. For tutor: cover every section of the content with 3-4 full paragraphs each. For fitb: 12-18 sentences covering all key terms. For keyconcepts: every important term, aim for 15-25. For practicetest: 8-12 detailed questions. For studyplan: 7 days minimum. For solve: give a thorough multi-step explanation with all necessary detail. Fill every field. Never leave arrays empty. Never truncate.';
+  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. You MUST generate a massive amount of content covering EVERY single concept, term, fact, and detail in the uploaded material — leave nothing out. MINIMUM quantities (go higher if the content supports it): flashcards = 100+ cards (one per term, fact, person, date, event, definition, formula, concept); quiz = 50+ questions covering every testable fact; notes = one detailed section per topic with 6-8 bullets; tutor = one section per topic with 4-5 paragraphs; fitb = 20+ sentences; keyconcepts = 30+ terms; practicetest = 15+ questions; studyplan = 7 days. Never stop early. Never skip a concept. If the content is long, generate more items, not fewer. Fill every field. Never leave arrays empty. Never truncate mid-array.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"term or question — one card per concept in the content","back":"thorough definition or full answer"}]}',
@@ -113,7 +113,7 @@ const handler = async (event) => {
     const structures = arr.map(m => modeMap[m] || ('"' + m + '":{"content":"study material"}')).join(',\n    ');
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + list + difficultyInstruction + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structures + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    const maxTokens = model === 'gpt-4o' ? 4096 : 4096;
+    const maxTokens = 16000;
     return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
