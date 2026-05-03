@@ -70,7 +70,7 @@ const handler = async (event) => {
     fileCtx += '\n\nUploaded materials:\n';
     for (let i = 0; i < filesArr.length; i++) {
       const f = filesArr[i];
-      if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 15000) + '\n';
+      if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 30000) + '\n';
       else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ') — no text extracted]\n';
     }
   }
@@ -79,19 +79,19 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. Keep responses concise: notes = 4-5 sections with 3 bullets each; quiz = 6 questions; flashcards = 10 cards; tutor = 3-4 sections with 2 short paragraphs each; fitb = 6 sentences; keyconcepts = 8 terms; practicetest = 4 questions; studyplan = 5 days. Fill every field. Never leave arrays empty.';
+  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. Be EXHAUSTIVE: extract and cover EVERY concept, term, topic, and detail present in the content. Do not summarise or skip anything. For notes: generate a section for every major topic with 5-7 detailed bullets each. For quiz: generate 1 question per key concept — aim for 15-25 questions. For flashcards: generate 1 card per term/concept — aim for 25-40 cards. For tutor: cover every section of the content with 3-4 full paragraphs each. For fitb: 12-18 sentences covering all key terms. For keyconcepts: every important term, aim for 15-25. For practicetest: 8-12 detailed questions. For studyplan: 7 days minimum. For solve: give a thorough multi-step explanation with all necessary detail. Fill every field. Never leave arrays empty. Never truncate.';
 
   const modeMap = {
-    flashcards: '"flashcards":{"cards":[{"front":"term","back":"definition"}]}',
-    quiz: '"quiz":{"questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct","difficulty":"Medium"}]}',
+    flashcards: '"flashcards":{"cards":[{"front":"term or question — one card per concept in the content","back":"thorough definition or full answer"}]}',
+    quiz: '"quiz":{"questions":[{"question":"specific question about a key concept — generate one per concept","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"clear explanation of why the correct answer is right","difficulty":"Medium"}]}',
     fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
-    summary: '"summary":{"overview":"3-4 sentence overview","keyPoints":["key point 1","key point 2","key point 3","key point 4","key point 5"],"mustRemember":"single most important concept"}',
-    notes: '"notes":{"sections":[{"heading":"Section Title","content":"Brief paragraph.","bullets":["bullet 1","bullet 2","bullet 3"]}]}',
-    tutor: '"tutor":{"title":"Lesson title","sections":[{"number":1,"heading":"Section Title","paragraphs":["Clear explanation paragraph.","Follow-up detail paragraph."],"keyTakeaway":"One key insight.","thinkAboutIt":"A reflective question?"}]}',
-    practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"question","sampleAnswer":"sample answer"}]}]}',
-    keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"definition","importance":"why it matters"}]}',
-    studyplan: '"studyplan":{"totalDays":5,"steps":[{"day":1,"title":"Introduction","tasks":["task 1","task 2"],"duration":"30 min"}]}',
-    solve: '"solve":{"quickAnswer":"direct answer","stepByStep":[{"step":1,"title":"step title","content":"explanation"}],"keyInsight":"key insight","examples":["example 1"]}'
+    summary: '"summary":{"overview":"comprehensive 6-8 sentence overview covering all main ideas","keyPoints":["detailed key point — include one per major concept from the content"],"mustRemember":"the single most critical concept to remember"}',
+    notes: '"notes":{"sections":[{"heading":"Section Title — one section per major topic","content":"Thorough paragraph explaining this topic with full detail and context.","bullets":["Detailed bullet 1 with full explanation","Detailed bullet 2","Detailed bullet 3","Detailed bullet 4","Detailed bullet 5"]}]}',
+    tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section heading","paragraphs":["In-depth paragraph explaining this concept thoroughly with examples and context.","Continue with sub-concepts, nuances, and real-world applications.","Add as many paragraphs as needed to fully explain this section."],"keyTakeaway":"Key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
+    practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"detailed question requiring full explanation","sampleAnswer":"comprehensive sample answer covering all key points"}]}]}',
+    keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"complete, detailed definition","importance":"why this concept matters and how it connects to other ideas"}]}',
+    studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Topic Introduction","tasks":["specific task 1","specific task 2","specific task 3"],"duration":"45 min"}]}',
+    solve: '"solve":{"quickAnswer":"direct, complete answer","stepByStep":[{"step":1,"title":"step title","content":"thorough explanation of this step with all necessary detail"}],"keyInsight":"the most important insight","examples":["concrete example 1","concrete example 2","concrete example 3"]}'
   };
 
   // Split modes into two buckets by model
@@ -113,8 +113,7 @@ const handler = async (event) => {
     const structures = arr.map(m => modeMap[m] || ('"' + m + '":{"content":"study material"}')).join(',\n    ');
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + list + difficultyInstruction + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structures + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan'];
-    const maxTokens = arr.some(m => heavyModes.includes(m)) ? 4000 : 2500;
+    const maxTokens = model === 'gpt-4o' ? 4096 : 4096;
     return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
