@@ -4455,9 +4455,9 @@ function applyAccentColor(accent, accent2) {
     // Flashcard & quiz accents
     '.fc-progress-bar,.quiz-score-ring{background:'+grad+'!important}',
     '.quiz-option.correct{background:rgba('+r+',.12)!important;border-color:'+accent+'!important}',
-    // AI checker meter purple
-    '.ai-meter{background:linear-gradient(135deg,rgba('+r+',.08),rgba('+r2+',.04))!important;border-color:rgba('+r+',.25)!important}',
-    '.ai-meter::before{background:radial-gradient(ellipse at 50% 0%,rgba('+r+',.12),transparent 70%)!important}',
+    // AI checker meter — light: clean white card; dark: accent-tinted
+    isLight ? '.ai-meter{background:#fff!important;border-color:rgba(0,0,0,0.07)!important;box-shadow:0 2px 16px rgba(0,0,0,0.06)!important}' : '.ai-meter{background:linear-gradient(135deg,rgba('+r+',.08),rgba('+r2+',.04))!important;border-color:rgba('+r+',.25)!important}',
+    isLight ? '.ai-meter::before{display:none!important}' : '.ai-meter::before{background:radial-gradient(ellipse at 50% 0%,rgba('+r+',.12),transparent 70%)!important}',
     // Color swatch active ring
     '.color-swatch.active{box-shadow:0 0 0 2px '+accent+',0 0 12px rgba('+r+',.35)!important}',
     // Set folder hover
