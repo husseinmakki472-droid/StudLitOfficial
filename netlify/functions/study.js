@@ -79,7 +79,7 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. You MUST generate a massive amount of content covering EVERY single concept, term, fact, and detail in the uploaded material — leave nothing out. MINIMUM quantities (go higher if the content supports it): flashcards = 100+ cards (one per term, fact, person, date, event, definition, formula, concept); quiz = 50+ questions covering every testable fact; notes = one detailed section per major topic with 8-10 bullets each (minimum 8 sections total); tutor = one section per topic with 5-7 long paragraphs each (minimum 6 sections total); fitb = 20+ sentences; keyconcepts = 30+ terms; practicetest = 15+ questions; studyplan = 7 days. Never stop early. Never skip a concept. If the content is long, generate more items, not fewer. Fill every field. Never leave arrays empty. Never truncate mid-array.';
+  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate thorough, comprehensive content covering every major concept, term, fact, and detail from the material. MINIMUM quantities: flashcards = 80+ cards (one per key term, fact, definition, formula, concept — be exhaustive); quiz = 25+ questions (cover every testable concept); notes = 6+ sections with 5-6 detailed bullets each; tutor = 5+ sections with 3-4 full paragraphs each; fitb = 15+ sentences; keyconcepts = 20+ terms with full definitions; practicetest = 10+ short-answer questions; studyplan = 7 days. Cover as much content as possible. Fill every field. Never leave arrays empty. Never truncate mid-array.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"term or question — one card per concept in the content","back":"thorough definition or full answer"}]}',
@@ -109,7 +109,10 @@ const handler = async (event) => {
       : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    return callOpenAI(apiKey, model, systemPrompt, userContent, 16000);
+    // Token limits tuned so responses finish within Netlify's 60s timeout:
+    // gpt-4o ~80-100 tok/s → 3000 tokens ≈ 30-38s; gpt-4o-mini ~150-200 tok/s → 5000 tokens ≈ 25-33s
+    const maxTokens = GPT4O_MODES.has(mode) ? 3000 : 5000;
+    return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
   try {
