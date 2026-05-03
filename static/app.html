@@ -479,24 +479,24 @@ footer{position:relative;z-index:1;text-align:center;padding:40px 28px;border-to
 .humanizer-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)}
 [data-theme="light"] .doc-page{background:#f6f5ff}
 [data-theme="light"] .doc-topbar{background:rgba(255,255,255,0.8);border-color:rgba(0,0,0,0.07)}
-[data-theme="light"] .doc-topbar-back{border-color:rgba(0,0,0,0.12);color:rgba(15,14,26,0.45)}
+[data-theme="light"] .doc-topbar-back{border-color:rgba(0,0,0,0.12);color:rgba(15,14,26,0.6)}
 [data-theme="light"] .doc-topbar-back:hover{border-color:rgba(0,0,0,0.25);color:#0f0e1a}
 [data-theme="light"] .doc-mode-tabs{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.08)}
 [data-theme="light"] .doc-pane{background:rgba(255,255,255,0.9);border-color:rgba(0,0,0,0.08)}
-[data-theme="light"] .doc-pane-header{border-bottom-color:rgba(0,0,0,0.06)}
-[data-theme="light"] .doc-pane-label{color:rgba(15,14,26,0.45)}
-[data-theme="light"] .doc-pane-wc{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.07);color:rgba(15,14,26,0.4)}
+[data-theme="light"] .doc-pane-header{border-bottom-color:rgba(0,0,0,0.08)}
+[data-theme="light"] .doc-pane-label{color:#0f0e1a;font-weight:800}
+[data-theme="light"] .doc-pane-wc{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.65)}
 [data-theme="light"] .doc-textarea{color:#0f0e1a}
-[data-theme="light"] .doc-textarea::placeholder{color:rgba(15,14,26,0.22)}
+[data-theme="light"] .doc-textarea::placeholder{color:rgba(15,14,26,0.38)}
 [data-theme="light"] .doc-pane-actions{border-top-color:rgba(0,0,0,0.07)}
-[data-theme="light"] .doc-btn-ghost{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.5)}
-[data-theme="light"] .doc-results-empty{color:rgba(15,14,26,0.22)}
-[data-theme="light"] .doc-results-empty-title{color:rgba(15,14,26,0.3)}
+[data-theme="light"] .doc-btn-ghost{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.65)}
+[data-theme="light"] .doc-results-empty{color:rgba(15,14,26,0.5)}
+[data-theme="light"] .doc-results-empty-icon{opacity:0.55}
+[data-theme="light"] .doc-results-empty-title{color:#0f0e1a;font-weight:700}
+[data-theme="light"] .doc-results-empty-sub{color:rgba(15,14,26,0.5)}
 [data-theme="light"] .humanizer-text{color:#0f0e1a}
 [data-theme="light"] .humanizer-actions{border-top-color:rgba(0,0,0,0.07)}
 [data-theme="light"] .doc-topbar-icon{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border-color:rgba(124,92,252,0.2)}
-[data-theme="light"] .doc-btn-ghost{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.08);color:rgba(15,14,26,0.5)}
-[data-theme="light"] .humanizer-text{color:#0f0e1a}
 @media(max-width:1100px){.workspace-3col{grid-template-columns:1fr}}
 @media(max-width:900px){.features-grid{grid-template-columns:1fr 1fr};.hero-stats{gap:28px}}
 @media(max-width:540px){.navbar{padding:0 16px};.hero{padding:52px 16px 44px};.hero h1{letter-spacing:-1px};.features-grid{grid-template-columns:1fr};.hero-stats{gap:20px;flex-wrap:wrap};.modes-grid{grid-template-columns:1fr 1fr};.btn-cta span{display:none}}
@@ -1957,12 +1957,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 /* ── AI checker/writing page (view-writing) ── */
 [data-theme=”light”] .doc-topbar{background:#ededfa;border-bottom-color:rgba(0,0,0,0.08)}
-[data-theme=”light”] .doc-topbar-title{color:#0f0e1a}
-[data-theme=”light”] .doc-topbar-sub{color:rgba(15,14,26,0.45)}
-[data-theme=”light”] .doc-topbar-back{color:rgba(15,14,26,0.45)}
+[data-theme=”light”] .doc-topbar-title{color:#0f0e1a;font-weight:800}
+[data-theme=”light”] .doc-topbar-sub{color:rgba(15,14,26,0.6)}
+[data-theme=”light”] .doc-topbar-back{color:rgba(15,14,26,0.6)}
 [data-theme=”light”] .doc-topbar-back:hover{color:#0f0e1a}
-[data-theme=”light”] .doc-topbar-icon{opacity:.7}
-[data-theme=”light”] .doc-mode-tab{background:#f0eeff;border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.55)}
+[data-theme=”light”] .doc-topbar-icon{opacity:.9}
+[data-theme=”light”] .doc-mode-tab{background:#f0eeff;border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.65);font-weight:600}
 [data-theme=”light”] .doc-mode-tab:hover{background:#e8e7ff;color:#0f0e1a}
 [data-theme=”light”] .doc-mode-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border-color:transparent}
 
@@ -3022,6 +3022,30 @@ function applyTheme(theme) {
       .pt-answer-bar-text { color: rgba(15,14,26,0.55) !important; }
       .result-title { color: #0f0e1a !important; }
       .wz-panel-main { background: #f5f4ff !important; }
+
+      /* AI Checker page text visibility */
+      .doc-topbar-title { color: #0f0e1a !important; font-weight: 800 !important; }
+      .doc-topbar-sub { color: rgba(15,14,26,0.6) !important; }
+      .doc-topbar-back { color: rgba(15,14,26,0.6) !important; border-color: rgba(0,0,0,0.12) !important; }
+      .doc-topbar-back:hover { color: #0f0e1a !important; }
+      .doc-mode-tab { color: rgba(15,14,26,0.65) !important; font-weight: 600 !important; }
+      .doc-mode-tab.active { color: #fff !important; }
+      .doc-pane-label { color: #0f0e1a !important; font-weight: 800 !important; }
+      .doc-pane-wc { color: rgba(15,14,26,0.65) !important; }
+      .doc-textarea { color: #0f0e1a !important; }
+      .doc-textarea::placeholder { color: rgba(15,14,26,0.38) !important; }
+      .doc-btn-ghost { color: rgba(15,14,26,0.65) !important; }
+      .doc-results-empty { color: rgba(15,14,26,0.5) !important; }
+      .doc-results-empty-title { color: #0f0e1a !important; font-weight: 700 !important; }
+      .doc-results-empty-sub { color: rgba(15,14,26,0.5) !important; }
+      .humanizer-text { color: #0f0e1a !important; }
+      .ai-meter-label { color: rgba(15,14,26,0.55) !important; }
+      .ai-meter-sublabel { color: rgba(15,14,26,0.45) !important; }
+      .ai-meter-track { stroke: rgba(0,0,0,0.09) !important; }
+      .ai-verdict-sub { color: rgba(15,14,26,0.6) !important; }
+      .ai-break-label { color: rgba(15,14,26,0.6) !important; }
+      .ai-flagged-title { color: #0f0e1a !important; font-weight: 700 !important; }
+      .ai-flagged-text { color: rgba(15,14,26,0.72) !important; }
 
       /* Catch-all: any remaining white text on light bg */
       body.light-mode h1, body.light-mode h2, body.light-mode h3,
