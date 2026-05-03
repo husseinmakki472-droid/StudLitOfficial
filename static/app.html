@@ -1104,16 +1104,25 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .ai-sub-tab { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: rgba(15,14,26,0.6) !important; }
 [data-theme=“light”] .ai-sub-tab:hover { background: #f0eeff !important; color: #0f0e1a !important; }
 [data-theme=“light”] .ai-sub-tab.active { background: linear-gradient(135deg,#7c5cfc,#b06ef3) !important; color: #fff !important; border-color: transparent !important; }
-[data-theme=“light”] .ai-results { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=“light”] .ai-meter { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=“light”] .ai-meter-label { color: rgba(15,14,26,0.5) !important; }
-[data-theme=“light”] .ai-meter-track { stroke: rgba(0,0,0,0.09) !important; }
-[data-theme=“light”] .ai-verdict-sub { color: rgba(15,14,26,0.55) !important; }
-[data-theme=“light”] .ai-break-card { background: #f0eeff !important; border: 1.5px solid rgba(0,0,0,0.09) !important; }
-[data-theme=“light”] .ai-break-label { color: rgba(15,14,26,0.5) !important; }
-[data-theme=“light”] .ai-flagged-section { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=“light”] .ai-flagged-title { color: #0f0e1a !important; }
-[data-theme=“light”] .ai-flagged-text { background: #f5f4ff !important; color: rgba(15,14,26,0.72) !important; }
+[data-theme=”light”] .ai-results { background: transparent !important; border: none !important; }
+[data-theme=”light”] .ai-meter { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04) !important; }
+[data-theme=”light”] .ai-meter::before { display: none !important; }
+[data-theme=”light”] .ai-meter-label { color: rgba(15,14,26,0.45) !important; font-weight: 800 !important; }
+[data-theme=”light”] .ai-meter-pct { color: #0f0e1a !important; }
+[data-theme=”light”] .ai-meter-sublabel { color: rgba(15,14,26,0.4) !important; }
+[data-theme=”light”] .ai-meter-track { stroke: rgba(0,0,0,0.08) !important; }
+[data-theme=”light”] .ai-verdict { color: #0f0e1a !important; }
+[data-theme=”light”] .ai-verdict-sub { color: rgba(15,14,26,0.55) !important; }
+[data-theme=”light”] .ai-breakdown { gap: 8px !important; }
+[data-theme=”light”] .ai-break-card { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 1px 8px rgba(0,0,0,0.05) !important; }
+[data-theme=”light”] .ai-break-card:hover { border-color: rgba(124,92,252,0.25) !important; box-shadow: 0 2px 12px rgba(124,92,252,0.1) !important; }
+[data-theme=”light”] .ai-break-val { color: #0f0e1a !important; }
+[data-theme=”light”] .ai-break-label { color: rgba(15,14,26,0.5) !important; font-weight: 700 !important; }
+[data-theme=”light”] .ai-flagged-section { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 1px 8px rgba(0,0,0,0.05) !important; }
+[data-theme=”light”] .ai-flagged-title { color: #0f0e1a !important; }
+[data-theme=”light”] .ai-flagged-text { background: #f7f6ff !important; color: rgba(15,14,26,0.75) !important; border-radius: 12px !important; }
+[data-theme=”light”] .ai-flag-span { color: #0f0e1a !important; }
+[data-theme=”light”] .ai-flag-span-med { color: #0f0e1a !important; }
 [data-theme=“light”] .humanizer-output { background: #f5f4ff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
 [data-theme=“light”] .humanizer-output-label { color: rgba(15,14,26,0.5) !important; }
 [data-theme=“light”] .humanizer-text { color: #0f0e1a !important; }
@@ -3085,15 +3094,23 @@ function applyTheme(theme) {
       .doc-results-empty-sub { color: rgba(15,14,26,0.6) !important; }
       .humanizer-text { color: #0f0e1a !important; }
       .humanizer-output-label { color: rgba(15,14,26,0.7) !important; font-weight: 700 !important; }
-      .ai-meter-label { color: rgba(15,14,26,0.65) !important; font-weight: 700 !important; }
-      .ai-meter-sublabel { color: rgba(15,14,26,0.55) !important; }
-      .ai-meter-track { stroke: rgba(0,0,0,0.09) !important; }
+      .ai-results { background: transparent !important; border: none !important; }
+      .ai-meter { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04) !important; }
+      .ai-meter::before { display: none !important; }
+      .ai-meter-label { color: rgba(15,14,26,0.45) !important; font-weight: 800 !important; }
+      .ai-meter-pct { color: #0f0e1a !important; }
+      .ai-meter-sublabel { color: rgba(15,14,26,0.4) !important; }
+      .ai-meter-track { stroke: rgba(0,0,0,0.08) !important; }
       .ai-verdict { color: #0f0e1a !important; font-weight: 800 !important; }
-      .ai-verdict-sub { color: rgba(15,14,26,0.7) !important; }
-      .ai-break-val { -webkit-text-fill-color: initial !important; }
-      .ai-break-label { color: rgba(15,14,26,0.65) !important; font-weight: 600 !important; }
-      .ai-flagged-title { color: #0f0e1a !important; font-weight: 700 !important; }
-      .ai-flagged-text { color: rgba(15,14,26,0.82) !important; }
+      .ai-verdict-sub { color: rgba(15,14,26,0.55) !important; }
+      .ai-break-card { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 1px 8px rgba(0,0,0,0.05) !important; }
+      .ai-break-val { color: #0f0e1a !important; }
+      .ai-break-label { color: rgba(15,14,26,0.5) !important; font-weight: 700 !important; }
+      .ai-flagged-section { background: #fff !important; border: 1px solid rgba(0,0,0,0.07) !important; box-shadow: 0 1px 8px rgba(0,0,0,0.05) !important; }
+      .ai-flagged-title { color: #0f0e1a !important; font-weight: 800 !important; }
+      .ai-flagged-text { background: #f7f6ff !important; color: rgba(15,14,26,0.75) !important; border-radius: 12px !important; }
+      .ai-flag-span { color: #0f0e1a !important; }
+      .ai-flag-span-med { color: #0f0e1a !important; }
 
       /* ── AI textarea / old checker UI ── */
       .ai-textarea { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; color: #0f0e1a !important; }
