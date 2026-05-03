@@ -40,19 +40,23 @@ let parsed;
 try { parsed = JSON.parse(raw.replace(/`json|`/g, '').trim()); }
 catch (e) { return { statusCode: 500, body: JSON.stringify({ error: 'Failed to parse response' }) }; }
 let flaggedHtml = escHtml(text);
-const flagged = parsed.flaggedPhrases || [];
+const flagged = Array.isArray(parsed.flaggedPhrases) ? parsed.flaggedPhrases : [];
 for (let i = 0; i < flagged.length; i++) {
 const phrase = flagged[i];
-if (!phrase) continue;
+if (!phrase || typeof phrase !== 'string' || phrase.length > 200) continue;
+try {
 const esc = escHtml(phrase);
 flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '<span class="ai-flag-span">' + esc + '</span>');
+} catch(e) { continue; }
 }
-const passive = parsed.passivePhrases || [];
+const passive = Array.isArray(parsed.passivePhrases) ? parsed.passivePhrases : [];
 for (let j = 0; j < passive.length; j++) {
 const phrase = passive[j];
-if (!phrase) continue;
+if (!phrase || typeof phrase !== 'string' || phrase.length > 200) continue;
+try {
 const esc = escHtml(phrase);
 flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '<span class="ai-flag-span-med">' + esc + '</span>');
+} catch(e) { continue; }
 }
 return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml }) };
 } catch (err) {

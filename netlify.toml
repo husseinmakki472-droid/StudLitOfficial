@@ -12,6 +12,12 @@
 [functions.study]
   timeout = 26
 
+[[redirects]]
+  from = "/"
+  to = "/app.html"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
