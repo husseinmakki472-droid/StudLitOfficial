@@ -79,58 +79,53 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. You MUST generate a massive amount of content covering EVERY single concept, term, fact, and detail in the uploaded material — leave nothing out. MINIMUM quantities (go higher if the content supports it): flashcards = 100+ cards (one per term, fact, person, date, event, definition, formula, concept); quiz = 50+ questions covering every testable fact; notes = one detailed section per topic with 6-8 bullets; tutor = one section per topic with 4-5 paragraphs; fitb = 20+ sentences; keyconcepts = 30+ terms; practicetest = 15+ questions; studyplan = 7 days. Never stop early. Never skip a concept. If the content is long, generate more items, not fewer. Fill every field. Never leave arrays empty. Never truncate mid-array.';
+  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. You MUST generate a massive amount of content covering EVERY single concept, term, fact, and detail in the uploaded material — leave nothing out. MINIMUM quantities (go higher if the content supports it): flashcards = 100+ cards (one per term, fact, person, date, event, definition, formula, concept); quiz = 50+ questions covering every testable fact; notes = one detailed section per major topic with 8-10 bullets each (minimum 8 sections total); tutor = one section per topic with 5-7 long paragraphs each (minimum 6 sections total); fitb = 20+ sentences; keyconcepts = 30+ terms; practicetest = 15+ questions; studyplan = 7 days. Never stop early. Never skip a concept. If the content is long, generate more items, not fewer. Fill every field. Never leave arrays empty. Never truncate mid-array.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"term or question — one card per concept in the content","back":"thorough definition or full answer"}]}',
     quiz: '"quiz":{"questions":[{"question":"specific question about a key concept — generate one per concept","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"clear explanation of why the correct answer is right","difficulty":"Medium"}]}',
     fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
     summary: '"summary":{"overview":"comprehensive 6-8 sentence overview covering all main ideas","keyPoints":["detailed key point — include one per major concept from the content"],"mustRemember":"the single most critical concept to remember"}',
-    notes: '"notes":{"sections":[{"heading":"Section Title — one section per major topic","content":"Thorough paragraph explaining this topic with full detail and context.","bullets":["Detailed bullet 1 with full explanation","Detailed bullet 2","Detailed bullet 3","Detailed bullet 4","Detailed bullet 5"]}]}',
-    tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section heading","paragraphs":["In-depth paragraph explaining this concept thoroughly with examples and context.","Continue with sub-concepts, nuances, and real-world applications.","Add as many paragraphs as needed to fully explain this section."],"keyTakeaway":"Key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
+    notes: '"notes":{"sections":[{"heading":"Section Title — one section per major topic","content":"Thorough paragraph explaining this topic with full detail and context.","bullets":["Detailed bullet 1 with full explanation","Detailed bullet 2","Detailed bullet 3","Detailed bullet 4","Detailed bullet 5","Detailed bullet 6","Detailed bullet 7","Detailed bullet 8"]}]}',
+    tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section heading","paragraphs":["In-depth paragraph 1 explaining this concept thoroughly with examples and context.","In-depth paragraph 2 covering sub-concepts and nuances.","In-depth paragraph 3 with real-world applications.","In-depth paragraph 4 connecting to other concepts.","In-depth paragraph 5 summarizing key insights."],"keyTakeaway":"Key insight for this section.","thinkAboutIt":"A reflective question to deepen understanding?"}]}',
     practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"detailed question requiring full explanation","sampleAnswer":"comprehensive sample answer covering all key points"}]}]}',
     keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"complete, detailed definition","importance":"why this concept matters and how it connects to other ideas"}]}',
     studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Topic Introduction","tasks":["specific task 1","specific task 2","specific task 3"],"duration":"45 min"}]}',
     solve: '"solve":{"quickAnswer":"direct, complete answer","stepByStep":[{"step":1,"title":"step title","content":"thorough explanation of this step with all necessary detail"}],"keyInsight":"the most important insight","examples":["concrete example 1","concrete example 2","concrete example 3"]}'
   };
 
-  // Split modes into two buckets by model
-  const gpt4oModes = modesArr.filter(m => GPT4O_MODES.has(m));
-  const miniModes  = modesArr.filter(m => !GPT4O_MODES.has(m));
-
   const difficultyModes = ['quiz', 'practicetest', 'fitb'];
-  const difficultyInstruction = modesArr.some(m => difficultyModes.includes(m))
-    ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=simple recall; medium=understanding required; hard=analysis and application. Every question must match this level.'
-    : '';
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
     .map(function(f) { return { type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }; });
   const sharedCtxBlock = fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : [];
 
-  function buildCall(arr, model) {
-    const list = arr.join(', ');
-    const structures = arr.map(m => modeMap[m] || ('"' + m + '":{"content":"study material"}')).join(',\n    ');
-    const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + list + difficultyInstruction + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structures + '\n  }\n}';
+  // Each mode gets its own dedicated call so it has the full token budget
+  function buildSingleModeCall(mode, model) {
+    const structure = modeMap[mode] || ('"' + mode + '":{"content":"study material"}');
+    const diffInstr = difficultyModes.includes(mode)
+      ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=simple recall; medium=understanding required; hard=analysis and application. Every question must match this level.'
+      : '';
+    const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    const maxTokens = 16000;
-    return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
+    return callOpenAI(apiKey, model, systemPrompt, userContent, 16000);
   }
 
   try {
-    // Run both calls in parallel; skip a call if its bucket is empty
-    const [gpt4oResult, miniResult] = await Promise.all([
-      gpt4oModes.length ? buildCall(gpt4oModes, 'gpt-4o')      : Promise.resolve(null),
-      miniModes.length  ? buildCall(miniModes,  'gpt-4o-mini')  : Promise.resolve(null),
-    ]);
+    // One parallel call per mode — each gets its own full 16k token budget
+    const modePromises = modesArr.map(function(mode) {
+      const model = GPT4O_MODES.has(mode) ? 'gpt-4o' : 'gpt-4o-mini';
+      return buildSingleModeCall(mode, model)
+        .then(function(result) { return (result && result.results) ? result.results : {}; })
+        .catch(function() { return {}; });
+    });
 
-    // Merge results from both calls
-    const mergedResults = Object.assign(
-      {},
-      miniResult  && miniResult.results,
-      gpt4oResult && gpt4oResult.results
-    );
-    const topicName = (gpt4oResult && gpt4oResult.topic) || (miniResult && miniResult.topic) || (topic || 'Study Material');
+    const resultArr = await Promise.all(modePromises);
+    const mergedResults = Object.assign({}, ...resultArr);
+
+    // Get topic name from first successful result
+    const topicName = topic || 'Study Material';
 
     return {
       statusCode: 200,
