@@ -975,9 +975,9 @@ LIGHT MODE — complete override, !important on all visuals
 /* ── Sidebar ── */
 [data-theme=“light”] .sl-sidebar { background: #e2e1f7 !important; border-right: 2px solid rgba(0,0,0,0.12) !important; }
 [data-theme=“light”] .sl-sidebar-logo { color: #0f0e1a !important; }
-[data-theme=“light”] .sl-nav-item { color: rgba(15,14,26,0.6) !important; background: transparent !important; }
-[data-theme=“light”] .sl-nav-item:hover { background: rgba(0,0,0,0.07) !important; color: #0f0e1a !important; }
-[data-theme=“light”] .sl-nav-item.active { background: rgba(124,92,252,0.18) !important; color: #5b3fd4 !important; }
+[data-theme=”light”] .sl-nav-item { color: rgba(15,14,26,0.65) !important; background: transparent !important; font-weight: 600 !important; }
+[data-theme=”light”] .sl-nav-item:hover { background: rgba(0,0,0,0.07) !important; color: #0f0e1a !important; }
+[data-theme=”light”] .sl-nav-item.active { background: rgba(124,92,252,0.15) !important; color: #5b3fd4 !important; font-weight: 700 !important; border-color: rgba(124,92,252,0.25) !important; }
 [data-theme=“light”] .sl-nav-divider { background: rgba(0,0,0,0.12) !important; }
 [data-theme=“light”] .sl-nav-section-label { color: rgba(15,14,26,0.45) !important; }
 [data-theme=“light”] .sl-sidebar-bottom { border-top: 1.5px solid rgba(0,0,0,0.1) !important; }
@@ -989,14 +989,15 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .sl-hero-sub { color: rgba(15,14,26,0.6) !important; }
 
 /* ── Input cards ── */
-[data-theme=“light”] .sl-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important; }
-[data-theme=“light”] .sl-input-card:hover { background: #f0eeff !important; border-color: #7c5cfc !important; }
-[data-theme=“light”] .sl-input-card.active-card { background: #ece9ff !important; border-color: #7c5cfc !important; }
-[data-theme=“light”] .sl-input-card-title { color: #0f0e1a !important; }
-[data-theme=“light”] .sl-input-card-sub { color: rgba(15,14,26,0.55) !important; }
+[data-theme=”light”] .sl-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.06) !important; }
+[data-theme=”light”] .sl-input-card:hover { background: #f5f4ff !important; border-color: #7c5cfc !important; box-shadow: 0 4px 20px rgba(124,92,252,0.14) !important; }
+[data-theme=”light”] .sl-input-card.active-card { background: #ece9ff !important; border-color: #7c5cfc !important; box-shadow: 0 0 0 2.5px rgba(124,92,252,0.35), 0 4px 20px rgba(124,92,252,0.14) !important; }
+[data-theme=”light”] .sl-input-card-icon { background: #eae9ff !important; border: 1.5px solid rgba(124,92,252,0.2) !important; }
+[data-theme=”light”] .sl-input-card-title { color: #0f0e1a !important; font-weight: 700 !important; }
+[data-theme=”light”] .sl-input-card-sub { color: rgba(15,14,26,0.55) !important; }
 
 /* ── Input panel ── */
-[data-theme=“light”] .sl-panel-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; }
+[data-theme=”light”] .sl-panel-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.07) !important; }
 [data-theme=“light”] .sl-topic-textarea { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; }
 [data-theme=“light”] .sl-topic-textarea::placeholder { color: rgba(15,14,26,0.35) !important; }
 [data-theme=“light”] .sl-topic-textarea:focus { border-color: #7c5cfc !important; }
@@ -1013,25 +1014,25 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .sl-file-name { color: rgba(15,14,26,0.7) !important; }
 
 /* ── Mode buttons ── */
-[data-theme=“light”] .sl-modes-label { color: rgba(15,14,26,0.5) !important; }
-[data-theme=“light”] .sl-mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; }
-[data-theme=“light”] .sl-mode-btn:hover { background: #f0eeff !important; border-color: #7c5cfc !important; }
-[data-theme=“light”] .sl-mode-btn.selected { background: rgba(124,92,252,0.12) !important; border-color: #7c5cfc !important; box-shadow: 0 0 0 1px #7c5cfc !important; }
-[data-theme=“light”] .sl-mode-name { color: rgba(15,14,26,0.72) !important; }
-[data-theme=“light”] .sl-mode-btn.selected .sl-mode-name { color: #5b3fd4 !important; }
+[data-theme=”light”] .sl-modes-label { color: rgba(15,14,26,0.6) !important; font-weight: 700 !important; }
+[data-theme=”light”] .sl-mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.07) !important; }
+[data-theme=”light”] .sl-mode-btn:hover { background: #f5f4ff !important; border-color: #7c5cfc !important; box-shadow: 0 2px 12px rgba(124,92,252,0.12) !important; }
+[data-theme=”light”] .sl-mode-btn.selected { background: rgba(124,92,252,0.1) !important; border-color: #7c5cfc !important; box-shadow: 0 0 0 2px rgba(124,92,252,0.3), 0 2px 12px rgba(124,92,252,0.12) !important; }
+[data-theme=”light”] .sl-mode-name { color: rgba(15,14,26,0.75) !important; font-weight: 600 !important; }
+[data-theme=”light”] .sl-mode-btn.selected .sl-mode-name { color: #5b3fd4 !important; font-weight: 700 !important; }
 [data-theme=“light”] .sl-btn-sec { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: rgba(15,14,26,0.65) !important; }
 
 /* ── Study sets ── */
-[data-theme=“light”] .sl-sets-heading { color: #0f0e1a !important; }
-[data-theme=“light”] .sl-sets-header { border-bottom: 1.5px solid rgba(0,0,0,0.1) !important; }
-[data-theme=”light”] .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
-[data-theme=”light”] .sl-set-card:hover { border-color: #7c5cfc !important; box-shadow: 0 4px 16px rgba(124,92,252,0.12) !important; }
+[data-theme=”light”] .sl-sets-heading { color: #0f0e1a !important; font-weight: 800 !important; }
+[data-theme=”light”] .sl-sets-header { border-bottom: 1.5px solid rgba(0,0,0,0.12) !important; }
+[data-theme=”light”] .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05) !important; }
+[data-theme=”light”] .sl-set-card:hover { border-color: #7c5cfc !important; box-shadow: 0 4px 20px rgba(124,92,252,0.15) !important; }
 [data-theme=”light”] .sl-set-card-title { color: #0f0e1a !important; }
 [data-theme=”light”] .sl-set-mode-pill { background: rgba(124,92,252,0.08) !important; color: #7c5cfc !important; }
 [data-theme=”light”] .sl-set-meta-chip { background: rgba(0,0,0,0.04) !important; color: rgba(15,14,26,0.6) !important; }
 [data-theme=“light”] .sl-sets-empty { color: rgba(15,14,26,0.45) !important; }
 [data-theme=“light”] .sets-title { color: #0f0e1a !important; }
-[data-theme=“light”] .set-folder { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
+[data-theme=”light”] .set-folder { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important; }
 [data-theme=“light”] .set-folder-name { color: #0f0e1a !important; }
 [data-theme=“light”] .set-folder-meta { color: rgba(15,14,26,0.45) !important; }
 [data-theme=“light”] .session-title { color: rgba(15,14,26,0.7) !important; }
@@ -1929,8 +1930,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme=”light”] .sl-home-sets-section{border-top-color:rgba(0,0,0,0.08)}
 [data-theme=”light”] .sl-home-sets-title{color:#0f0e1a}
 [data-theme=”light”] .sl-home-sets-all{color:#7c5cfc}
+[data-theme=”light”] .sl-home-sets-empty { border-color: rgba(0,0,0,0.2) !important; }
 [data-theme=”light”] .sl-home-sets-empty-icon{opacity:.45}
-[data-theme=”light”] .sl-home-sets-empty-text{color:rgba(15,14,26,0.4)}
+[data-theme=”light”] .sl-home-sets-empty-text{color:rgba(15,14,26,0.45) !important; font-weight: 500 !important;}
 
 /* ── Upload file list ── */
 [data-theme=”light”] .upload-file-item{background:#f5f4ff;border:1px solid rgba(0,0,0,0.08)}
@@ -2824,7 +2826,9 @@ function applyTheme(theme) {
       .pricing-features li { color: rgba(15,14,26,0.75) !important; font-weight: 500 !important; }
 
       /* ── Input / Generate panel ── */
-      .sl-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; }
+      .sl-input-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.06) !important; }
+      .sl-input-card.active-card { background: #ece9ff !important; box-shadow: 0 0 0 2.5px rgba(124,92,252,0.35), 0 4px 20px rgba(124,92,252,0.14) !important; }
+      .sl-input-card-icon { background: #eae9ff !important; border: 1.5px solid rgba(124,92,252,0.2) !important; }
       .sl-input-card-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .sl-input-card-sub { color: rgba(15,14,26,0.65) !important; }
       .panel-heading { color: #0f0e1a !important; font-weight: 800 !important; }
@@ -2842,15 +2846,16 @@ function applyTheme(theme) {
       .regen-diff-select { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: #0f0e1a !important; font-weight: 600 !important; }
 
       /* ── Study mode buttons ── */
-      .sl-mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; }
+      .sl-mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.07) !important; }
+      .sl-mode-btn.selected { box-shadow: 0 0 0 2px rgba(124,92,252,0.3), 0 2px 12px rgba(124,92,252,0.12) !important; }
       .sl-mode-name { color: rgba(15,14,26,0.8) !important; font-weight: 600 !important; }
       .sl-mode-btn.selected .sl-mode-name { color: #5b3fd4 !important; font-weight: 700 !important; }
-      .mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; }
+      .mode-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.07) !important; }
       .mode-btn span, .mode-btn div { color: rgba(15,14,26,0.8) !important; font-weight: 600 !important; }
       .mode-btn.selected span, .mode-btn.selected div { color: #5b3fd4 !important; font-weight: 700 !important; }
 
       /* ── Cards / panels ── */
-      .sl-panel-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.11) !important; }
+      .sl-panel-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.07) !important; }
       .content-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; }
       .card-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .card-body { color: rgba(15,14,26,0.75) !important; }
@@ -2861,7 +2866,7 @@ function applyTheme(theme) {
 
       /* ── Sets / sessions ── */
       .sl-sets-heading { color: #0f0e1a !important; font-weight: 800 !important; }
-      .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; }
+      .sl-set-card { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.18) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05) !important; }
       .sl-set-card-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .sl-sets-empty, .sets-empty { color: rgba(15,14,26,0.55) !important; font-weight: 500 !important; }
       .sets-title { color: #0f0e1a !important; font-weight: 800 !important; }
