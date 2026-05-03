@@ -34,10 +34,12 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .page-tab:hover{color:rgba(240,239,255,0.85);background:rgba(255,255,255,0.05)}
 .page-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 12px rgba(124,92,252,0.35),inset 0 1px 0 rgba(255,255,255,0.15)}
 .nav-right{display:flex;align-items:center;gap:10px}
-.theme-toggle{position:relative;width:52px;height:30px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.14);border-radius:999px;transition:background .3s,border-color .3s,box-shadow .3s;flex-shrink:0;padding:0}
-.theme-toggle::before{content:'';position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#7c5cfc,#b06ef3);box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .35s var(--ease-back),background .3s,box-shadow .25s}
-[data-theme="light"] .theme-toggle{background:linear-gradient(135deg,#7c5cfc,#b06ef3)!important;border-color:transparent!important;box-shadow:0 2px 12px rgba(124,92,252,0.35)!important}
-[data-theme="light"] .theme-toggle::before{transform:translateX(22px);background:#fff!important;box-shadow:0 2px 6px rgba(0,0,0,0.2)!important}
+.theme-toggle-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:999px;padding:5px 5px 5px 12px;transition:background .3s,border-color .3s;cursor:pointer}
+[data-theme="light"] .theme-toggle-wrap{background:rgba(0,0,0,0.06)!important;border-color:rgba(0,0,0,0.14)!important}
+.theme-toggle{position:relative;width:46px;height:26px;cursor:pointer;background:rgba(255,255,255,0.1);border:none;border-radius:999px;transition:background .3s,box-shadow .3s;flex-shrink:0;padding:0;outline:none}
+.theme-toggle::before{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#7c5cfc,#b06ef3);box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:transform .35s var(--ease-back),background .3s}
+[data-theme="light"] .theme-toggle{background:linear-gradient(135deg,#7c5cfc,#b06ef3)!important;box-shadow:0 2px 10px rgba(124,92,252,0.4)!important}
+[data-theme="light"] .theme-toggle::before{transform:translateX(20px);background:#fff!important;box-shadow:0 2px 6px rgba(0,0,0,0.18)!important}
 .btn-cta{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .2s,box-shadow .2s,transform .15s var(--ease-back);box-shadow:0 4px 18px rgba(124,92,252,0.35);white-space:nowrap}
 .btn-cta:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,92,252,0.35)}
 .page-view{display:none}
@@ -1213,7 +1215,7 @@ LIGHT MODE — complete override, !important on all visuals
 
 /* ── Theme label in navbar ── */
 .theme-label{font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none}
-[data-theme="light"] .theme-label{color:rgba(15,14,26,0.45) !important}
+[data-theme="light"] .theme-label{color:rgba(15,14,26,0.65) !important;font-weight:600 !important}
 
 /* ── Processing / loading text (overrides inline styles) ── */
 [data-theme="light"] .wz-processing p{color:rgba(15,14,26,0.45) !important}
@@ -1695,7 +1697,7 @@ body.light-mode .lb-history-date,[data-theme=“light”] .lb-history-date{color
 .lb-empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3)}
 body.light-mode .lb-empty,[data-theme=“light”] .lb-empty{color:rgba(15,14,26,0.35)}
 
-.theme-label{font-size:11px;font-weight:700;color:rgba(240,239,255,0.45);letter-spacing:.5px;user-select:none;white-space:nowrap}
+.theme-label{font-size:12px;font-weight:600;color:rgba(240,239,255,0.6);letter-spacing:.2px;user-select:none;white-space:nowrap}
 body.light-mode #themeLabel,[data-theme=”light”] #themeLabel{color:rgba(15,14,26,0.5) !important}
 
 /* ===== 4-TAB WORKSPACE ===== */
@@ -2174,9 +2176,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
   </div>
   <div class="nav-right">
-    <div style="display:flex;align-items:center;gap:7px">
+    <div class="theme-toggle-wrap" onclick="document.getElementById('themeToggle').click();event.stopPropagation()">
     <span id="themeLabel" class="theme-label">🌙 Dark</span>
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="event.stopPropagation()"></button>
   </div>
     <button class="btn-cta" onclick="switchTab('workspace')">▶ <span>Start Studying</span></button>
   </div>
