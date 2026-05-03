@@ -11,6 +11,38 @@ function repairJson(str) {
   return str + stack.reverse().join('');
 }
 
+// These modes always use gpt-4o; everything else always uses gpt-4o-mini
+const GPT4O_MODES = new Set(['quiz', 'solve', 'tutor', 'practicetest']);
+
+async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ]
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(function() { return {}; });
+    throw new Error((err.error && err.error.message) || 'OpenAI API error ' + response.status);
+  }
+  const data = await response.json();
+  const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+  if (!content) throw new Error('No content from OpenAI');
+  try { return JSON.parse(content); }
+  catch (e) {
+    try { return JSON.parse(repairJson(content)); }
+    catch (e2) { throw new Error('Response was too long. Try a shorter topic.'); }
+  }
+}
+
 const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -47,8 +79,6 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
-
   const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. Keep responses concise: notes = 4-5 sections with 3 bullets each; quiz = 6 questions; flashcards = 10 cards; tutor = 3-4 sections with 2 short paragraphs each; fitb = 6 sentences; keyconcepts = 8 terms; practicetest = 4 questions; studyplan = 5 days. Fill every field. Never leave arrays empty.';
 
   const modeMap = {
@@ -64,62 +94,50 @@ const handler = async (event) => {
     solve: '"solve":{"quickAnswer":"direct answer","stepByStep":[{"step":1,"title":"step title","content":"explanation"}],"keyInsight":"key insight","examples":["example 1"]}'
   };
 
-  let modeStructures = '';
-  for (let i = 0; i < modesArr.length; i++) {
-    const m = modesArr[i];
-    modeStructures += (modeMap[m] || ('"' + m + '":{"content":"study material"}'));
-    if (i < modesArr.length - 1) modeStructures += ',\n    ';
-  }
+  // Split modes into two buckets by model
+  const gpt4oModes = modesArr.filter(m => GPT4O_MODES.has(m));
+  const miniModes  = modesArr.filter(m => !GPT4O_MODES.has(m));
 
   const difficultyModes = ['quiz', 'practicetest', 'fitb'];
-  const hasDifficultyMode = modesArr.some(function(m) { return difficultyModes.indexOf(m) !== -1; });
-  const difficultyInstruction = hasDifficultyMode
+  const difficultyInstruction = modesArr.some(m => difficultyModes.includes(m))
     ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=simple recall; medium=understanding required; hard=analysis and application. Every question must match this level.'
     : '';
-
-  const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + modeList + difficultyInstruction + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
-
-  const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan'];
-  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 4000 : 2500;
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
     .map(function(f) { return { type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }; });
-  const userContent = [
-    ...imageBlocks,
-    ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
-    { type: 'text', text: queryText }
-  ];
+  const sharedCtxBlock = fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : [];
+
+  function buildCall(arr, model) {
+    const list = arr.join(', ');
+    const structures = arr.map(m => modeMap[m] || ('"' + m + '":{"content":"study material"}')).join(',\n    ');
+    const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + list + difficultyInstruction + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structures + '\n  }\n}';
+    const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
+    const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan'];
+    const maxTokens = arr.some(m => heavyModes.includes(m)) ? 4000 : 2500;
+    return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
+  }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: modesArr.some(m => ['quiz','solve','tutor','practicetest'].includes(m)) ? 'gpt-4o' : 'gpt-4o-mini',
-        max_tokens: maxTokens,
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent }
-        ]
-      })
-    });
-    if (!response.ok) {
-      const err = await response.json().catch(function() { return {}; });
-      return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
-    }
-    const data = await response.json();
-    const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-    if (!content) return { statusCode: 500, body: JSON.stringify({ error: 'No content from OpenAI' }) };
-    let parsed;
-    try { parsed = JSON.parse(content); }
-    catch (e) {
-      try { parsed = JSON.parse(repairJson(content)); }
-      catch (e2) { return { statusCode: 500, body: JSON.stringify({ error: 'Response was too long. Try a shorter topic.' }) }; }
-    }
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(parsed) };
+    // Run both calls in parallel; skip a call if its bucket is empty
+    const [gpt4oResult, miniResult] = await Promise.all([
+      gpt4oModes.length ? buildCall(gpt4oModes, 'gpt-4o')      : Promise.resolve(null),
+      miniModes.length  ? buildCall(miniModes,  'gpt-4o-mini')  : Promise.resolve(null),
+    ]);
+
+    // Merge results from both calls
+    const mergedResults = Object.assign(
+      {},
+      miniResult  && miniResult.results,
+      gpt4oResult && gpt4oResult.results
+    );
+    const topicName = (gpt4oResult && gpt4oResult.topic) || (miniResult && miniResult.topic) || (topic || 'Study Material');
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ topic: topicName, results: mergedResults })
+    };
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
