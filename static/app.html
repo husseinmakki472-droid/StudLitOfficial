@@ -526,19 +526,19 @@ height:calc(100vh - 64px);
 overflow-y:auto;
 }
 .sl-sidebar-logo {
-font-family:’Syne’,sans-serif; font-weight:800; font-size:17px;
-color:#f0efff; margin-bottom:20px; padding:10px 12px;
+font-family:’Syne’,sans-serif; font-weight:800; font-size:20px;
+letter-spacing:-.5px; color:#f0efff; margin-bottom:20px; padding:10px 12px;
 display:flex; align-items:center; gap:10px;
-background:rgba(255,255,255,0.03);
-border:1px solid rgba(255,255,255,0.06);
+background:rgba(255,255,255,0.04);
+border:1px solid rgba(255,255,255,0.08);
 border-radius:14px;
 }
 .sl-sidebar-logo-mark {
-width:28px;height:28px;border-radius:8px;
+width:32px;height:32px;border-radius:9px;
 background:linear-gradient(135deg,#7c5cfc,#b06ef3);
 display:flex;align-items:center;justify-content:center;
-font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
-box-shadow:0 0 14px rgba(124,92,252,0.4);
+font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
+box-shadow:0 0 16px rgba(124,92,252,0.5);
 }
 .sl-sidebar-logo span { background:linear-gradient(135deg,#7c5cfc,#b06ef3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
 .sl-nav-item {
@@ -976,8 +976,10 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=“light”] .btn-cta { background: linear-gradient(135deg,#7c5cfc,#b06ef3) !important; color: #fff !important; }
 
 /* ── Sidebar ── */
-[data-theme=“light”] .sl-sidebar { background: #e2e1f7 !important; border-right: 2px solid rgba(0,0,0,0.12) !important; }
-[data-theme=“light”] .sl-sidebar-logo { color: #0f0e1a !important; }
+[data-theme=”light”] .sl-sidebar { background: #e2e1f7 !important; border-right: 2px solid rgba(0,0,0,0.12) !important; }
+[data-theme=”light”] .sl-sidebar-logo { color: #0f0e1a !important; background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.1) !important; }
+[data-theme=”light”] .sl-sidebar-logo span { background: linear-gradient(135deg,#7c5cfc,#b06ef3) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+[data-theme=”light”] .sl-sidebar-logo-mark { box-shadow: 0 0 14px rgba(124,92,252,0.3) !important; }
 [data-theme=”light”] .sl-nav-item { color: rgba(15,14,26,0.65) !important; background: transparent !important; font-weight: 600 !important; }
 [data-theme=”light”] .sl-nav-item:hover { background: rgba(0,0,0,0.07) !important; color: #0f0e1a !important; }
 [data-theme=”light”] .sl-nav-item.active { background: rgba(124,92,252,0.15) !important; color: #5b3fd4 !important; font-weight: 700 !important; border-color: rgba(124,92,252,0.25) !important; }
