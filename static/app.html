@@ -3119,6 +3119,8 @@ function applyTheme(theme) {
     `;
     document.head.appendChild(s);
   }
+  // Re-apply accent so theme-aware rules (tab colors etc) refresh
+  try{var ac=localStorage.getItem('sl-accent');var ac2=localStorage.getItem('sl-accent2');if(ac)applyAccentColor(ac,ac2);}catch(e){}
 }
 
 function switchTab(t){
@@ -4356,6 +4358,7 @@ function applyAccentColor(accent, accent2) {
   var a2 = accent2 || accent;
   var r = hexToRgb(accent), r2 = hexToRgb(a2);
   var grad = 'linear-gradient(135deg,'+accent+','+a2+')';
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
   var gradH = 'linear-gradient(90deg,'+accent+','+a2+')';
   var gradV = 'linear-gradient(180deg,'+accent+','+a2+')';
   // Always inject so removing/resetting also works
@@ -4375,7 +4378,7 @@ function applyAccentColor(accent, accent2) {
     // Sidebar
     '.sl-sidebar-logo-mark{background:'+grad+'!important;box-shadow:0 0 14px rgba('+r+',.4)!important}',
     '.sl-sidebar-logo span{background:'+grad+'!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;background-clip:text!important}',
-    '.sl-nav-item.active{background:rgba('+r+',.1)!important;border-color:rgba('+r+',.22)!important;color:#f0efff!important}',
+    '.sl-nav-item.active{background:rgba('+r+',.1)!important;border-color:rgba('+r+',.22)!important;color:'+(isLight?accent:'#f0efff')+'!important}',
     '.sl-nav-item.active::before{background:'+gradV+'!important}',
     '.sl-nav-item:hover{background:rgba('+r+',.05)!important}',
     // User avatar
@@ -4426,7 +4429,8 @@ function applyAccentColor(accent, accent2) {
     '.paste-add-btn:hover{background:rgba('+r+',.3)!important}',
     '.paste-text-zone:focus-within{border-color:rgba('+r+',.4)!important}',
     // Doc writing page tabs
-    '.doc-mode-tab.active{background:rgba('+r+',.15)!important;color:#f0efff!important}',
+    isLight ? '.doc-mode-tab.active{background:'+grad+'!important;color:#fff!important;font-weight:700!important}' : '.doc-mode-tab.active{background:rgba('+r+',.15)!important;color:#f0efff!important}',
+    isLight ? '.doc-mode-tab:not(.active){background:rgba(0,0,0,0.06)!important;color:#0f0e1a!important;font-weight:700!important}' : '',
     // Next step buttons
     '.wz-next-btn:not(:disabled){background:'+grad+'!important;box-shadow:0 4px 16px rgba('+r+',.3)!important}',
     // Input focus
