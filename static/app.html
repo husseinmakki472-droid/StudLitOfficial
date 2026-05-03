@@ -3206,7 +3206,7 @@ function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(se
 function updateModesBar(){var bar=document.getElementById('selectedModesBar');if(!bar)return;var names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'};if(selectedModes.size>1){bar.style.display='flex';bar.innerHTML='<span style="font-size:11px;font-weight:600">Generating:</span>'+[...selectedModes].map(function(m){return '<span class="sel-mode-tag">'+(names[m]||m)+'</span>';}).join('');}else{bar.style.display='none';}}
 function selectMode(btn){document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedModes=new Set([btn.dataset.mode]);updateModesBar()}
 
-function saveSets(){localStorage.setItem('sl-sets',JSON.stringify(studySets))}
+function saveSets(){try{localStorage.setItem('sl-sets',JSON.stringify(studySets));}catch(e){console.warn('saveSets: localStorage full or unavailable',e);}}
 function renderSets(filter){
   if(filter===undefined)filter='';
   var list=document.getElementById('setsList');
@@ -3441,11 +3441,11 @@ async function generate() {
   }
   const modes = [...selectedModes];
   const btn = document.getElementById('generateBtn')||document.getElementById('generateBtn2');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
-  showLoading();
   const filesPayload = uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const failedFiles = uploadedFiles.filter(f=>f.readError&&!f.imageData);
   if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
+  showLoading();
   try {
     let res;
     const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:(genLang!=='English'?input+' — Respond in '+genLang+'.':input),modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}

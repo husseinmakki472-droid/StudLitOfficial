@@ -38,7 +38,7 @@ const handler = async (event) => {
     fileCtx += '\n\nUploaded materials:\n';
     for (let i = 0; i < filesArr.length; i++) {
       const f = filesArr[i];
-      if (f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 15000) + '\n';
+      if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 15000) + '\n';
       else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ') — no text extracted]\n';
     }
   }
