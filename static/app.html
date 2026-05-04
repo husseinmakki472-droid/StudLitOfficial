@@ -227,6 +227,33 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .lesson-think{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.15);border-radius:14px;padding:12px 16px;margin-top:12px}
 .lesson-think-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c5cfc;display:block;margin-bottom:6px}
 .lesson-think-q{font-size:13.5px;color:rgba(240,239,255,0.58);font-style:italic;margin:0;line-height:1.65}
+.lesson-defs{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.lesson-defs-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(240,239,255,0.4);margin-bottom:8px}
+.lesson-def-row{display:flex;gap:8px;margin-bottom:6px;font-size:13.5px;line-height:1.6;align-items:baseline}
+.lesson-def-term{color:#b06ef3;font-weight:700;white-space:nowrap}
+.lesson-def-sep{color:rgba(240,239,255,0.25);flex-shrink:0}
+.lesson-def-body{color:rgba(240,239,255,0.62)}
+.lesson-examples{margin:14px 0;display:flex;flex-direction:column;gap:10px}
+.lesson-examples-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(240,239,255,0.4);margin-bottom:4px}
+.lesson-example{background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.12);border-radius:12px;padding:12px 14px}
+.lesson-example-num{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4ade80;margin-bottom:5px}
+.lesson-example p{margin:0;font-size:13.5px;color:rgba(240,239,255,0.68);line-height:1.65}
+.lesson-rw{background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.14);border-radius:14px;padding:16px 18px;margin:24px 0 16px}
+.lesson-rw-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fbbf24;margin-bottom:8px}
+.lesson-rw-body{margin:0;font-size:14px;color:rgba(240,239,255,0.68);line-height:1.7}
+.lesson-summary{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.18);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.lesson-summary-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c5cfc;margin-bottom:8px}
+.lesson-summary-body{margin:0;font-size:14px;color:rgba(240,239,255,0.68);line-height:1.7}
+.lesson-quiz{margin-bottom:16px}
+.lesson-quiz-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(240,239,255,0.4);margin-bottom:10px}
+.lesson-quiz-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.lesson-quiz-q{font-size:14px;color:rgba(240,239,255,0.88);line-height:1.6;margin-bottom:10px;display:flex;gap:10px}
+.lesson-quiz-num{background:#7c5cfc;color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;flex-shrink:0;height:fit-content;margin-top:2px}
+.lesson-quiz-reveal-btn{background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.3);color:#b06ef3;border-radius:8px;padding:5px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s}
+.lesson-quiz-reveal-btn:hover{background:rgba(124,92,252,0.25)}
+.lesson-quiz-ans{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.14);border-radius:8px;padding:10px 12px;margin-top:8px}
+.lesson-quiz-ans-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4ade80;display:block;margin-bottom:5px}
+.lesson-quiz-ans{font-size:13.5px;color:rgba(240,239,255,0.72);line-height:1.65}
 .test-header-strip{background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1));border:1px solid rgba(124,92,252,0.25);border-radius:22px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .test-header-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff}
 .test-timer-badge{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700}
@@ -1087,6 +1114,17 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=”light”] .lesson-quote{color:rgba(15,14,26,0.7) !important;background:rgba(124,92,252,0.05) !important}
 [data-theme=”light”] .lesson-think{background:rgba(124,92,252,0.04) !important;border-color:rgba(124,92,252,0.12) !important}
 [data-theme=”light”] .lesson-think-q{color:rgba(15,14,26,0.65) !important}
+[data-theme=”light”] .lesson-defs{background:rgba(0,0,0,0.02) !important;border-color:rgba(0,0,0,0.08) !important}
+[data-theme=”light”] .lesson-def-body{color:rgba(15,14,26,0.68) !important}
+[data-theme=”light”] .lesson-example{background:rgba(74,222,128,0.04) !important;border-color:rgba(74,222,128,0.15) !important}
+[data-theme=”light”] .lesson-example p{color:rgba(15,14,26,0.68) !important}
+[data-theme=”light”] .lesson-rw{background:rgba(251,191,36,0.04) !important;border-color:rgba(251,191,36,0.18) !important}
+[data-theme=”light”] .lesson-rw-body{color:rgba(15,14,26,0.72) !important}
+[data-theme=”light”] .lesson-summary{background:rgba(124,92,252,0.04) !important;border-color:rgba(124,92,252,0.15) !important}
+[data-theme=”light”] .lesson-summary-body{color:rgba(15,14,26,0.72) !important}
+[data-theme=”light”] .lesson-quiz-item{background:rgba(0,0,0,0.02) !important;border-color:rgba(0,0,0,0.08) !important}
+[data-theme=”light”] .lesson-quiz-q{color:rgba(15,14,26,0.88) !important}
+[data-theme=”light”] .lesson-quiz-ans{background:rgba(74,222,128,0.04) !important;border-color:rgba(74,222,128,0.18) !important;color:rgba(15,14,26,0.72) !important}
 [data-theme=”light”] .solve-point-title{color:#0f0e1a !important}[data-theme=”light”] .solve-point-body{color:rgba(15,14,26,0.72) !important}[data-theme=”light”] .solve-point{border-bottom-color:rgba(0,0,0,0.07) !important}
 [data-theme=”light”] .concept-term { color: #0f0e1a !important; }
 [data-theme=“light”] .concept-def { color: rgba(15,14,26,0.65) !important; }
@@ -3605,11 +3643,16 @@ function renderTutorHTML(topic, d){
   const secHtml=sections.map((s,i)=>{
     const paras=Array.isArray(s.paragraphs)&&s.paragraphs.length?s.paragraphs:(s.content?[s.content]:[]);
     const parasHtml=paras.map(p=>`<p class="lesson-content">${sanitizeLessonHtml(p)}</p>`).join('');
+    const defsHtml=(s.definitions&&s.definitions.length)?`<div class="lesson-defs"><div class="lesson-defs-label">📚 Key Terms</div>${s.definitions.map(d=>`<div class="lesson-def-row"><span class="lesson-def-term">${escHtml(d.term||'')}</span><span class="lesson-def-sep">—</span><span class="lesson-def-body">${escHtml(d.definition||'')}</span></div>`).join('')}</div>`:'';
+    const examplesHtml=(s.examples&&s.examples.length)?`<div class="lesson-examples"><div class="lesson-examples-label">💡 Examples</div>${s.examples.map((ex,ei)=>`<div class="lesson-example"><span class="lesson-example-num">Example ${ei+1}</span><p>${escHtml(ex)}</p></div>`).join('')}</div>`:'';
     const quoteHtml=s.keyTakeaway?`<blockquote class="lesson-quote">"${escHtml(s.keyTakeaway)}"</blockquote>`:'';
     const thinkHtml=s.thinkAboutIt?`<div class="lesson-think"><span class="lesson-think-label">Think About It</span><p class="lesson-think-q">${escHtml(s.thinkAboutIt)}</p></div>`:'';
-    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${parasHtml}${quoteHtml}${thinkHtml}</div>`;
+    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${defsHtml}${parasHtml}${examplesHtml}${quoteHtml}${thinkHtml}</div>`;
   }).join('');
-  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}</div><div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
+  const rwHtml=d.realWorldApplication?`<div class="lesson-rw"><div class="lesson-rw-label">🌍 Real-World Application</div><p class="lesson-rw-body">${escHtml(d.realWorldApplication)}</p></div>`:'';
+  const summaryHtml=d.summary?`<div class="lesson-summary"><div class="lesson-summary-label">📋 Summary</div><p class="lesson-summary-body">${escHtml(d.summary)}</p></div>`:'';
+  const quizHtml=(d.quiz&&d.quiz.length)?`<div class="lesson-quiz"><div class="lesson-quiz-label">🧠 Quick Quiz</div>${d.quiz.map((q,qi)=>`<div class="lesson-quiz-item"><div class="lesson-quiz-q"><span class="lesson-quiz-num">Q${qi+1}</span>${escHtml(q.question||'')}</div><div class="lesson-quiz-reveal-wrap"><button class="lesson-quiz-reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Show Answer</button><div class="lesson-quiz-ans" style="display:none"><span class="lesson-quiz-ans-label">Answer:</span>${escHtml(q.answer||'')}</div></div></div>`).join('')}</div>`:'';
+  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}${rwHtml}${summaryHtml}${quizHtml}</div><div class="tutor-followup" onclick="switchAndGenerate('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
 }
 
 function ptToggleAnswers(show){
