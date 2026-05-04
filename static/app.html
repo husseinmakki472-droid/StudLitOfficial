@@ -2342,7 +2342,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
             <button class="sl-upload-btn" onclick="document.getElementById('cameraInputMain').click()">📷 Camera</button>
           </div>
         </div>
-        <input type="file" id="fileInputMain" style="display:none" accept=".pdf,.txt,.doc,.docx,image/*" onchange="handleFileUpload(this)">
+        <input type="file" id="fileInputMain" style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.rtf,.odt,.txt,.md,.html,.htm,.xml,.json,.yaml,.yml,.py,.js,.ts,.jsx,.tsx,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt,.rs,.sh,.sql,image/*,video/*" onchange="handleFileUpload(this)">
         <input type="file" id="videoInputMain" style="display:none" accept="video/*" onchange="handleFileUpload(this)">
         <input type="file" id="imgInputMain" style="display:none" accept="image/*" onchange="handleFileUpload(this)">
         <input type="file" id="cameraInputMain" style="display:none" accept="image/*" capture="environment" onchange="handleFileUpload(this)">
@@ -3780,41 +3780,92 @@ async function extractDocxClientSide(file){
   const result=await m.extractRawText({arrayBuffer:ab});
   return(result.value||'').trim();
 }
+// ── Shared file helpers (all upload paths) ────────────────────────────────
+let _jszipLib=null;
+async function _loadJsZip(){
+  if(_jszipLib)return _jszipLib;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  _jszipLib=window.JSZip;return _jszipLib;
+}
+function _stripHtml(h){return h.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s{2,}/g,' ').trim();}
+function _stripRtf(r){return r.replace(/\{\\[^}]+\}/g,'').replace(/\\[a-z]+[-\d]* ?/gi,'').replace(/[{}]/g,'').replace(/\s{2,}/g,' ').trim();}
+async function _extractPptx(file){
+  const Z=await _loadJsZip();const zip=await Z.loadAsync(file);
+  const slides=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n)).sort();
+  const parts=[];
+  for(const n of slides){const xml=await zip.files[n].async('string');parts.push((xml.match(/<a:t[^>]*>([^<]+)<\/a:t>/g)||[]).map(m=>m.replace(/<[^>]+>/g,'')).join(' '));}
+  return parts.join('\n\n');
+}
+async function _extractXlsx(file){
+  const Z=await _loadJsZip();const zip=await Z.loadAsync(file);
+  let shared=[];
+  if(zip.files['xl/sharedStrings.xml']){const xml=await zip.files['xl/sharedStrings.xml'].async('string');shared=(xml.match(/<t(?:\s[^>]*)?>([^<]*)<\/t>/g)||[]).map(m=>m.replace(/<[^>]*>/g,''));}
+  const sheetKeys=Object.keys(zip.files).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort();
+  const rows=[];
+  for(const key of sheetKeys){const xml=await zip.files[key].async('string');const rowEls=xml.match(/<row[^>]*>[\s\S]*?<\/row>/g)||[];for(const row of rowEls){const vals=(row.match(/<c [^>]*>[\s\S]*?<\/c>/g)||[]).map(cell=>{const vs=/t="s"/.test(cell);const vm=cell.match(/<v>([^<]*)<\/v>/);if(!vm)return'';return vs?(shared[parseInt(vm[1])]||''):vm[1];}).filter(v=>v);if(vals.length)rows.push(vals.join('\t'));}}
+  return rows.join('\n');
+}
+async function _extractOdt(file){
+  const Z=await _loadJsZip();const zip=await Z.loadAsync(file);
+  if(!zip.files['content.xml'])return'';
+  return(await zip.files['content.xml'].async('string')).replace(/<[^>]+>/g,' ').replace(/\s{2,}/g,' ').trim();
+}
+function slFileIcon(lname,type){
+  if(type.startsWith('video/'))return'🎬';if(type.startsWith('image/'))return'🖼️';
+  if(type==='application/pdf'||lname.endsWith('.pdf'))return'📄';
+  if(lname.endsWith('.pptx')||lname.endsWith('.ppt'))return'📊';
+  if(lname.endsWith('.xlsx')||lname.endsWith('.xls')||lname.endsWith('.csv'))return'📊';
+  if(lname.endsWith('.docx')||lname.endsWith('.doc')||type.includes('wordprocessingml'))return'📝';
+  return'📎';
+}
+function slFileTypeLabel(lname,type){
+  if(type.startsWith('video/'))return'Video';if(type.startsWith('image/'))return'Image';
+  if(type==='application/pdf'||lname.endsWith('.pdf'))return'PDF';
+  if(lname.endsWith('.docx')||lname.endsWith('.doc')||type.includes('wordprocessingml'))return'Word';
+  if(lname.endsWith('.pptx')||lname.endsWith('.ppt')||type.includes('presentationml'))return'Slides';
+  if(lname.endsWith('.xlsx')||lname.endsWith('.xls')||type.includes('spreadsheetml'))return'Sheet';
+  if(lname.endsWith('.csv'))return'CSV';if(lname.endsWith('.html')||lname.endsWith('.htm'))return'HTML';
+  if(lname.endsWith('.rtf'))return'RTF';if(lname.endsWith('.odt'))return'ODT';
+  if(lname.endsWith('.md'))return'MD';if(lname.endsWith('.json'))return'JSON';
+  return'File';
+}
+const _TEXT_EXTS=['.txt','.md','.csv','.yaml','.yml','.json','.xml','.py','.js','.ts','.jsx','.tsx','.java','.c','.cpp','.cs','.go','.rb','.php','.swift','.kt','.rs','.sh','.sql','.r','.m','.scala','.pl','.lua'];
+async function slReadFileContent(file,fileObj){
+  const lname=file.name.toLowerCase();const t=file.type;
+  if(t.startsWith('text/')||_TEXT_EXTS.some(e=>lname.endsWith(e))){fileObj.textContent=await file.text();return;}
+  if(lname.endsWith('.html')||lname.endsWith('.htm')){fileObj.textContent=_stripHtml(await file.text());return;}
+  if(lname.endsWith('.rtf')){fileObj.textContent=_stripRtf(await file.text());return;}
+  const isPdf=t==='application/pdf'||lname.endsWith('.pdf');
+  const isDocx=lname.endsWith('.docx')||t.includes('wordprocessingml');
+  const isPptx=lname.endsWith('.pptx')||t.includes('presentationml.presentation');
+  const isXlsx=lname.endsWith('.xlsx')||t.includes('spreadsheetml.sheet');
+  const isOdt=lname.endsWith('.odt')||t.includes('opendocument.text');
+  if(isPdf||isDocx){
+    if(file.size>75*1024*1024){fileObj.readError='File too large (max 75 MB)';return;}
+    if(file.size<=4*1024*1024){
+      const b64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
+      const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:b64})});
+      const result=await res.json();
+      if(res.ok&&result.text){fileObj.textContent=result.text;}else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
+    }else if(isPdf){fileObj.textContent=await extractPdfClientSide(file);if(!fileObj.textContent)fileObj.readError='No text found — may be a scanned image PDF';}
+    else{fileObj.textContent=await extractDocxClientSide(file);if(!fileObj.textContent)fileObj.readError='No text found in document';}
+    return;
+  }
+  if(isPptx){try{fileObj.textContent=await _extractPptx(file);if(!fileObj.textContent)fileObj.readError='No text found in presentation';}catch(e){fileObj.readError='Could not read presentation: '+e.message;}return;}
+  if(isXlsx){try{fileObj.textContent=await _extractXlsx(file);if(!fileObj.textContent)fileObj.readError='No text found in spreadsheet';}catch(e){fileObj.readError='Could not read spreadsheet: '+e.message;}return;}
+  if(isOdt){try{fileObj.textContent=await _extractOdt(file);if(!fileObj.textContent)fileObj.readError='No text found in document';}catch(e){fileObj.readError='Could not read document: '+e.message;}return;}
+  if(t.startsWith('image/')){const b64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});fileObj.imageData=b64;return;}
+  fileObj.readError='Unsupported file type. Try .pdf, .docx, .pptx, .xlsx, .csv, or paste text directly.';
+}
 async function handleFileUpload(input){
   const file=input.files[0];if(!file)return;input.value='';
-  const iconMap={'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};
-  let icon='📎';for(const[t,e]of Object.entries(iconMap)){if(file.type.startsWith(t)){icon=e;break}}
   const lname=file.name.toLowerCase();
-  const isPdf=file.type==='application/pdf'||lname.endsWith('.pdf');
-  const isDocx=lname.endsWith('.docx')||file.type.includes('wordprocessingml');
-  const typeLabel=file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':isDocx?'Doc':'File';
+  const icon=slFileIcon(lname,file.type);
+  const typeLabel=slFileTypeLabel(lname,file.type);
   const fileObj={name:file.name,type:typeLabel,icon,mimeType:file.type,reading:true};
   uploadedFiles.push(fileObj);renderFileList();
   if(!document.getElementById('studyInput')?.value){const si=document.getElementById('studyInput');if(si){si.value=`Lesson from: ${file.name}`;updateCharCount();}}
-  try{
-    if(file.type.startsWith('text/')||lname.endsWith('.txt')||lname.endsWith('.md')){
-      fileObj.textContent=await file.text();
-    } else if(isPdf||isDocx){
-      if(file.size>75*1024*1024){
-        fileObj.readError='File too large (max 75 MB)';
-      } else if(file.size<=4*1024*1024){
-        const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
-        const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:base64})});
-        const result=await res.json();
-        if(res.ok&&result.text){fileObj.textContent=result.text;}
-        else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
-      } else if(isPdf){
-        fileObj.textContent=await extractPdfClientSide(file);
-        if(!fileObj.textContent)fileObj.readError='No text found — may be a scanned image PDF';
-      } else {
-        fileObj.textContent=await extractDocxClientSide(file);
-        if(!fileObj.textContent)fileObj.readError='No text found in document';
-      }
-    } else if(file.type.startsWith('image/')){
-      const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
-      fileObj.imageData=base64;
-    }
-  }catch(e){fileObj.readError=e.message||'Read failed';console.warn('File read error:',e);}
+  try{await slReadFileContent(file,fileObj);}catch(e){fileObj.readError=e.message||'Read failed';console.warn('File read error:',e);}
   fileObj.reading=false;renderFileList();
 }
 function addUrlLesson(){
@@ -5000,41 +5051,15 @@ async function wzHandleModalFiles(input) {
   input.value = '';
   for (const file of files) {
     const lname = file.name.toLowerCase();
-    const isPdf = file.type === 'application/pdf' || lname.endsWith('.pdf');
-    const isDocx = lname.endsWith('.docx') || file.type.includes('wordprocessingml');
-    const iconMap = {'video/':'🎬','image/':'🖼️','application/pdf':'📄','text/':'📝'};
-    let icon = '📎';
-    for (const [t,e] of Object.entries(iconMap)) { if (file.type.startsWith(t)){icon=e;break;} }
-    const typeLabel = file.type.startsWith('video/')?'Video':file.type.startsWith('image/')?'Image':isPdf?'PDF':isDocx?'Doc':'File';
+    const icon = slFileIcon(lname, file.type);
+    const typeLabel = slFileTypeLabel(lname, file.type);
     const fileObj = { name:file.name, type:typeLabel, icon, mimeType:file.type, reading:true };
     uploadedFiles.push(fileObj);
     wzRenderModalFiles();
     if (!document.getElementById('studyInput')?.value) {
       const _si = document.getElementById('studyInput'); if (_si) { _si.value = 'Lesson from: ' + file.name; updateCharCount(); }
     }
-    try {
-      if (file.type.startsWith('text/') || lname.endsWith('.txt') || lname.endsWith('.md')) {
-        fileObj.textContent = await file.text();
-      } else if (isPdf || isDocx) {
-        if (file.size > 75*1024*1024) { fileObj.readError = 'File too large (max 75 MB)'; }
-        else if (file.size <= 4*1024*1024) {
-          const base64 = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.readAsDataURL(file); });
-          const res = await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:base64})});
-          const result = await res.json();
-          if (res.ok && result.text) fileObj.textContent = result.text;
-          else fileObj.readError = result.error || 'Extraction failed';
-        } else if (isPdf) {
-          fileObj.textContent = await extractPdfClientSide(file);
-          if (!fileObj.textContent) fileObj.readError = 'No text found — may be a scanned PDF';
-        } else {
-          fileObj.textContent = await extractDocxClientSide(file);
-          if (!fileObj.textContent) fileObj.readError = 'No text found';
-        }
-      } else if (file.type.startsWith('image/')) {
-        const base64 = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.readAsDataURL(file); });
-        fileObj.imageData = base64;
-      }
-    } catch(e) { fileObj.readError = e.message || 'Read failed'; }
+    try { await slReadFileContent(file, fileObj); } catch(e) { fileObj.readError = e.message || 'Read failed'; }
     fileObj.reading = false;
     wzRenderModalFiles();
   }
@@ -6259,7 +6284,7 @@ function qnUpdateCount() {
     <div class="wz-modal-sub">We will turn your file into insane study material</div>
     <div id="wzModalFileList"></div>
     <button class="wz-add-another-btn" onclick="document.getElementById('wzFileInputModal').click()">+ Add Another File</button>
-    <input type="file" id="wzFileInputModal" style="display:none" accept=".pdf,.txt,.doc,.docx,image/*,video/*" multiple onchange="wzHandleModalFiles(this)">
+    <input type="file" id="wzFileInputModal" style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.rtf,.odt,.txt,.md,.html,.htm,.xml,.json,.yaml,.yml,.py,.js,.ts,.jsx,.tsx,.java,.c,.cpp,.cs,.go,.rb,.php,.swift,.kt,.rs,.sh,.sql,image/*,video/*" multiple onchange="wzHandleModalFiles(this)">
     <div class="wz-modal-footer">
       <button class="wz-modal-next-btn" id="wzModalNextBtn" onclick="wzGoStep2()" disabled>Next</button>
     </div>
