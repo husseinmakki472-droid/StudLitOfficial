@@ -1832,8 +1832,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-autosave-badge{font-size:11.5px;font-weight:600;color:#4ade80;opacity:0;transition:opacity .4s;white-space:nowrap}
 .wz-sidebar-item:hover{background:rgba(255,255,255,0.04);color:#f0efff}
 .wz-sidebar-item.active{background:rgba(124,92,252,0.1);color:#f0efff;border-left:3px solid #7c5cfc;padding-left:9px}
-.wz-sidebar-circle{display:none}
-.wz-sidebar-item.loaded:not(.active) .wz-sidebar-circle{display:none}
+.wz-sidebar-circle{width:7px;height:7px;border-radius:50%;background:rgba(124,92,252,0.6);flex-shrink:0;animation:pulse 1.1s infinite}
+.wz-sidebar-item.loaded .wz-sidebar-circle{display:none}
 .wz-sidebar-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;opacity:.65}
 .wz-sidebar-item.active .wz-sidebar-icon{opacity:1}
 .wz-sidebar-divider{height:1px;background:rgba(255,255,255,0.06);margin:10px 4px}
@@ -2069,7 +2069,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme=”light”] .wz-panel-sidebar{border-right-color:rgba(0,0,0,0.08)}
 [data-theme=”light”] .wz-sidebar-item{color:rgba(15,14,26,0.5)}
 [data-theme=”light”] .wz-sidebar-item:hover,[data-theme=”light”] .wz-sidebar-item.active{background:rgba(0,0,0,0.04);color:#0f0e1a}
-[data-theme=”light”] .wz-sidebar-circle{display:none}
+[data-theme=”light”] .wz-sidebar-circle{background:rgba(124,92,252,0.5)}
 [data-theme=”light”] .wz-right-empty-text{color:rgba(15,14,26,0.3)}
 [data-theme=”light”] .wz-processing-text{color:rgba(15,14,26,0.4)}
 [data-theme=”light”] .wz-method-name{color:#0f0e1a}
@@ -3506,7 +3506,7 @@ function renderFlashcardsHTML(topic, d){
   if(!cards.length)return'<div class="error-card"><div class="error-card-label">⚠ No cards</div><div class="error-card-body">No flashcard data returned.</div></div>';
   fcCards=cards.map(c=>({q:c.front||'',a:c.back||''}));
   fcIndex=0;fcFlipped=false;
-  return`${resultHeader('flashcards',t,[{text:'🃏 '+fcCards.length+' Cards',accent:true},{text:'Active Recall'}])}<div id="fcContainer"><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div><div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><div class="fc-arrow" onclick="fcNext()">→</div></div></div><div class="flashcard" id="flashcard" onclick="fcFlip()"><div class="fc-face fc-front"><div class="fc-indicator">Question</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal answer</div></div><div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div></div><div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div></div>`;
+  return`${resultHeader('flashcards',t,[{text:'🃏 '+fcCards.length+' Cards',accent:true},{text:'Active Recall'}])}<div id="fcContainer"><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div><div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><button onclick="fcSkip()" style="background:none;border:none;cursor:pointer;font-size:11px;color:rgba(240,239,255,0.3);padding:4px 8px;border-radius:6px;transition:color .15s" onmouseover="this.style.color='rgba(248,113,113,0.7)'" onmouseout="this.style.color='rgba(240,239,255,0.3)'" title="Remove this card">✕ skip</button><div class="fc-arrow" onclick="fcNext()">→</div></div></div><div class="flashcard" id="flashcard" onclick="fcFlip()"><div class="fc-face fc-front"><div class="fc-indicator">Question</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal answer</div></div><div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div></div><div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div></div>`;
 }
 
 function renderQuizHTML(topic, d){
@@ -3689,12 +3689,13 @@ function fcUpdateCard(){const c=fcCards[fcIndex];document.getElementById('fcFron
 function fcNext(){fcIndex=(fcIndex+1)%fcCards.length;fcUpdateCard()}
 function fcPrev(){fcIndex=(fcIndex-1+fcCards.length)%fcCards.length;fcUpdateCard()}
 function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
+function fcSkip(){if(fcCards.length<=1)return;fcCards.splice(fcIndex,1);if(fcIndex>=fcCards.length)fcIndex=0;fcUpdateCard();}
 
 function renderQuizQuestion(){
   if(quizCurrent>=quizData.length)return renderQuizScore();
   quizQStart=Date.now();
   const q=quizData[quizCurrent];const letters=['A','B','C','D'];
-  return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div class="quiz-difficulty">${q.difficulty}</div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`;
+  return`<div><div class="quiz-q-header"><div class="quiz-progress-num">Question ${quizCurrent+1} of ${quizData.length}</div><div style="display:flex;align-items:center;gap:8px"><div class="quiz-difficulty">${q.difficulty}</div><button onclick="quizSkip()" style="background:none;border:1px solid rgba(248,113,113,0.3);cursor:pointer;font-size:11px;color:rgba(248,113,113,0.5);padding:3px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='rgba(248,113,113,0.9)';this.style.borderColor='rgba(248,113,113,0.6)'" onmouseout="this.style.color='rgba(248,113,113,0.5)';this.style.borderColor='rgba(248,113,113,0.3)'" title="Skip this question">Skip →</button></div></div><div class="fc-progress-bar-wrap"><div class="fc-progress-bar" style="width:${quizCurrent/quizData.length*100}%"></div></div><div class="quiz-question" style="margin-top:16px">${escHtml(q.q)}</div><div class="quiz-options">${q.opts.map((o,i)=>`<div class="quiz-option" onclick="quizSelect(this,${i},${q.correct})"><div class="quiz-opt-letter">${letters[i]}</div><span>${escHtml(o)}</span></div>`).join('')}</div><div class="quiz-feedback" id="quizFeedback"></div></div>`;
 }
 function quizSelect(el,picked,correct){
   const timeMs=Date.now()-quizQStart;
@@ -3708,6 +3709,7 @@ function quizSelect(el,picked,correct){
   quizAnswers.push({difficulty:q.difficulty||'Medium',correct:isCorrect,timeMs});
   setTimeout(()=>{quizCurrent++;document.getElementById('quizBody').innerHTML=renderQuizQuestion();},1800);
 }
+function quizSkip(){quizData.splice(quizCurrent,1);if(!quizData.length){document.getElementById('quizBody').innerHTML=renderQuizScore();return;}if(quizCurrent>=quizData.length)quizCurrent=0;document.getElementById('quizBody').innerHTML=renderQuizQuestion();}
 function renderQuizScore(){
   const pct=Math.round(quizScore/quizData.length*100);
   const msg=pct>=75?'🎉 Great work!':pct>=50?'👍 Solid effort!':'📚 Keep studying!';
@@ -3866,12 +3868,22 @@ async function pasteGenerate(){
   const filesPayload=uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const topicStr=(genLang!=='English'?topic+' — Respond in '+genLang+'.':topic);
   try{
-    const fetches=modes.map(mode=>fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topicStr,modes:[mode],files:filesPayload,urls:[],difficulty:genDiff})}).then(r=>r.json()).catch(()=>null));
-    const responses=await Promise.all(fetches);
-    const combined={};let resolvedTopic=topic;
-    responses.forEach((data,i)=>{if(data&&!data.error&&data.results){if(data.topic)resolvedTopic=data.topic;Object.assign(combined,data.results);}});
-    if(!Object.keys(combined).length){document.getElementById('wzResultMain').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>';return;}
-    wzBuildTabbedResult(resolvedTopic,modes,combined);
+    let resolvedTopic2=topic;let firstShown2=false;wzResultTabs={};
+    document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
+    await Promise.all(modes.map(mode=>
+      fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topicStr,modes:[mode],files:filesPayload,urls:[],difficulty:genDiff})})
+        .then(r=>r.json().catch(()=>({error:'Request timed out.'}))).catch(()=>({error:'Network error.'}))
+        .then(data=>{
+          if(data&&!data.error&&data.results&&data.results[mode]){
+            if(data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
+            wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);
+          }else{wzResultTabs[mode]=`<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data.')}</div></div>`;}
+          wzMarkTabLoaded(mode);
+          if(!firstShown2){firstShown2=true;wzShowTab(mode);}
+        })
+    ));
+    if(!firstShown2){document.getElementById('wzResultMain').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>';return;}
+    document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
   }catch(err){document.getElementById('wzResultMain').innerHTML=`<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;}
   finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generate';}}
 }
@@ -5113,28 +5125,35 @@ async function wzGenerate() {
     const fetchMode = mode => fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
-    }).then(r => r.json().catch(() => ({error: r.ok ? 'Invalid response from server.' : 'Request timed out. Try selecting fewer modes or a shorter topic.'}))).catch(() => ({error: 'Network error. Check your connection and try again.'}));
+    }).then(r => r.json().catch(() => ({error: 'Request timed out. Try again.'}))).catch(() => ({error: 'Network error. Check your connection.'}));
 
-    const responses = await Promise.all(methods.map(fetchMode));
-
-    const combinedResults = {};
     let resolvedTopic = input || 'Study Set';
-    let firstError = null;
-    responses.forEach(data => {
-      if (data && !data.error && data.results) {
-        if (data.topic && data.topic !== 'the uploaded content') resolvedTopic = data.topic;
-        Object.assign(combinedResults, data.results);
-      } else if (data && data.error && !firstError) {
-        firstError = data.error;
-      }
-    });
+    let firstShown = false;
+    wzResultTabs = {};
+    document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
 
-    if (!Object.keys(combinedResults).length) {
-      const msg = firstError || 'The request timed out. Try selecting fewer modes or a shorter topic, then generate again.';
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`;
+    // Kick off all mode fetches in parallel; render each tab as it arrives
+    await Promise.all(methods.map(mode =>
+      fetchMode(mode).then(data => {
+        if (data && !data.error && data.results && data.results[mode]) {
+          if (data.topic && data.topic !== 'the uploaded content') {
+            resolvedTopic = data.topic;
+            document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
+          }
+          wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, data.results[mode]);
+        } else {
+          wzResultTabs[mode] = `<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data returned.')}</div></div>`;
+        }
+        wzMarkTabLoaded(mode);
+        if (!firstShown) { firstShown = true; wzShowTab(mode); }
+      })
+    ));
+
+    if (!firstShown) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>`;
       return;
     }
-    wzBuildTabbedResult(resolvedTopic, methods, combinedResults);
+    document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
     const fileCtx = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent).join('\n\n');
     wzFullContent = fileCtx || input || '';
     wzInitChat(wzFullContent);
@@ -5150,6 +5169,7 @@ function wzBuildSidebar(methods) {
     `<div class="wz-sidebar-item${i===0?' active':''}" data-mode="${m}" onclick="wzShowTab('${m}')">
       <div class="wz-sidebar-icon">${WZ_MODE_ICONS[m]||'📄'}</div>
       <span style="flex:1">${WZ_MODE_NAMES[m]||m}</span>
+      <div class="wz-sidebar-circle"></div>
       <button class="wz-sidebar-del" onclick="wzDeleteMode(event,'${m}')" title="Remove mode">✕</button>
     </div>`
   ).join('') +
@@ -5184,28 +5204,35 @@ function wzBuildSidebar(methods) {
   setTimeout(function(){ try { wzTimerRefresh(); } catch(e){} }, 0);
 }
 
+function wzRenderMode(mode, topic, d) {
+  if (!d) return `<div class="error-card"><div class="error-card-label">⚠ Content unavailable</div><div class="error-card-body">This mode didn't return data. <button class="regen-btn" style="margin-top:10px" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Try again</button></div></div>`;
+  switch(mode) {
+    case 'notes': return renderNotesHTML(topic,d);
+    case 'quiz': return renderQuizHTML(topic,d);
+    case 'flashcards': return renderFlashcardsHTML(topic,d);
+    case 'tutor': return renderTutorHTML(topic,d);
+    case 'practicetest': return renderPracticeTestHTML(topic,d);
+    case 'fitb': return renderFITBHTML(topic,d);
+    case 'summary': return renderSummaryHTML(topic,d);
+    case 'keyconcepts': return renderKeyConceptsHTML(topic,d);
+    case 'studyplan': return renderStudyPlanHTML(topic,d);
+    case 'solve': return renderSolveHTML(topic,d);
+    default: return `<div class="card-body">${escHtml(JSON.stringify(d))}</div>`;
+  }
+}
+
+function wzMarkTabLoaded(mode) {
+  document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
+    if (el.dataset.mode === mode || el.dataset.mode === '__content__') el.classList.add('loaded');
+  });
+}
+
 function wzBuildTabbedResult(topic, methods, results) {
   wzResultTabs = {};
   document.getElementById('wzResultTitleEl').textContent = topic;
   methods.forEach(mode => {
-    const d = results[mode];
-    let html = d ? '' : `<div class="error-card"><div class="error-card-label">⚠ Content unavailable</div><div class="error-card-body">This mode didn't return data. <button class="regen-btn" style="margin-top:10px" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Try again</button></div></div>`;
-    if (d) switch(mode) {
-      case 'notes': html=renderNotesHTML(topic,d); break;
-      case 'quiz': html=renderQuizHTML(topic,d); break;
-      case 'flashcards': html=renderFlashcardsHTML(topic,d); break;
-      case 'tutor': html=renderTutorHTML(topic,d); break;
-      case 'practicetest': html=renderPracticeTestHTML(topic,d); break;
-      case 'fitb': html=renderFITBHTML(topic,d); break;
-      case 'summary': html=renderSummaryHTML(topic,d); break;
-      case 'keyconcepts': html=renderKeyConceptsHTML(topic,d); break;
-      case 'studyplan': html=renderStudyPlanHTML(topic,d); break;
-      case 'solve': html=renderSolveHTML(topic,d); break;
-    }
-    wzResultTabs[mode] = html;
-  });
-  document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
-    if (wzResultTabs[el.dataset.mode] || el.dataset.mode === '__content__') el.classList.add('loaded');
+    wzResultTabs[mode] = wzRenderMode(mode, topic, results[mode]);
+    wzMarkTabLoaded(mode);
   });
   wzShowTab(methods[0]);
   lastResult = { topic, modes: methods.join('+'), html: wzResultTabs[methods[0]] || '' };

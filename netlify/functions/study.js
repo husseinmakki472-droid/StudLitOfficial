@@ -14,6 +14,33 @@ function repairJson(str) {
 // These modes always use gpt-4o; everything else always uses gpt-4o-mini
 const GPT4O_MODES = new Set(['quiz', 'solve', 'tutor', 'practicetest']);
 
+function detectSubject(topic, fileCtx) {
+  const text = ((topic || '') + ' ' + (fileCtx || '')).toLowerCase();
+  if (/\b(calculus|algebra|geometry|trigonometry|matrix|vector|derivative|integral|theorem|proof|polynomial|equation|formula)\b/.test(text)) return 'math';
+  if (/\b(physics|force|momentum|velocity|acceleration|gravity|quantum|wave|circuit|thermodynamics|electromagnetic)\b/.test(text)) return 'physics';
+  if (/\b(cell|dna|rna|protein|organism|evolution|genetics|ecosystem|photosynthesis|mitosis|species|anatomy|biology)\b/.test(text)) return 'biology';
+  if (/\b(element|compound|molecule|atom|bond|acid|base|oxidation|periodic|stoichiometry|chemistry|chemical reaction)\b/.test(text)) return 'chemistry';
+  if (/\b(war|empire|revolution|treaty|civilization|colonialism|dynasty|historical|century|political history|government)\b/.test(text)) return 'history';
+  if (/\b(novel|poem|character|theme|metaphor|literary|protagonist|symbolism|narrative|rhetoric|genre|literature)\b/.test(text)) return 'literature';
+  if (/\b(algorithm|function|variable|loop|class|object|database|programming|code|software|html|css|javascript|python)\b/.test(text)) return 'cs';
+  if (/\b(market|supply|demand|profit|revenue|economics|inflation|gdp|fiscal|business|entrepreneur|finance)\b/.test(text)) return 'business';
+  if (/\b(anatomy|diagnosis|symptom|treatment|disease|medication|clinical|medical|physiology|pharmacology|nursing)\b/.test(text)) return 'medicine';
+  return 'general';
+}
+
+const SUBJECT_INSTRUCTIONS = {
+  math:       'SUBJECT=MATH: Include calculation problems where students must show steps. Ask "solve for X", "prove that", "find the value". Test formula application with specific numbers, not just definitions.',
+  physics:    'SUBJECT=PHYSICS: Include scenario problems (e.g. "A ball rolls off a ledge at 5 m/s — how long until it hits the ground?"). Ask students to apply equations, check units, and explain why laws hold.',
+  biology:    'SUBJECT=BIOLOGY: Ask students to describe mechanisms step-by-step ("trace how X occurs"), compare structures/processes, explain adaptive significance, and connect cause to biological effect.',
+  chemistry:  'SUBJECT=CHEMISTRY: Include reaction prediction, equation balancing, bond-type comparisons, and application of equilibrium/kinetics principles to real scenarios.',
+  history:    'SUBJECT=HISTORY: Focus on causation ("What led to X?"), significance ("Why did X matter?"), comparison of events or figures, and analysis of decisions and their consequences.',
+  literature: 'SUBJECT=LITERATURE: Ask about themes, character motivation, literary devices in specific passages, authorial choices, and how structure or tone affects meaning.',
+  cs:         'SUBJECT=CS: Include code tracing, bug identification, algorithm comparison, Big-O analysis, and "why is X better than Y in this situation?" questions.',
+  business:   'SUBJECT=BUSINESS: Use case-based questions, apply frameworks (SWOT, Porter\'s 5 Forces), evaluate business decisions, and ask students to justify trade-offs.',
+  medicine:   'SUBJECT=MEDICINE: Use clinical scenarios, ask students to prioritise diagnoses, explain pathophysiology mechanisms, and connect patient symptoms to underlying causes.',
+  general:    ''
+};
+
 async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -95,6 +122,8 @@ const handler = async (event) => {
   };
 
   const difficultyModes = ['quiz', 'practicetest', 'fitb'];
+  const subject = detectSubject(topic, fileCtx);
+  const subjectHint = SUBJECT_INSTRUCTIONS[subject] || '';
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
@@ -107,7 +136,8 @@ const handler = async (event) => {
     const diffInstr = difficultyModes.includes(mode)
       ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=simple recall; medium=understanding required; hard=analysis and application. Every question must match this level.'
       : '';
-    const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
+    const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
+    const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
     // Token limits tuned so responses finish within Netlify's 60s timeout:
     // gpt-4o ~80-100 tok/s → 3000 tokens ≈ 30-38s; gpt-4o-mini ~150-200 tok/s → 5000 tokens ≈ 25-33s
