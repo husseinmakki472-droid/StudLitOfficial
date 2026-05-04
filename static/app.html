@@ -4247,13 +4247,20 @@ function wzApplySetContext() {
 function wzDeleteMode(e, mode) {
   e.stopPropagation();
   delete wzResultTabs[mode];
-  const remaining = Object.keys(wzResultTabs);
+  // Use wzSelectedMethods as source of truth so deleting a still-loading
+  // tab doesn't cause "no remaining modes" when wzResultTabs is partially filled
+  wzSelectedMethods.delete(mode);
+  const remaining = [...wzSelectedMethods];
   if (!remaining.length) {
     if (activeSetContext) { wzLeaveSet(); } else { slShowHome(); }
     return;
   }
   wzBuildSidebar(remaining);
-  wzShowTab(remaining[0]);
+  // Re-mark already-loaded tabs so their dots disappear
+  remaining.forEach(m => { if (wzResultTabs[m]) wzMarkTabLoaded(m); });
+  // Show the first tab that actually has content, else the first tab
+  const firstLoaded = remaining.find(m => wzResultTabs[m]);
+  wzShowTab(firstLoaded || remaining[0]);
   if (activeSetContext) autoSaveSetContext();
 }
 
