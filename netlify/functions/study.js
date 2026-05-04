@@ -106,7 +106,7 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. CRITICAL THINKING: questions and flashcard fronts must go beyond recall — ask students to apply, analyze, compare, explain why, predict, or solve scenarios. Mix types: ~30% recall, ~40% application, ~30% analysis. MINIMUM quantities: flashcards = 60+ cards; quiz = 20+ questions; notes = 5+ sections with 4-5 bullets; tutor = 4+ sections with 3 paragraphs each; fitb = 12+ sentences; keyconcepts = 15+ terms; practicetest = 8+ questions; studyplan = 7 days. Fill every field. Never leave arrays empty. Never truncate mid-array.';
+  const systemPrompt = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks, no extra text. CRITICAL THINKING: questions and flashcard fronts must go beyond recall — ask students to apply, analyze, compare, explain why, predict, or solve scenarios. Mix types: ~30% recall, ~40% application, ~30% analysis. MINIMUM quantities: flashcards = 80+ cards; quiz = 25+ questions; notes = 6+ sections with 5-6 bullets each; tutor = 5+ sections with 4 paragraphs each; fitb = 15+ sentences; keyconcepts = 18+ terms; practicetest = 10+ questions; studyplan = 7 days. Fill every field. Never leave arrays empty. Never truncate mid-array.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"Mix of question types — e.g. \'Why does X happen?\', \'How would you apply X to Y?\', \'What is the difference between X and Y?\', \'What would happen if X changed?\', \'Give an example of X in real life\', or \'Define X\' for core terms. NOT just \'What is X?\'","back":"thorough answer — explain the concept, the reasoning, or the real-world connection, not just a one-line definition"}]}',
@@ -139,9 +139,9 @@ const handler = async (event) => {
     const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    // Token limits tuned to finish within ~20s (well under Netlify's hard timeout):
-    // gpt-4o ~80-100 tok/s → 1800 tokens ≈ 18-22s; gpt-4o-mini ~150-200 tok/s → 3000 tokens ≈ 15-20s
-    const maxTokens = GPT4O_MODES.has(mode) ? 1800 : 3000;
+    // Batched calls (2 per generation) give each function its own full budget.
+    // gpt-4o ~80-100 tok/s → 2500 ≈ 25-31s; gpt-4o-mini ~150-200 tok/s → 4000 ≈ 20-27s
+    const maxTokens = GPT4O_MODES.has(mode) ? 2500 : 4000;
     return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
