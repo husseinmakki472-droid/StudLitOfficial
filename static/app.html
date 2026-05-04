@@ -1498,6 +1498,32 @@ LIGHT MODE — complete override, !important on all visuals
 /* ── Paste panel ── */
 [data-theme="light"] .paste-char-count{color:rgba(15,14,26,0.35)!important}
 
+/* ── Save bar ── */
+[data-theme="light"] .save-bar{background:rgba(0,0,0,0.03)!important;border:1px solid rgba(0,0,0,0.09)!important}
+[data-theme="light"] .save-bar-select{background:#fff!important;border:1px solid rgba(0,0,0,0.12)!important;color:#0f0e1a!important}
+
+/* ── Upload zone (non-sl variant in wz upload) ── */
+[data-theme="light"] .upload-zone{border:2px dashed rgba(0,0,0,0.18)!important;background:rgba(0,0,0,0.02)!important}
+[data-theme="light"] .upload-zone:hover,[data-theme="light"] .upload-zone.drag-over{border-color:#7c5cfc!important;background:rgba(124,92,252,0.04)!important}
+
+/* ── Selected modes bar ── */
+[data-theme="light"] .selected-modes-bar{background:rgba(0,0,0,0.03)!important;border:1px solid rgba(0,0,0,0.09)!important;color:rgba(15,14,26,0.65)!important}
+
+/* ── Wz sidebar divider ── */
+[data-theme="light"] .wz-sidebar-divider{background:rgba(0,0,0,0.08)!important}
+
+/* ── Wz lang select ── */
+[data-theme="light"] .wz-lang-select{background:#fff!important;border:1.5px solid rgba(0,0,0,0.12)!important;color:#0f0e1a!important}
+
+/* ── New tutor lesson labels ── */
+[data-theme="light"] .lesson-defs-label{color:rgba(15,14,26,0.45)!important}
+[data-theme="light"] .lesson-def-sep{color:rgba(15,14,26,0.2)!important}
+[data-theme="light"] .lesson-examples-label{color:rgba(15,14,26,0.45)!important}
+[data-theme="light"] .lesson-quiz-label{color:rgba(15,14,26,0.45)!important}
+[data-theme="light"] .lesson-quiz-reveal-btn{background:rgba(124,92,252,0.1)!important;border-color:rgba(124,92,252,0.25)!important;color:#5b3fd4!important}
+[data-theme="light"] .lesson-quiz-reveal-btn:hover{background:rgba(124,92,252,0.18)!important}
+[data-theme="light"] .lesson-quiz-ans-label{color:#16a34a!important}
+
 /* ── Hero section (Home tab) ── */
 [data-theme="light"] .hero-rating{color:rgba(15,14,26,0.55)!important}
 [data-theme="light"] .hero-price-note{color:rgba(15,14,26,0.4)!important}
@@ -2943,9 +2969,13 @@ function applyTheme(theme) {
       .sets-search { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; color: #0f0e1a !important; }
       .sets-search::placeholder { color: rgba(15,14,26,0.38) !important; }
       .save-bar-label { color: rgba(15,14,26,0.7) !important; font-weight: 600 !important; }
+      .save-bar { background: rgba(0,0,0,0.03) !important; border: 1px solid rgba(0,0,0,0.09) !important; }
+      .save-bar-select { background: #fff !important; border: 1px solid rgba(0,0,0,0.12) !important; color: #0f0e1a !important; }
+      .selected-modes-bar { background: rgba(0,0,0,0.03) !important; border: 1px solid rgba(0,0,0,0.09) !important; color: rgba(15,14,26,0.65) !important; }
 
       /* ── Upload zone ── */
       .sl-upload-zone { border: 2px dashed rgba(0,0,0,0.2) !important; background: rgba(0,0,0,0.02) !important; }
+      .upload-zone { border: 2px dashed rgba(0,0,0,0.18) !important; background: rgba(0,0,0,0.02) !important; }
       .sl-upload-zone-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .sl-upload-zone-sub { color: rgba(15,14,26,0.65) !important; }
       .sl-upload-zone p, .sl-upload-zone span, .sl-upload-zone div { color: rgba(15,14,26,0.65) !important; }
@@ -3074,6 +3104,12 @@ function applyTheme(theme) {
       .lesson-content strong { color: #0f0e1a !important; font-weight: 700 !important; }
       .lesson-quote { color: rgba(15,14,26,0.75) !important; background: rgba(124,92,252,0.05) !important; }
       .lesson-think-q { color: rgba(15,14,26,0.75) !important; }
+      .lesson-defs-label { color: rgba(15,14,26,0.45) !important; }
+      .lesson-def-sep { color: rgba(15,14,26,0.2) !important; }
+      .lesson-examples-label { color: rgba(15,14,26,0.45) !important; }
+      .lesson-quiz-label { color: rgba(15,14,26,0.45) !important; }
+      .lesson-quiz-reveal-btn { background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.25) !important; color: #5b3fd4 !important; }
+      .lesson-quiz-ans-label { color: #16a34a !important; }
       .step-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .step-desc { color: rgba(15,14,26,0.75) !important; }
 
@@ -3107,6 +3143,7 @@ function applyTheme(theme) {
       .wz-method-name { color: #0f0e1a !important; font-weight: 700 !important; }
       .wz-method-desc { color: rgba(15,14,26,0.65) !important; }
       .wz-lang-label { color: rgba(15,14,26,0.7) !important; font-weight: 600 !important; }
+      .wz-lang-select { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.12) !important; color: #0f0e1a !important; }
       .wz-upload-modal { background: #fff !important; border-color: rgba(0,0,0,0.11) !important; }
       .wz-modal-close { background: rgba(0,0,0,0.05) !important; border-color: rgba(0,0,0,0.11) !important; color: rgba(15,14,26,0.6) !important; }
       .wz-modal-file-item { background: #f5f4ff !important; border-color: rgba(0,0,0,0.09) !important; }
@@ -3117,6 +3154,7 @@ function applyTheme(theme) {
       /* ── Wz result panel ── */
       .wz-result-topbar-title { color: #0f0e1a !important; font-weight: 800 !important; }
       .wz-sidebar-add { color: rgba(15,14,26,0.6) !important; font-weight: 700 !important; }
+      .wz-sidebar-divider { background: rgba(0,0,0,0.08) !important; }
       .wz-sidebar-icon { opacity: 0.85 !important; }
       .wz-sidebar-item { color: rgba(15,14,26,0.75) !important; font-weight: 600 !important; }
       .wz-sidebar-item.active { background: rgba(124,92,252,0.15) !important; color: #5b3fd4 !important; font-weight: 700 !important; border-left-color: #7c5cfc !important; }
