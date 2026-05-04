@@ -3886,18 +3886,20 @@ async function pasteGenerate(){
   try{
     let resolvedTopic2=topic;let firstShown2=false;wzResultTabs={};
     document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
-    await Promise.all(modes.map(mode=>
-      fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topicStr,modes:[mode],files:filesPayload,urls:[],difficulty:genDiff})})
-        .then(r=>r.json().catch(()=>({error:'Request timed out.'}))).catch(()=>({error:'Network error.'}))
-        .then(data=>{
-          if(data&&!data.error&&data.results&&data.results[mode]){
-            if(data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
-            wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);
-          }else{wzResultTabs[mode]=`<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data.')}</div></div>`;}
-          wzMarkTabLoaded(mode);
-          if(!firstShown2){firstShown2=true;wzShowTab(mode);}
-        })
-    ));
+    const _GPT4O2=new Set(['quiz','solve','tutor','practicetest']);
+    const _mini2=modes.filter(m=>!_GPT4O2.has(m));
+    const _gpt4o2=modes.filter(m=>_GPT4O2.has(m));
+    const _batches2=[_mini2.length&&_mini2,_gpt4o2.length&&_gpt4o2].filter(Boolean);
+    const _fb2=bm=>fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topicStr,modes:bm,files:filesPayload,urls:[],difficulty:genDiff})}).then(r=>r.json().catch(()=>({error:'Request timed out.'}))).catch(()=>({error:'Network error.'}));
+    await Promise.all(_batches2.map(bm=>_fb2(bm).then(data=>{
+      if(data&&!data.error&&data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
+      bm.forEach(mode=>{
+        if(data&&!data.error&&data.results&&data.results[mode]){wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);}
+        else{wzResultTabs[mode]=`<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data.')}</div></div>`;}
+        wzMarkTabLoaded(mode);
+        if(!firstShown2){firstShown2=true;wzShowTab(mode);}
+      });
+    })));
     if(!firstShown2){document.getElementById('wzResultMain').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>';return;}
     document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
   }catch(err){document.getElementById('wzResultMain').innerHTML=`<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;}
@@ -5145,30 +5147,41 @@ async function wzGenerate() {
   try {
     const topicArg = input || 'the uploaded content';
     const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
-    const fetchMode = mode => fetch('/.netlify/functions/study', {
+
+    // Two batched requests: mini-model modes + gpt4o modes
+    // Backend runs each mode as its own parallel OpenAI call within one function invocation,
+    // eliminating N cold-start overhead and resource contention from N separate Netlify calls.
+    const GPT4O_SET = new Set(['quiz','solve','tutor','practicetest']);
+    const miniModes  = methods.filter(m => !GPT4O_SET.has(m));
+    const gpt4oModes = methods.filter(m =>  GPT4O_SET.has(m));
+    const batches    = [miniModes.length && miniModes, gpt4oModes.length && gpt4oModes].filter(Boolean);
+
+    const fetchBatch = batchModes => fetch('/.netlify/functions/study', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
-    }).then(r => r.json().catch(() => ({error: 'Request timed out. Try again.'}))).catch(() => ({error: 'Network error. Check your connection.'}));
+      body:JSON.stringify({topic:topicArg, modes:batchModes, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
+    }).then(r => r.json().catch(() => ({error:'Request timed out. Try again.'}))).catch(() => ({error:'Network error. Check your connection.'}));
 
     let resolvedTopic = input || 'Study Set';
     let firstShown = false;
     wzResultTabs = {};
     document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
 
-    // Kick off all mode fetches in parallel; render each tab as it arrives
-    await Promise.all(methods.map(mode =>
-      fetchMode(mode).then(data => {
-        if (data && !data.error && data.results && data.results[mode]) {
-          if (data.topic && data.topic !== 'the uploaded content') {
-            resolvedTopic = data.topic;
-            document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
-          }
-          wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, data.results[mode]);
-        } else {
-          wzResultTabs[mode] = `<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data returned.')}</div></div>`;
+    await Promise.all(batches.map(batchModes =>
+      fetchBatch(batchModes).then(data => {
+        if (data && !data.error && data.topic && data.topic !== 'the uploaded content') {
+          resolvedTopic = data.topic;
+          document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
         }
-        wzMarkTabLoaded(mode);
-        if (!firstShown) { firstShown = true; wzShowTab(mode); }
+        batchModes.forEach(mode => {
+          if (data && !data.error && data.results && data.results[mode]) {
+            wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, data.results[mode]);
+          } else {
+            const errMsg = (data && data.error) || 'No data returned.';
+            wzResultTabs[mode] = `<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml(errMsg)} <button class="regen-btn" style="margin-top:8px;display:inline-flex" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Retry</button></div></div>`;
+          }
+          wzMarkTabLoaded(mode);
+          if (!firstShown) { firstShown = true; wzShowTab(mode); }
+        });
       })
     ));
 
