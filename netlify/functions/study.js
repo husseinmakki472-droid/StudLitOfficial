@@ -142,9 +142,8 @@ const handler = async (event) => {
     const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + tutorInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    // Batched calls (2 per generation) give each function its own full budget.
-    // gpt-4o ~80-100 tok/s → 2500 ≈ 25-31s; gpt-4o-mini ~150-200 tok/s → 4000 ≈ 20-27s
-    const maxTokens = GPT4O_MODES.has(mode) ? 2500 : 4000;
+    // gpt-4o: 1800 tokens; gpt-4o-mini: 1500 tokens
+    const maxTokens = GPT4O_MODES.has(mode) ? 1800 : 1500;
     return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
