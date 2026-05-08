@@ -19,7 +19,7 @@ const handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); }
   catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const { topic, modes, files, urls, difficulty } = body;
+  const { topic, modes, files, urls, difficulty, chunkIndex, totalChunks } = body;
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
   const modesArr = modes || [];
   const filesArr = files || [];
@@ -38,7 +38,7 @@ const handler = async (event) => {
     fileCtx += '\n\nUploaded materials:\n';
     for (let i = 0; i < filesArr.length; i++) {
       const f = filesArr[i];
-      if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 18000) + '\n';
+      if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 20000) + '\n';
       else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ') — no text extracted]\n';
     }
   }
@@ -47,16 +47,26 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
+  const isNotesOnly = modesArr.length === 1 && modesArr[0] === 'notes';
+  const hasNotes = modesArr.indexOf('notes') !== -1;
   const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
 
-  const systemPrompt = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate quality content: notes = 5 sections with 3-4 bullets each; quiz = 8 questions with explanations; flashcards = 12 cards; tutor = 4 sections with 2 paragraphs each; fitb = 7 sentences; keyconcepts = 10 terms with definitions; practicetest = 3 questions per section; studyplan = 5 days; summary = 5 key points. Keep all answers clear and substantive.';
+  const chunkNote = (chunkIndex !== undefined && totalChunks !== undefined)
+    ? '\n\nCHUNK: You are processing section ' + (chunkIndex + 1) + ' of ' + totalChunks + ' from this document. Focus exclusively on the content provided in this chunk. Do not summarise — expand every concept fully.'
+    : '';
+
+  const systemPrompt = hasNotes
+    ? 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. For notes mode: generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational. For other modes: quiz = 8 questions; flashcards = 12 cards; keyconcepts = 10 terms; summary = 6-8 key points; practicetest = 3 questions per section; fitb = 7 sentences; studyplan = 5-7 days; tutor = 4 sections.'
+    : 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate quality content: quiz = 8 questions with explanations; flashcards = 12 cards; fitb = 7 sentences; keyconcepts = 10 terms with definitions; practicetest = 3 questions per section; studyplan = 5 days; summary = 5 key points. Keep all answers clear and substantive.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
     quiz: '"quiz":{"questions":[{"question":"full question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"detailed explanation of why this answer is correct and why others are wrong","difficulty":"Medium"}]}',
     fitb: '"fitb":{"sentences":[{"text":"The ___ is responsible for ___ and plays a key role in ___.","blanks":["term1","term2","term3"]}]}',
     summary: '"summary":{"overview":"3-4 sentence overview covering all major themes","keyPoints":["detailed key point 1 with context","detailed key point 2","key point 3","key point 4","key point 5","key point 6","key point 7","key point 8"],"mustRemember":"the single most critical concept to understand"}',
-    notes: '"notes":{"sections":[{"heading":"Section Title","content":"Rich 2-3 sentence paragraph introducing this section with context.","bullets":["detailed bullet 1 with explanation","detailed bullet 2","detailed bullet 3","detailed bullet 4","detailed bullet 5"]}]}',
+
+    notes: '"notes":{"sections":[{"heading":"Section Title","overview":"2-3 sentence introduction explaining what this section covers and why it matters.","content":"Detailed explanatory paragraph 1 that fully explains the concept with context.\\n\\nParagraph 2 that builds on this with more depth, mechanisms, and nuance.\\n\\nParagraph 3 connecting this to broader ideas and implications.","bullets":["Key point 1 — full explanation of this concept with sufficient detail for a student","Key point 2 — another important aspect fully explained","Key point 3 — another key idea with context and explanation","Key point 4 — further elaboration","Key point 5 — additional important detail"],"keyTerms":[{"term":"important vocabulary word","definition":"precise and comprehensive definition of this term"}],"examples":["Concrete example 1 that illustrates the concept clearly","Concrete example 2 showing a different application or scenario"],"applications":["Real-world application or relevance of this concept","Another context where this knowledge is applied"],"causeEffect":"Explanation of cause-and-effect relationships, mechanisms, or sequences relevant to this section.","keyTakeaway":"The single most important insight a student must remember from this section."}]}',
+
     tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section Heading","paragraphs":["First detailed paragraph explaining the concept clearly with analogies.","Second paragraph building on this with examples and applications.","Third paragraph connecting to broader context and implications."],"keyTakeaway":"The one most important insight from this section.","thinkAboutIt":"A thought-provoking question to deepen understanding?"}]}',
     practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"question text","sampleAnswer":"comprehensive sample answer"}]},{"type":"multipleChoice","questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct"}]},{"type":"essayPrompt","questions":[{"question":"essay prompt","sampleAnswer":"detailed outline and key points to cover"}]}]}',
     keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"comprehensive 2-3 sentence definition","importance":"why this concept matters and real-world applications"}]}',
@@ -74,15 +84,19 @@ const handler = async (event) => {
   const difficultyModes = ['quiz', 'practicetest', 'fitb'];
   const hasDifficultyMode = modesArr.some(function(m) { return difficultyModes.indexOf(m) !== -1; });
   const difficultyInstruction = hasDifficultyMode
-    ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall with simple language; medium=conceptual understanding required with some application; hard=deep analysis, synthesis, and real-world application. Every question must clearly match this level.'
+    ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis and synthesis.'
     : '';
 
-  const quantityInstruction = '\n\nQUANTITY REQUIREMENTS:\n- flashcards: 12 cards\n- quiz: 8 questions\n- fitb: 7 sentences\n- notes: 5 sections × 3-4 bullets\n- tutor: 4 sections × 2 paragraphs\n- keyconcepts: 10 concepts\n- studyplan: 5 days\n- summary: 5 key points\n- practicetest: 3 questions per section\n- solve: 2+ examples';
+  const notesQuantity = hasNotes
+    ? '\n\nNOTES REQUIREMENTS: Generate 6-10 rich sections. Each section must have: a full overview paragraph, 2-3 detailed content paragraphs, 5+ detailed bullets, key terms with definitions, 2+ examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept.'
+    : '';
 
-  const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + modeList + difficultyInstruction + quantityInstruction + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
+  const quantityInstruction = '\n\nQUANTITY: flashcards=12 cards; quiz=8 questions; fitb=7 sentences; keyconcepts=10 concepts; studyplan=5+ days; summary=6+ points; practicetest=3 questions per section; solve=2+ examples.' + notesQuantity;
 
-  const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan', 'keyconcepts', 'flashcards'];
-  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 2000 : 1500;
+  const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + modeList + chunkNote + difficultyInstruction + quantityInstruction + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
+
+  const isHeavyNotes = hasNotes;
+  const maxTokens = isHeavyNotes ? 4000 : (modesArr.some(function(m) { return ['tutor','practicetest','studyplan','keyconcepts','flashcards'].indexOf(m) !== -1; }) ? 2000 : 1500);
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
@@ -100,7 +114,7 @@ const handler = async (event) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         max_tokens: maxTokens,
-        temperature: 0.35,
+        temperature: 0.3,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
