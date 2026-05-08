@@ -2459,7 +2459,14 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
   <!-- Paper input -->
   <div class="grader-input-card" style="margin-top:12px">
-    <div class="grader-label">Your Paper or Essay</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="grader-label" style="margin-bottom:0">Your Paper or Essay</div>
+      <div style="display:flex;gap:6px">
+        <button class="chat-util-btn" style="width:auto;padding:0 10px;font-size:13px;gap:5px;display:flex;align-items:center" onclick="document.getElementById('graderInput').value='';updateGraderWordCount()" title="Clear"><span>✕</span><span>Clear</span></button>
+        <button class="chat-util-btn" style="width:auto;padding:0 10px;font-size:13px;gap:5px;display:flex;align-items:center" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('graderInput').value=t;updateGraderWordCount()})" title="Paste"><span>📋</span><span>Paste</span></button>
+        <button class="chat-util-btn" style="width:auto;padding:0 10px;font-size:13px;gap:5px;display:flex;align-items:center" onclick="navigator.clipboard.writeText(document.getElementById('graderInput').value)" title="Copy"><span>⎘</span><span>Copy</span></button>
+      </div>
+    </div>
     <textarea class="grader-textarea" id="graderInput" placeholder="Paste your paper, essay, report, or any written assignment here…" oninput="updateGraderWordCount()"></textarea>
     <div class="grader-actions">
       <button class="btn-grade" id="gradeBtn" onclick="runGrader()">📋 Grade My Paper</button>
