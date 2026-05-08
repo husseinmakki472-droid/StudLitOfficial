@@ -98,7 +98,7 @@ const handler = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
       body: JSON.stringify({
-        model: 'gpt-4.1-mini',
+        model: 'gpt-4o-mini',
         max_tokens: maxTokens,
         temperature: 0.35,
         response_format: { type: 'json_object' },
