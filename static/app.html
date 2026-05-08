@@ -3211,22 +3211,33 @@ async function generate() {
       const imageFiles = filesPayload.filter(f=>f.imageData);
       const allNotesSections = [];
 
+      let chunkError = null;
       for (let ci = 0; ci < chunks.length; ci++) {
         if(btn) btn.textContent = '⏳ Section ' + (ci+1) + ' of ' + totalChunks + '...';
         const chunkFile = [{name:'document-chunk-'+(ci+1)+'.txt', type:'text/plain', mimeType:null, textContent:chunks[ci], imageData:null}];
         const chunkPayload = [...imageFiles, ...chunkFile];
         try {
           const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:chunkPayload, urls:[], difficulty:genDiff, chunkIndex:ci, totalChunks})});
-          if (cRes.ok) {
-            const cData = await cRes.json();
-            if (cData.results && cData.results.notes && cData.results.notes.sections) {
-              allNotesSections.push(...cData.results.notes.sections);
-              if (!notesData) notesData = {sections:[]};
-            }
-          }
-        } catch(e) { /* continue with remaining chunks */ }
+          const cData = await cRes.json().catch(()=>({}));
+          if (cRes.ok && cData.results && cData.results.notes && cData.results.notes.sections && cData.results.notes.sections.length) {
+            allNotesSections.push(...cData.results.notes.sections);
+            if (!notesData) notesData = {sections:[]};
+          } else if (cData.error) { chunkError = cData.error; }
+        } catch(e) { chunkError = e.message; }
       }
-      if (notesData) notesData.sections = allNotesSections;
+      if (notesData && allNotesSections.length) {
+        notesData.sections = allNotesSections;
+      } else {
+        // Fallback: try one single truncated call
+        if(btn) btn.textContent = '⏳ Retrying...';
+        try {
+          const fbFile = [{name:'content.txt',type:'text/plain',mimeType:null,textContent:totalFileText.slice(0,5000),imageData:null}];
+          const fbRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...fbFile], urls:[], difficulty:genDiff})});
+          const fbData = await fbRes.json().catch(()=>({}));
+          if (fbRes.ok && fbData.results && fbData.results.notes) { notesData = fbData.results.notes; }
+          else { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(chunkError||fbData.error||'Could not generate notes. Try pasting your text directly.')+'</div></div>'); return; }
+        } catch(e) { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(e.message)+'</div></div>'); return; }
+      }
 
       // Now handle other modes (non-notes) in a single call with truncated content
       if (otherModes.length) {
@@ -4789,22 +4800,31 @@ async function wzGenerate() {
         const totalChunks = chunks.length;
         const imageFiles = filesPayload.filter(f => f.imageData);
         const allNotesSections = [];
+        let wzChunkError = null;
         for (let ci = 0; ci < chunks.length; ci++) {
           setStatus('Processing section ' + (ci+1) + ' of ' + totalChunks + '…');
           const chunkFile = [{name:'chunk-'+(ci+1)+'.txt',type:'text/plain',mimeType:null,textContent:chunks[ci],imageData:null}];
           try {
             const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...chunkFile], urls:[], difficulty:settingsDiff, chunkIndex:ci, totalChunks})});
-            if (cRes.ok) {
-              const cData = await cRes.json().catch(()=>({}));
-              if (cData.results && cData.results.notes && cData.results.notes.sections) {
-                allNotesSections.push(...cData.results.notes.sections);
-                if (cData.topic && cData.topic !== 'the uploaded content') resolvedTopic = cData.topic;
-              }
-            }
-          } catch(e) {}
+            const cData = await cRes.json().catch(()=>({}));
+            if (cRes.ok && cData.results && cData.results.notes && cData.results.notes.sections && cData.results.notes.sections.length) {
+              allNotesSections.push(...cData.results.notes.sections);
+              if (cData.topic && cData.topic !== 'the uploaded content') resolvedTopic = cData.topic;
+            } else if (cData.error) { wzChunkError = cData.error; }
+          } catch(e) { wzChunkError = e.message; }
         }
-        if (allNotesSections.length) combinedResults.notes = {sections: allNotesSections};
-        else firstError = firstError || 'Could not generate notes for the uploaded document.';
+        if (allNotesSections.length) {
+          combinedResults.notes = {sections: allNotesSections};
+        } else {
+          setStatus('Retrying with shorter content…');
+          try {
+            const fbFile = [{name:'content.txt',type:'text/plain',mimeType:null,textContent:totalFileText.slice(0,5000),imageData:null}];
+            const fbRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...fbFile], urls:[], difficulty:settingsDiff})});
+            const fbData = await fbRes.json().catch(()=>({}));
+            if (fbRes.ok && fbData.results && fbData.results.notes) { combinedResults.notes = fbData.results.notes; if (fbData.topic && fbData.topic!=='the uploaded content') resolvedTopic=fbData.topic; }
+            else firstError = firstError || wzChunkError || fbData.error || 'Could not generate notes. Try pasting your text directly.';
+          } catch(e) { firstError = firstError || e.message; }
+        }
       } else {
         // Small file or text topic — single notes call
         setStatus('Generating notes…');
