@@ -3667,6 +3667,9 @@ function slShowHome() {
   document.getElementById('wzResultView').style.display = 'none';
   setResultMode(false);
   switchWsTab('create');
+  // Restore ws-create to its normal block layout after wzGenerate sets flex on it
+  const wsCreate = document.getElementById('ws-create');
+  if (wsCreate) { wsCreate.style.display = ''; wsCreate.style.flexDirection = ''; wsCreate.style.padding = ''; wsCreate.style.overflow = ''; }
   wzApplySetContext();
 }
 
@@ -4630,6 +4633,10 @@ async function wzGenerate() {
   rv.style.display = 'flex';
   setResultMode(true);
   switchWsTab('create');
+  // setResultMode hides all .ws-section via inline style; restore ws-create as flex column
+  // so wzResultView (flex:1; height:0) can properly expand to fill the space
+  const wsCreate = document.getElementById('ws-create');
+  if (wsCreate) { wsCreate.style.display = 'flex'; wsCreate.style.flexDirection = 'column'; wsCreate.style.padding = '0'; wsCreate.style.overflow = 'hidden'; }
   // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
   document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
