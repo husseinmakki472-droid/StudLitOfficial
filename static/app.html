@@ -1434,6 +1434,10 @@ body.light-mode .solve-chat-input-row,[data-theme=”light”] .solve-chat-input
 body.light-mode .solve-chat-input,[data-theme=”light”] .solve-chat-input{background:#fff;border-color:#e4ddff;color:#0f0e1a}
 .solve-chat-send{background:linear-gradient(135deg,#7c5cfc,#b06ef3);border:none;border-radius:12px;width:44px;height:44px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .15s;flex-shrink:0}
 .solve-chat-send:hover{opacity:.88;transform:scale(1.05)}
+.chat-util-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;height:36px;padding:0 10px;color:rgba(240,239,255,0.6);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;transition:background .15s,color .15s;margin:auto 0;white-space:nowrap}
+.chat-util-btn:hover{background:rgba(255,255,255,0.13);color:#f0efff}
+body.light-mode .chat-util-btn,[data-theme="light"] .chat-util-btn{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.5)}
+body.light-mode .chat-util-btn:hover,[data-theme="light"] .chat-util-btn:hover{background:rgba(0,0,0,0.1);color:#0f0e1a}
 .sl-user-info{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid rgba(255,255,255,0.08);margin-top:auto}
 body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-color:#e4ddff}
 
@@ -2096,6 +2100,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     </div>
     <div class="solve-chat-input-row">
       <input class="solve-chat-input" id="chatInput" type="text" placeholder="Ask a question or describe a problem..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-util-btn" onclick="document.getElementById('chatInput').value=''" title="Clear">✕</button>
+      <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('chatInput').value=t})" title="Paste">📋</button>
       <button class="solve-chat-send" onclick="sendChat()">→</button>
     </div>
   </div>
@@ -2336,6 +2342,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         </div>
         <div class="wz-chat-input-row">
           <textarea class="wz-chat-input" id="wzChatInput" placeholder="Ask me anything about the material…" rows="1" onkeydown="wzChatKeydown(event)"></textarea>
+          <button class="chat-util-btn" onclick="document.getElementById('wzChatInput').value=''" title="Clear">✕</button>
+          <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('wzChatInput').value=t})" title="Paste">📋</button>
           <button class="wz-chat-send" onclick="wzSendChat()">↑</button>
         </div>
       </div>
@@ -2371,6 +2379,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         </div>
         <div class="sl-chat-input-row">
           <textarea class="sl-chat-input" id="wzChatInputPaste" placeholder="Ask a question…" rows="1" onkeydown="wzChatKeydown2(event)"></textarea>
+          <button class="chat-util-btn" onclick="document.getElementById('wzChatInputPaste').value=''" title="Clear">✕</button>
+          <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('wzChatInputPaste').value=t})" title="Paste">📋</button>
           <button class="sl-chat-send" onclick="wzSendChat2()" title="Send">↑</button>
         </div>
       </div>
@@ -2449,7 +2459,14 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
   <!-- Paper input -->
   <div class="grader-input-card" style="margin-top:12px">
-    <div class="grader-label">Your Paper or Essay</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="grader-label" style="margin-bottom:0">Your Paper or Essay</div>
+      <div style="display:flex;gap:6px">
+        <button class="chat-util-btn" onclick="document.getElementById('graderInput').value='';updateGraderWordCount()">✕ Clear</button>
+        <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('graderInput').value=t;updateGraderWordCount()})">📋 Paste</button>
+        <button class="chat-util-btn" onclick="navigator.clipboard.writeText(document.getElementById('graderInput').value)">⎘ Copy</button>
+      </div>
+    </div>
     <textarea class="grader-textarea" id="graderInput" placeholder="Paste your paper, essay, report, or any written assignment here…" oninput="updateGraderWordCount()"></textarea>
     <div class="grader-actions">
       <button class="btn-grade" id="gradeBtn" onclick="runGrader()">📋 Grade My Paper</button>
