@@ -3167,8 +3167,24 @@ function splitDocIntoChunks(text, chunkSize) {
   return chunks.length ? chunks : [text.slice(0, chunkSize)];
 }
 
+async function pollStudyResult(requestId, onProgress) {
+  const MAX_ATTEMPTS = 120;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    let d;
+    try {
+      const res = await fetch('/.netlify/functions/study-status', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});
+      d = res.ok ? await res.json() : null;
+    } catch(e) { continue; }
+    if (!d) continue;
+    if (d.status === 'done') return d.data;
+    if (d.status === 'error') throw new Error(d.error || 'Generation failed');
+    if (onProgress && d.progress) onProgress(d.progress);
+  }
+  throw new Error('Generation timed out. Please try again.');
+}
+
 async function generate() {
-  // Trial gate
   if (isTrialExpired()) { showUpgradeModal(); return; }
 
   const input = getInput();
@@ -3187,73 +3203,20 @@ async function generate() {
   try {
     const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
     const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
-    const authTok = await getAuthToken();
-    const studyHeaders = {'Content-Type':'application/json'};
-    if (authTok) studyHeaders['Authorization'] = 'Bearer ' + authTok;
     const topicStr = genLang!=='English' ? input+' — Respond in '+genLang+'.' : input;
-    const hasNotes = modes.indexOf('notes') !== -1;
-    const otherModes = modes.filter(m=>m!=='notes');
-
-    // Detect large file upload for notes chunking
-    const totalFileText = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent||'').join('\n\n');
-    const useChunking = hasNotes && totalFileText.length > 3500;
-
-    let notesData = null; // merged notes sections from all chunks
-    let baseData = null;  // result from the main (non-notes) call
-
-    if (useChunking) {
-      // Split document into chunks and process notes for each chunk independently
-      const CHUNK_SIZE = 4000;
-      const chunks = splitDocIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 5); // max 5 chunks
-      const totalChunks = chunks.length;
-      if(btn) btn.textContent = '⏳ Processing ' + totalChunks + ' sections...';
-
-      const imageFiles = filesPayload.filter(f=>f.imageData);
-      const allNotesSections = [];
-
-      for (let ci = 0; ci < chunks.length; ci++) {
-        if(btn) btn.textContent = '⏳ Section ' + (ci+1) + ' of ' + totalChunks + '...';
-        const chunkFile = [{name:'document-chunk-'+(ci+1)+'.txt', type:'text/plain', mimeType:null, textContent:chunks[ci], imageData:null}];
-        const chunkPayload = [...imageFiles, ...chunkFile];
-        try {
-          const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:chunkPayload, urls:[], difficulty:genDiff, chunkIndex:ci, totalChunks})});
-          if (cRes.ok) {
-            const cData = await cRes.json();
-            if (cData.results && cData.results.notes && cData.results.notes.sections) {
-              allNotesSections.push(...cData.results.notes.sections);
-              if (!notesData) notesData = {sections:[]};
-            }
-          }
-        } catch(e) { /* continue with remaining chunks */ }
-      }
-      if (notesData) notesData.sections = allNotesSections;
-
-      // Now handle other modes (non-notes) in a single call with truncated content
-      if (otherModes.length) {
-        const truncPayload = filesPayload.map(f=>({...f, textContent:f.textContent?f.textContent.slice(0,6000):null}));
-        try {
-          const oRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:otherModes, files:truncPayload, urls:uploadedUrls||[], difficulty:genDiff})});
-          if (oRes.ok) baseData = await oRes.json();
-        } catch(e) {}
-      }
-    } else {
-      // Standard single-call path
-      let res;
-      try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:studyHeaders,body:JSON.stringify({topic:topicStr,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
-      catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
-      let data;
-      try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
-      if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
-      baseData = data;
-    }
-
-    // Merge results
-    const topic = (baseData&&baseData.topic) || (notesData&&notesData.topic) || input || 'Study Set';
+    const requestId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    await fetch('/.netlify/functions/study-background', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({requestId, topic:topicStr, modes, files:filesPayload, urls:uploadedUrls||[], difficulty:genDiff})
+    });
+    const data = await pollStudyResult(requestId, msg => { if(btn) btn.textContent = '⏳ ' + msg; });
+    const topic = data.topic || input || 'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
     let combined='';
     modes.forEach((mode,i)=>{
       if(modes.length>1)combined+=`<div style="margin-bottom:32px;${i>0?'border-top:1px solid rgba(255,255,255,0.08);padding-top:24px':''}">`;
-      const d = mode==='notes' ? (notesData || baseData?.results?.notes) : baseData?.results?.[mode];
+      const d = data.results && data.results[mode];
       if(!d){combined+='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned for this mode.</div></div>';}
       else{
         switch(mode){
@@ -4769,73 +4732,20 @@ async function wzGenerate() {
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const setStatus = msg => { const el = document.getElementById('wzGenStatus'); if (el) el.textContent = msg; };
   try {
-    const topicArg = input || 'the uploaded content';
     const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
-    const headers = {'Content-Type':'application/json'};
-    const combinedResults = {};
-    let resolvedTopic = input || 'Study Set';
-    let firstError = null;
-
-    const hasNotes = methods.indexOf('notes') !== -1;
-    const otherMethods = methods.filter(m => m !== 'notes');
-    const totalFileText = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent||'').join('\n\n');
-    const useChunking = hasNotes && totalFileText.length > 3500;
-
-    // Process notes with chunking if file is large
-    if (hasNotes) {
-      if (useChunking) {
-        const CHUNK_SIZE = 4000;
-        const chunks = splitDocIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 5);
-        const totalChunks = chunks.length;
-        const imageFiles = filesPayload.filter(f => f.imageData);
-        const allNotesSections = [];
-        for (let ci = 0; ci < chunks.length; ci++) {
-          setStatus('Processing section ' + (ci+1) + ' of ' + totalChunks + '…');
-          const chunkFile = [{name:'chunk-'+(ci+1)+'.txt',type:'text/plain',mimeType:null,textContent:chunks[ci],imageData:null}];
-          try {
-            const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...chunkFile], urls:[], difficulty:settingsDiff, chunkIndex:ci, totalChunks})});
-            if (cRes.ok) {
-              const cData = await cRes.json().catch(()=>({}));
-              if (cData.results && cData.results.notes && cData.results.notes.sections) {
-                allNotesSections.push(...cData.results.notes.sections);
-                if (cData.topic && cData.topic !== 'the uploaded content') resolvedTopic = cData.topic;
-              }
-            }
-          } catch(e) {}
-        }
-        if (allNotesSections.length) combinedResults.notes = {sections: allNotesSections};
-        else firstError = firstError || 'Could not generate notes for the uploaded document.';
-      } else {
-        // Small file or text topic — single notes call
-        setStatus('Generating notes…');
-        try {
-          const nRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})});
-          const nData = await nRes.json().catch(()=>({error:'Invalid response'}));
-          if (nData && !nData.error && nData.results) { Object.assign(combinedResults, nData.results); if (nData.topic && nData.topic!=='the uploaded content') resolvedTopic=nData.topic; }
-          else if (nData && nData.error) firstError = firstError || nData.error;
-        } catch(e) { firstError = firstError || 'Network error generating notes.'; }
-      }
-    }
-
-    // Process other modes in parallel (each its own call, truncated file for speed)
-    if (otherMethods.length) {
-      setStatus('Generating ' + otherMethods.join(', ') + '…');
-      const truncPayload = filesPayload.map(f=>({...f, textContent:f.textContent?f.textContent.slice(0,6000):null}));
-      const fetchMode = mode => fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicArg, modes:[mode], files:truncPayload, urls:uploadedUrls||[], difficulty:settingsDiff})})
-        .then(r => r.json().catch(()=>({error:'Invalid response'}))).catch(()=>({error:'Network error'}));
-      const responses = await Promise.all(otherMethods.map(fetchMode));
-      responses.forEach(data => {
-        if (data && !data.error && data.results) { if (data.topic && data.topic!=='the uploaded content') resolvedTopic=data.topic; Object.assign(combinedResults, data.results); }
-        else if (data && data.error && !firstError) firstError = data.error;
-      });
-    }
-
-    if (!Object.keys(combinedResults).length) {
-      const msg = firstError || 'The request failed. Try selecting fewer modes or a shorter topic, then generate again.';
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`;
+    const requestId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    setStatus('Starting generation…');
+    await fetch('/.netlify/functions/study-background', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({requestId, topic:topicStr, modes:methods, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
+    });
+    const data = await pollStudyResult(requestId, msg => setStatus(msg));
+    if (!data || !data.results || !Object.keys(data.results).length) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">The request failed. Try selecting fewer modes or a shorter topic, then generate again.</div></div>`;
       return;
     }
-    wzBuildTabbedResult(resolvedTopic, methods, combinedResults);
+    wzBuildTabbedResult(data.topic || input || 'Study Set', methods, data.results);
     const fileCtx = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent).join('\n\n');
     wzFullContent = fileCtx || input || '';
     wzInitChat(wzFullContent);

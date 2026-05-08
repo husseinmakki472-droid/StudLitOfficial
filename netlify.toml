@@ -10,7 +10,10 @@
   external_node_modules = ["pdf-parse", "mammoth"]
 
 [functions.study]
-  timeout = 60
+  timeout = 26
+
+[functions.study-status]
+  timeout = 10
 
 [[redirects]]
   from = "/"
