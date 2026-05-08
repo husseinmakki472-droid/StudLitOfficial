@@ -220,6 +220,21 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .notes-editor-section:hover .notes-section-del{opacity:1}
 .notes-section-del:hover{color:#f87171;background:rgba(248,113,113,0.1)}
 .notes-add-section-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:rgba(124,92,252,0.06);border:1px dashed rgba(124,92,252,0.25);border-radius:14px;color:rgba(124,92,252,0.7);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;margin-top:8px}
+.notes-section-overview{font-size:13.5px;color:var(--text-2);line-height:1.75;margin-bottom:10px;padding:10px 14px;background:rgba(124,92,252,0.06);border-left:3px solid #7c5cfc;border-radius:0 8px 8px 0}
+.notes-section-para{font-size:13.5px;color:var(--text-2);line-height:1.8;margin:0 0 10px}
+.notes-section-bullets{margin:8px 0 12px 16px;padding:0;list-style:disc}
+.notes-section-bullets li{font-size:13.5px;color:var(--text-2);line-height:1.7;margin-bottom:5px;padding-left:4px}
+.notes-section-terms-label,.notes-section-ex-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:14px 0 6px;opacity:.85}
+.notes-section-terms{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.notes-term-item{font-size:13px;line-height:1.6}
+.notes-term-word{font-weight:700;color:var(--text)}
+.notes-term-def{color:var(--text-2)}
+.notes-section-examples{margin:4px 0 12px 16px;padding:0;list-style:circle}
+.notes-section-examples li{font-size:13px;color:var(--text-2);line-height:1.65;margin-bottom:4px;padding-left:4px}
+.notes-section-cause{font-size:13px;color:var(--text-2);line-height:1.7;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;margin:10px 0}
+.notes-section-cause-label{font-weight:700;color:var(--text);margin-right:6px}
+.notes-section-takeaway{font-size:13.5px;color:var(--text);line-height:1.65;padding:10px 14px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.18);border-radius:10px;margin-top:12px}
+.notes-section-takeaway-icon{margin-right:6px}
 .notes-add-section-btn:hover{background:rgba(124,92,252,0.12);border-color:rgba(124,92,252,0.45);color:#b06ef3}
 .lesson-quote{border-left:3px solid #7c5cfc;margin:12px 0 14px;padding:10px 16px;background:rgba(124,92,252,0.07);border-radius:0 12px 12px 0;font-style:italic;color:rgba(240,239,255,0.62);font-size:13.5px;line-height:1.65}
 .lesson-think{background:rgba(124,92,252,0.06);border:1px solid rgba(124,92,252,0.15);border-radius:14px;padding:12px 16px;margin-top:12px}
@@ -1721,6 +1736,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme=”light”] .notes-editable-content:empty:before{color:rgba(15,14,26,0.25)!important;-webkit-text-fill-color:rgba(15,14,26,0.25)!important}
 [data-theme=”light”] .notes-editable-content strong{color:#0f0e1a!important;-webkit-text-fill-color:#0f0e1a!important}
 [data-theme=”light”] .notes-add-section-btn{border-color:rgba(0,0,0,0.12);color:rgba(15,14,26,0.35)}
+[data-theme=”light”] .notes-section-overview{background:rgba(124,92,252,0.06);border-left-color:#7c5cfc}
+[data-theme=”light”] .notes-section-para,[data-theme=”light”] .notes-section-bullets li,[data-theme=”light”] .notes-section-examples li,[data-theme=”light”] .notes-term-def,[data-theme=”light”] .notes-section-cause{color:rgba(15,14,26,0.72)!important;-webkit-text-fill-color:rgba(15,14,26,0.72)!important}
+[data-theme=”light”] .notes-term-word,[data-theme=”light”] .notes-section-cause-label{color:#0f0e1a!important;-webkit-text-fill-color:#0f0e1a!important}
+[data-theme=”light”] .notes-section-takeaway{background:rgba(124,92,252,0.07);border-color:rgba(124,92,252,0.2);color:#0f0e1a!important;-webkit-text-fill-color:#0f0e1a!important}
+[data-theme=”light”] .notes-section-cause{background:rgba(0,0,0,0.03)}
 
 /* ── Paste panel ── */
 [data-theme=”light”] .paste-text-area{background:#fff;border-color:rgba(0,0,0,0.09)}
@@ -2904,7 +2924,7 @@ function applyTheme(theme) {
   }
 }
 
-function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));var tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');['home','workspace','writing','leaderboard'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});var hx=document.getElementById('view-home-extra');if(hx)hx.classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'});try{if(t==='leaderboard')renderLb();}catch(e){};if(t==='workspace')try{switchWsTab('create');}catch(e){};if(t!=='workspace')setResultMode(false);}
+function switchTab(t){document.querySelectorAll('.page-tab').forEach(x=>x.classList.remove('active'));var tabEl=document.getElementById('tab-'+t);if(tabEl)tabEl.classList.add('active');['home','workspace','writing','leaderboard'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===t)});var hx=document.getElementById('view-home-extra');if(hx)hx.classList.toggle('active',t==='home');window.scrollTo({top:0,behavior:'smooth'});try{if(t==='leaderboard')renderLb();}catch(e){};if(t==='workspace'){try{switchWsTab('create');}catch(e){}var wzR=document.getElementById('wzResultView');var slR=document.getElementById('slResultView');var slH=document.getElementById('slHomeView');if(slH){var hasContent=(wzR&&wzR.style.display!==''&&wzR.style.display!=='none')||(slR&&slR.style.display==='block');if(!hasContent){slH.style.display='block';}}}if(t!=='workspace')setResultMode(false);}
 
 function toggleMode(btn){const m=btn.dataset.mode;if(selectedModes.has(m)){if(selectedModes.size===1)return;selectedModes.delete(m);btn.classList.remove('selected')}else{selectedModes.add(m);btn.classList.add('selected')}updateModesBar()}
 function updateModesBar(){var bar=document.getElementById('selectedModesBar');if(!bar)return;var names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'};if(selectedModes.size>1){bar.style.display='flex';bar.innerHTML='<span style="font-size:11px;font-weight:600">Generating:</span>'+[...selectedModes].map(function(m){return '<span class="sel-mode-tag">'+(names[m]||m)+'</span>';}).join('');}else{bar.style.display='none';}}
@@ -3130,6 +3150,23 @@ async function regenerateMode(mode) {
   }
 }
 
+function splitDocIntoChunks(text, chunkSize) {
+  if (!text || text.length <= chunkSize) return [text];
+  const chunks = [];
+  const paragraphs = text.split(/\n{2,}/);
+  let current = '';
+  for (const para of paragraphs) {
+    if (current.length + para.length + 2 > chunkSize && current.length > 0) {
+      chunks.push(current.trim());
+      current = para;
+    } else {
+      current += (current ? '\n\n' : '') + para;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks.length ? chunks : [text.slice(0, chunkSize)];
+}
+
 async function generate() {
   // Trial gate
   if (isTrialExpired()) { showUpgradeModal(); return; }
@@ -3148,23 +3185,76 @@ async function generate() {
   const failedFiles = uploadedFiles.filter(f=>f.readError&&!f.imageData);
   if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
   try {
-    let res;
-    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
+    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
+    const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
     const authTok = await getAuthToken();
     const studyHeaders = {'Content-Type':'application/json'};
     if (authTok) studyHeaders['Authorization'] = 'Bearer ' + authTok;
-    try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:studyHeaders,body:JSON.stringify({topic:(genLang!=='English'?input+' — Respond in '+genLang+'.':input),modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
-    catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
-    let data;
-    try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
-    if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
-    const topic = data.topic||input||'Study Set';
+    const topicStr = genLang!=='English' ? input+' — Respond in '+genLang+'.' : input;
+    const hasNotes = modes.indexOf('notes') !== -1;
+    const otherModes = modes.filter(m=>m!=='notes');
+
+    // Detect large file upload for notes chunking
+    const totalFileText = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent||'').join('\n\n');
+    const useChunking = hasNotes && totalFileText.length > 3500;
+
+    let notesData = null; // merged notes sections from all chunks
+    let baseData = null;  // result from the main (non-notes) call
+
+    if (useChunking) {
+      // Split document into chunks and process notes for each chunk independently
+      const CHUNK_SIZE = 4000;
+      const chunks = splitDocIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 5); // max 5 chunks
+      const totalChunks = chunks.length;
+      if(btn) btn.textContent = '⏳ Processing ' + totalChunks + ' sections...';
+
+      const imageFiles = filesPayload.filter(f=>f.imageData);
+      const allNotesSections = [];
+
+      for (let ci = 0; ci < chunks.length; ci++) {
+        if(btn) btn.textContent = '⏳ Section ' + (ci+1) + ' of ' + totalChunks + '...';
+        const chunkFile = [{name:'document-chunk-'+(ci+1)+'.txt', type:'text/plain', mimeType:null, textContent:chunks[ci], imageData:null}];
+        const chunkPayload = [...imageFiles, ...chunkFile];
+        try {
+          const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:chunkPayload, urls:[], difficulty:genDiff, chunkIndex:ci, totalChunks})});
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            if (cData.results && cData.results.notes && cData.results.notes.sections) {
+              allNotesSections.push(...cData.results.notes.sections);
+              if (!notesData) notesData = {sections:[]};
+            }
+          }
+        } catch(e) { /* continue with remaining chunks */ }
+      }
+      if (notesData) notesData.sections = allNotesSections;
+
+      // Now handle other modes (non-notes) in a single call with truncated content
+      if (otherModes.length) {
+        const truncPayload = filesPayload.map(f=>({...f, textContent:f.textContent?f.textContent.slice(0,6000):null}));
+        try {
+          const oRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:otherModes, files:truncPayload, urls:uploadedUrls||[], difficulty:genDiff})});
+          if (oRes.ok) baseData = await oRes.json();
+        } catch(e) {}
+      }
+    } else {
+      // Standard single-call path
+      let res;
+      try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:studyHeaders,body:JSON.stringify({topic:topicStr,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff})});}
+      catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
+      let data;
+      try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
+      if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
+      baseData = data;
+    }
+
+    // Merge results
+    const topic = (baseData&&baseData.topic) || (notesData&&notesData.topic) || input || 'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
     let combined='';
     modes.forEach((mode,i)=>{
       if(modes.length>1)combined+=`<div style="margin-bottom:32px;${i>0?'border-top:1px solid rgba(255,255,255,0.08);padding-top:24px':''}">`;
-      const d=data.results?.[mode];
-      if(!d){combined+='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned.</div></div>';}
+      const d = mode==='notes' ? (notesData || baseData?.results?.notes) : baseData?.results?.[mode];
+      if(!d){combined+='<div class="error-card"><div class="error-card-label">⚠ '+escHtml(mode)+'</div><div class="error-card-body">No data returned for this mode.</div></div>';}
       else{
         switch(mode){
           case 'solve':combined+=renderSolveHTML(topic,d);break;
@@ -3271,12 +3361,20 @@ function renderNotesHTML(topic, d){
   if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No notes were generated. Try selecting only Notes mode so the AI can dedicate the full response to detailed notes.</div></div>';
   const sHtml=sections.map((s,i)=>{
     const bullets=(s.bullets||[]);
-    const contentLines=[...(s.content?[s.content]:[]),...bullets].filter(Boolean);
-    const innerHtml=contentLines.map((l,li)=>li<contentLines.length-1?escHtml(l)+'<br>':escHtml(l)).join('');
-    return`<div class="notes-editor-section" style="animation-delay:${i*.05}s"><button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…">${escHtml(s.heading||'')}</div><div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…">${innerHtml}</div></div>`;
+    let rich='';
+    if(s.overview) rich+=`<div class="notes-section-overview">${escHtml(s.overview)}</div>`;
+    if(s.content){const paras=s.content.split(/\n\n+/).filter(Boolean);rich+=paras.map(p=>`<p class="notes-section-para">${escHtml(p)}</p>`).join('');}
+    if(bullets.length) rich+=`<ul class="notes-section-bullets">${bullets.map(b=>`<li>${escHtml(b)}</li>`).join('')}</ul>`;
+    if(s.keyTerms&&s.keyTerms.length) rich+=`<div class="notes-section-terms-label">Key Terms</div><div class="notes-section-terms">${s.keyTerms.map(kt=>`<div class="notes-term-item"><span class="notes-term-word">${escHtml(kt.term||'')}</span> — <span class="notes-term-def">${escHtml(kt.definition||'')}</span></div>`).join('')}</div>`;
+    if(s.examples&&s.examples.length) rich+=`<div class="notes-section-ex-label">Examples</div><ul class="notes-section-examples">${s.examples.map(ex=>`<li>${escHtml(ex)}</li>`).join('')}</ul>`;
+    if(s.applications&&s.applications.length) rich+=`<div class="notes-section-ex-label">Real-World Applications</div><ul class="notes-section-examples">${s.applications.map(a=>`<li>${escHtml(a)}</li>`).join('')}</ul>`;
+    if(s.causeEffect) rich+=`<div class="notes-section-cause"><span class="notes-section-cause-label">Cause &amp; Effect</span> ${escHtml(s.causeEffect)}</div>`;
+    if(s.keyTakeaway) rich+=`<div class="notes-section-takeaway"><span class="notes-section-takeaway-icon">💡</span> <strong>Key Takeaway:</strong> ${escHtml(s.keyTakeaway)}</div>`;
+    if(!rich){const contentLines=[...(s.content?[s.content]:[]),...bullets].filter(Boolean);rich=contentLines.map(l=>escHtml(l)+'<br>').join('');}
+    return`<div class="notes-editor-section" style="animation-delay:${i*.04}s"><button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…">${escHtml(s.heading||'')}</div><div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…">${rich}</div></div>`;
   }).join('');
   const toolbar=`<div class="notes-toolbar"><button class="notes-toolbar-btn" onclick="notesFormat('bold')" title="Bold"><b>B</b></button><button class="notes-toolbar-btn" onclick="notesFormat('italic')" title="Italic"><i>I</i></button><button class="notes-toolbar-btn" onclick="notesFormat('underline')" title="Underline"><u>U</u></button><button class="notes-toolbar-btn" onclick="notesFormat('strikeThrough')" title="Strikethrough"><s>S</s></button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('insertUnorderedList')" title="Bullet list">• List</button><button class="notes-toolbar-btn" onclick="notesFormat('insertOrderedList')" title="Numbered list">1. List</button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('removeFormat')" title="Clear formatting">✕ Format</button><div class="notes-toolbar-sep" style="margin-left:auto"></div><button class="notes-toolbar-btn" onclick="notesCopyAll()" title="Copy all notes">⎘ Copy</button></div>`;
-  return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Editable'}])}<div id="notesEditorBody" data-topic="${escHtml(t)}">${toolbar}${sHtml}<button class="notes-add-section-btn" onclick="notesAddSection()">＋ Add Section</button></div>`;
+  return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:sections.length+' Sections'},{text:'Editable'}])}<div id="notesEditorBody" data-topic="${escHtml(t)}">${toolbar}${sHtml}<button class="notes-add-section-btn" onclick="notesAddSection()">＋ Add Section</button></div>`;
 }
 
 function sanitizeLessonHtml(str){
@@ -3944,8 +4042,9 @@ function applyDisplayName(name) {
 }
 
 function showInfoToast(msg) {
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
   var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:11px 20px;font-size:13px;color:#f0efff;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5);pointer-events:none;animation:fadeUp .3s ease both';
+  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:'+(light?'#fff':'#1a1a2e')+';border:1px solid '+(light?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.15)')+';border-radius:12px;padding:11px 20px;font-size:13px;color:'+(light?'#0f0e1a':'#f0efff')+';z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,'+(light?'.12':'.5')+');pointer-events:none;animation:fadeUp .3s ease both';
   d.textContent = msg;
   document.body.appendChild(d);
   setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(function(){d.remove();},300); }, 2500);
@@ -3983,6 +4082,13 @@ function saveSettings() {
       autoGen: document.getElementById('autoGenToggle') ? document.getElementById('autoGenToggle').checked : false,
       compact: document.getElementById('compactToggle') ? document.getElementById('compactToggle').checked : false,
       reduceMotion: document.getElementById('reduceMotionToggle') ? document.getElementById('reduceMotionToggle').checked : false,
+      dailyReminder: document.getElementById('dailyReminderToggle') ? document.getElementById('dailyReminderToggle').checked : true,
+      reminderTime: document.getElementById('reminderTime') ? document.getElementById('reminderTime').value : '18:00',
+      streakAlert: document.getElementById('streakToggle') ? document.getElementById('streakToggle').checked : true,
+      weeklyReport: document.getElementById('weeklyReportToggle') ? document.getElementById('weeklyReportToggle').checked : false,
+      genComplete: document.getElementById('genCompleteToggle') ? document.getElementById('genCompleteToggle').checked : true,
+      sessionSaved: document.getElementById('sessionSavedToggle') ? document.getElementById('sessionSavedToggle').checked : true,
+      tips: document.getElementById('tipsToggle') ? document.getElementById('tipsToggle').checked : true,
     };
     localStorage.setItem('sl-prefs', JSON.stringify(prefs));
     syncPrefsToSupabase(prefs);
@@ -4022,6 +4128,15 @@ function loadSettingsFromStorage() {
     if (prefs.autoGen !== undefined) { var ag=document.getElementById('autoGenToggle'); if(ag) ag.checked=prefs.autoGen; }
     if (prefs.compact !== undefined) { var ct=document.getElementById('compactToggle'); if(ct) ct.checked=prefs.compact; }
     if (prefs.reduceMotion !== undefined) { var rm=document.getElementById('reduceMotionToggle'); if(rm) rm.checked=prefs.reduceMotion; }
+
+    // Notification prefs
+    if (prefs.dailyReminder !== undefined) { var dr=document.getElementById('dailyReminderToggle'); if(dr) dr.checked=prefs.dailyReminder; }
+    if (prefs.reminderTime) { var rt=document.getElementById('reminderTime'); if(rt) rt.value=prefs.reminderTime; }
+    if (prefs.streakAlert !== undefined) { var sa=document.getElementById('streakToggle'); if(sa) sa.checked=prefs.streakAlert; }
+    if (prefs.weeklyReport !== undefined) { var wr=document.getElementById('weeklyReportToggle'); if(wr) wr.checked=prefs.weeklyReport; }
+    if (prefs.genComplete !== undefined) { var gc=document.getElementById('genCompleteToggle'); if(gc) gc.checked=prefs.genComplete; }
+    if (prefs.sessionSaved !== undefined) { var ss=document.getElementById('sessionSavedToggle'); if(ss) ss.checked=prefs.sessionSaved; }
+    if (prefs.tips !== undefined) { var tp=document.getElementById('tipsToggle'); if(tp) tp.checked=prefs.tips; }
 
     // Restore accent colour swatches
     var accent = '';
@@ -4318,9 +4433,10 @@ function showXPToast(amount) {
 }
 
 function showBadgeToast(badge) {
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
   var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;bottom:240px;right:28px;background:#0d0d1f;border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .4s ease both;min-width:200px';
-  d.innerHTML = '<div style="font-size:26px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:#fff">Badge Unlocked!</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+badge.name+'</div></div>';
+  d.style.cssText = 'position:fixed;bottom:240px;right:28px;background:'+(light?'#fff':'#0d0d1f')+';border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,'+(light?'.12':'.5')+');animation:fadeUp .4s ease both;min-width:200px';
+  d.innerHTML = '<div style="font-size:26px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:'+(light?'#0f0e1a':'#fff')+'">Badge Unlocked!</div><div style="font-size:11px;color:'+(light?'rgba(15,14,26,0.5)':'rgba(255,255,255,0.5)')+';margin-top:2px">'+badge.name+'</div></div>';
   document.body.appendChild(d);
   setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .4s'; setTimeout(function(){d.remove();},400); }, 3000);
 }
@@ -4642,41 +4758,80 @@ async function wzGenerate() {
   rv.style.display = 'flex';
   setResultMode(true);
   switchWsTab('create');
-  // setResultMode hides all .ws-section via inline style; restore ws-create as flex column
-  // so wzResultView (flex:1; height:0) can properly expand to fill the space
   const wsCreate = document.getElementById('ws-create');
   if (wsCreate) { wsCreate.style.display = 'flex'; wsCreate.style.flexDirection = 'column'; wsCreate.style.padding = '0'; wsCreate.style.overflow = 'hidden'; }
-  // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
-  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
+  const loadingEl = document.getElementById('wzResultMain');
+  loadingEl.innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px" id="wzGenStatus">Processing content…</p></div>`;
   const input = (document.getElementById('studyInput')?.value || '').trim();
   let topicStr = input || 'the uploaded content';
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
+  const setStatus = msg => { const el = document.getElementById('wzGenStatus'); if (el) el.textContent = msg; };
   try {
     const topicArg = input || 'the uploaded content';
     const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
-    const fetchMode = mode => fetch('/.netlify/functions/study', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
-    }).then(r => r.json().catch(() => ({error: r.ok ? 'Invalid response from server.' : 'Request timed out. Try selecting fewer modes or a shorter topic.'}))).catch(() => ({error: 'Network error. Check your connection and try again.'}));
-
-    const responses = await Promise.all(methods.map(fetchMode));
-
+    const headers = {'Content-Type':'application/json'};
     const combinedResults = {};
     let resolvedTopic = input || 'Study Set';
     let firstError = null;
-    responses.forEach(data => {
-      if (data && !data.error && data.results) {
-        if (data.topic && data.topic !== 'the uploaded content') resolvedTopic = data.topic;
-        Object.assign(combinedResults, data.results);
-      } else if (data && data.error && !firstError) {
-        firstError = data.error;
+
+    const hasNotes = methods.indexOf('notes') !== -1;
+    const otherMethods = methods.filter(m => m !== 'notes');
+    const totalFileText = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent||'').join('\n\n');
+    const useChunking = hasNotes && totalFileText.length > 3500;
+
+    // Process notes with chunking if file is large
+    if (hasNotes) {
+      if (useChunking) {
+        const CHUNK_SIZE = 4000;
+        const chunks = splitDocIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 5);
+        const totalChunks = chunks.length;
+        const imageFiles = filesPayload.filter(f => f.imageData);
+        const allNotesSections = [];
+        for (let ci = 0; ci < chunks.length; ci++) {
+          setStatus('Processing section ' + (ci+1) + ' of ' + totalChunks + '…');
+          const chunkFile = [{name:'chunk-'+(ci+1)+'.txt',type:'text/plain',mimeType:null,textContent:chunks[ci],imageData:null}];
+          try {
+            const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...chunkFile], urls:[], difficulty:settingsDiff, chunkIndex:ci, totalChunks})});
+            if (cRes.ok) {
+              const cData = await cRes.json().catch(()=>({}));
+              if (cData.results && cData.results.notes && cData.results.notes.sections) {
+                allNotesSections.push(...cData.results.notes.sections);
+                if (cData.topic && cData.topic !== 'the uploaded content') resolvedTopic = cData.topic;
+              }
+            }
+          } catch(e) {}
+        }
+        if (allNotesSections.length) combinedResults.notes = {sections: allNotesSections};
+        else firstError = firstError || 'Could not generate notes for the uploaded document.';
+      } else {
+        // Small file or text topic — single notes call
+        setStatus('Generating notes…');
+        try {
+          const nRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})});
+          const nData = await nRes.json().catch(()=>({error:'Invalid response'}));
+          if (nData && !nData.error && nData.results) { Object.assign(combinedResults, nData.results); if (nData.topic && nData.topic!=='the uploaded content') resolvedTopic=nData.topic; }
+          else if (nData && nData.error) firstError = firstError || nData.error;
+        } catch(e) { firstError = firstError || 'Network error generating notes.'; }
       }
-    });
+    }
+
+    // Process other modes in parallel (each its own call, truncated file for speed)
+    if (otherMethods.length) {
+      setStatus('Generating ' + otherMethods.join(', ') + '…');
+      const truncPayload = filesPayload.map(f=>({...f, textContent:f.textContent?f.textContent.slice(0,6000):null}));
+      const fetchMode = mode => fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicArg, modes:[mode], files:truncPayload, urls:uploadedUrls||[], difficulty:settingsDiff})})
+        .then(r => r.json().catch(()=>({error:'Invalid response'}))).catch(()=>({error:'Network error'}));
+      const responses = await Promise.all(otherMethods.map(fetchMode));
+      responses.forEach(data => {
+        if (data && !data.error && data.results) { if (data.topic && data.topic!=='the uploaded content') resolvedTopic=data.topic; Object.assign(combinedResults, data.results); }
+        else if (data && data.error && !firstError) firstError = data.error;
+      });
+    }
 
     if (!Object.keys(combinedResults).length) {
-      const msg = firstError || 'The request timed out. Try selecting fewer modes or a shorter topic, then generate again.';
+      const msg = firstError || 'The request failed. Try selecting fewer modes or a shorter topic, then generate again.';
       document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`;
       return;
     }
@@ -5361,7 +5516,6 @@ function qnUpdateCount() {
   <div class="settings-modal settings-modal-wrap">
     <button class="settings-close" onclick="closeSettings()">✕</button>
 
-```
 <!-- Nav -->
 <div class="settings-nav">
   <div class="settings-nav-title">⚙️ Settings</div>
@@ -5398,7 +5552,7 @@ function qnUpdateCount() {
           <div class="settings-avatar-name" id="settingsDisplayName">Student</div>
           <div class="settings-avatar-email" id="settingsDisplayEmail"></div>
         </div>
-        <button class="btn-settings-change">Change Photo</button>
+        <button class="btn-settings-change" onclick="showInfoToast('Photo upload coming soon!')">Change Photo</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
@@ -5762,7 +5916,7 @@ function qnUpdateCount() {
           <div class="settings-row-title">Password</div>
           <div class="settings-row-sub">Change your login password</div>
         </div>
-        <button class="btn-settings-change">Change Password</button>
+        <button class="btn-settings-change" onclick="handleForgotPassword()">Change Password</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
@@ -5802,13 +5956,12 @@ function qnUpdateCount() {
           <div class="settings-row-title">Delete Account</div>
           <div class="settings-row-sub">Permanently remove your account and all data. This cannot be undone.</div>
         </div>
-        <button class="btn-settings-danger">Delete Account</button>
+        <button class="btn-settings-danger" onclick="if(confirm('Are you sure? This will delete all your data and cannot be undone.')){clearAllData();signOut();}">Delete Account</button>
       </div>
     </div>
   </div>
 
 </div><!-- /settings-content -->
-```
 
   </div><!-- /settings-modal -->
 </div><!-- /settings-overlay -->
