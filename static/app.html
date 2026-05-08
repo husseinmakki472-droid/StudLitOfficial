@@ -2071,6 +2071,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <button class="sl-nav-item" id="wstab-sets" onclick="switchWsTab('sets')">
         <span class="sl-nav-item-icon">📚</span> Study Sets
       </button>
+      <button class="sl-nav-item" onclick="toggleTimer()">
+        <span class="sl-nav-item-icon">⏱️</span> Study Timer
+      </button>
     </nav>
     <div class="sl-sidebar-bottom">
       <button class="sl-nav-item" onclick="toggleTimer()" style="margin-bottom:4px">
@@ -4699,14 +4702,7 @@ function wzBuildSidebar(methods) {
   </div>
   <div class="wz-sidebar-divider"></div>
   <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>
-  <div class="wz-timer-block" id="wzTimerBlock">
-    <div class="wz-timer-label">⏱ Study Timer</div>
-    <div class="wz-timer-display" id="wzTimerDisplay">00:00</div>
-    <div class="wz-timer-btns">
-      <button class="wz-timer-btn wz-timer-start" id="wzTimerStartBtn" onclick="wzTimerToggle()">Start</button>
-      <button class="wz-timer-btn wz-timer-reset" onclick="wzTimerReset()">Reset</button>
-    </div>
-  </div>`;
+  `;
 }
 
 function wzBuildTabbedResult(topic, methods, results) {
