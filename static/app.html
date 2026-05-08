@@ -2361,8 +2361,6 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         </div>
         <div class="wz-chat-input-row">
           <textarea class="wz-chat-input" id="wzChatInput" placeholder="Ask me anything about the material…" rows="1" onkeydown="wzChatKeydown(event)"></textarea>
-          <button class="chat-util-btn" onclick="document.getElementById('wzChatInput').value=''" title="Clear">✕</button>
-          <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('wzChatInput').value=t})" title="Paste">📋</button>
           <button class="wz-chat-send" onclick="wzSendChat()">↑</button>
         </div>
       </div>
@@ -2398,8 +2396,6 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         </div>
         <div class="sl-chat-input-row">
           <textarea class="sl-chat-input" id="wzChatInputPaste" placeholder="Ask a question…" rows="1" onkeydown="wzChatKeydown2(event)"></textarea>
-          <button class="chat-util-btn" onclick="document.getElementById('wzChatInputPaste').value=''" title="Clear">✕</button>
-          <button class="chat-util-btn" onclick="navigator.clipboard.readText().then(t=>{document.getElementById('wzChatInputPaste').value=t})" title="Paste">📋</button>
           <button class="sl-chat-send" onclick="wzSendChat2()" title="Send">↑</button>
         </div>
       </div>
