@@ -3944,8 +3944,9 @@ function applyDisplayName(name) {
 }
 
 function showInfoToast(msg) {
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
   var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:11px 20px;font-size:13px;color:#f0efff;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5);pointer-events:none;animation:fadeUp .3s ease both';
+  d.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:'+(light?'#fff':'#1a1a2e')+';border:1px solid '+(light?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.15)')+';border-radius:12px;padding:11px 20px;font-size:13px;color:'+(light?'#0f0e1a':'#f0efff')+';z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,'+(light?'.12':'.5')+');pointer-events:none;animation:fadeUp .3s ease both';
   d.textContent = msg;
   document.body.appendChild(d);
   setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(function(){d.remove();},300); }, 2500);
@@ -3983,6 +3984,13 @@ function saveSettings() {
       autoGen: document.getElementById('autoGenToggle') ? document.getElementById('autoGenToggle').checked : false,
       compact: document.getElementById('compactToggle') ? document.getElementById('compactToggle').checked : false,
       reduceMotion: document.getElementById('reduceMotionToggle') ? document.getElementById('reduceMotionToggle').checked : false,
+      dailyReminder: document.getElementById('dailyReminderToggle') ? document.getElementById('dailyReminderToggle').checked : true,
+      reminderTime: document.getElementById('reminderTime') ? document.getElementById('reminderTime').value : '18:00',
+      streakAlert: document.getElementById('streakToggle') ? document.getElementById('streakToggle').checked : true,
+      weeklyReport: document.getElementById('weeklyReportToggle') ? document.getElementById('weeklyReportToggle').checked : false,
+      genComplete: document.getElementById('genCompleteToggle') ? document.getElementById('genCompleteToggle').checked : true,
+      sessionSaved: document.getElementById('sessionSavedToggle') ? document.getElementById('sessionSavedToggle').checked : true,
+      tips: document.getElementById('tipsToggle') ? document.getElementById('tipsToggle').checked : true,
     };
     localStorage.setItem('sl-prefs', JSON.stringify(prefs));
     syncPrefsToSupabase(prefs);
@@ -4022,6 +4030,15 @@ function loadSettingsFromStorage() {
     if (prefs.autoGen !== undefined) { var ag=document.getElementById('autoGenToggle'); if(ag) ag.checked=prefs.autoGen; }
     if (prefs.compact !== undefined) { var ct=document.getElementById('compactToggle'); if(ct) ct.checked=prefs.compact; }
     if (prefs.reduceMotion !== undefined) { var rm=document.getElementById('reduceMotionToggle'); if(rm) rm.checked=prefs.reduceMotion; }
+
+    // Notification prefs
+    if (prefs.dailyReminder !== undefined) { var dr=document.getElementById('dailyReminderToggle'); if(dr) dr.checked=prefs.dailyReminder; }
+    if (prefs.reminderTime) { var rt=document.getElementById('reminderTime'); if(rt) rt.value=prefs.reminderTime; }
+    if (prefs.streakAlert !== undefined) { var sa=document.getElementById('streakToggle'); if(sa) sa.checked=prefs.streakAlert; }
+    if (prefs.weeklyReport !== undefined) { var wr=document.getElementById('weeklyReportToggle'); if(wr) wr.checked=prefs.weeklyReport; }
+    if (prefs.genComplete !== undefined) { var gc=document.getElementById('genCompleteToggle'); if(gc) gc.checked=prefs.genComplete; }
+    if (prefs.sessionSaved !== undefined) { var ss=document.getElementById('sessionSavedToggle'); if(ss) ss.checked=prefs.sessionSaved; }
+    if (prefs.tips !== undefined) { var tp=document.getElementById('tipsToggle'); if(tp) tp.checked=prefs.tips; }
 
     // Restore accent colour swatches
     var accent = '';
@@ -4318,9 +4335,10 @@ function showXPToast(amount) {
 }
 
 function showBadgeToast(badge) {
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
   var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;bottom:240px;right:28px;background:#0d0d1f;border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .4s ease both;min-width:200px';
-  d.innerHTML = '<div style="font-size:26px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:#fff">Badge Unlocked!</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">'+badge.name+'</div></div>';
+  d.style.cssText = 'position:fixed;bottom:240px;right:28px;background:'+(light?'#fff':'#0d0d1f')+';border:1.5px solid rgba(124,92,252,0.4);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,'+(light?'.12':'.5')+');animation:fadeUp .4s ease both;min-width:200px';
+  d.innerHTML = '<div style="font-size:26px">'+badge.icon+'</div><div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:800;color:'+(light?'#0f0e1a':'#fff')+'">Badge Unlocked!</div><div style="font-size:11px;color:'+(light?'rgba(15,14,26,0.5)':'rgba(255,255,255,0.5)')+';margin-top:2px">'+badge.name+'</div></div>';
   document.body.appendChild(d);
   setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .4s'; setTimeout(function(){d.remove();},400); }, 3000);
 }
@@ -5361,7 +5379,6 @@ function qnUpdateCount() {
   <div class="settings-modal settings-modal-wrap">
     <button class="settings-close" onclick="closeSettings()">✕</button>
 
-```
 <!-- Nav -->
 <div class="settings-nav">
   <div class="settings-nav-title">⚙️ Settings</div>
@@ -5398,7 +5415,7 @@ function qnUpdateCount() {
           <div class="settings-avatar-name" id="settingsDisplayName">Student</div>
           <div class="settings-avatar-email" id="settingsDisplayEmail"></div>
         </div>
-        <button class="btn-settings-change">Change Photo</button>
+        <button class="btn-settings-change" onclick="showInfoToast('Photo upload coming soon!')">Change Photo</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
@@ -5762,7 +5779,7 @@ function qnUpdateCount() {
           <div class="settings-row-title">Password</div>
           <div class="settings-row-sub">Change your login password</div>
         </div>
-        <button class="btn-settings-change">Change Password</button>
+        <button class="btn-settings-change" onclick="handleForgotPassword()">Change Password</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
@@ -5802,13 +5819,12 @@ function qnUpdateCount() {
           <div class="settings-row-title">Delete Account</div>
           <div class="settings-row-sub">Permanently remove your account and all data. This cannot be undone.</div>
         </div>
-        <button class="btn-settings-danger">Delete Account</button>
+        <button class="btn-settings-danger" onclick="if(confirm('Are you sure? This will delete all your data and cannot be undone.')){clearAllData();signOut();}">Delete Account</button>
       </div>
     </div>
   </div>
 
 </div><!-- /settings-content -->
-```
 
   </div><!-- /settings-modal -->
 </div><!-- /settings-overlay -->
