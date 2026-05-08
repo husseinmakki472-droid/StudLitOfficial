@@ -3211,22 +3211,33 @@ async function generate() {
       const imageFiles = filesPayload.filter(f=>f.imageData);
       const allNotesSections = [];
 
+      let chunkError = null;
       for (let ci = 0; ci < chunks.length; ci++) {
         if(btn) btn.textContent = '⏳ Section ' + (ci+1) + ' of ' + totalChunks + '...';
         const chunkFile = [{name:'document-chunk-'+(ci+1)+'.txt', type:'text/plain', mimeType:null, textContent:chunks[ci], imageData:null}];
         const chunkPayload = [...imageFiles, ...chunkFile];
         try {
           const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:chunkPayload, urls:[], difficulty:genDiff, chunkIndex:ci, totalChunks})});
-          if (cRes.ok) {
-            const cData = await cRes.json();
-            if (cData.results && cData.results.notes && cData.results.notes.sections) {
-              allNotesSections.push(...cData.results.notes.sections);
-              if (!notesData) notesData = {sections:[]};
-            }
-          }
-        } catch(e) { /* continue with remaining chunks */ }
+          const cData = await cRes.json().catch(()=>({}));
+          if (cRes.ok && cData.results && cData.results.notes && cData.results.notes.sections && cData.results.notes.sections.length) {
+            allNotesSections.push(...cData.results.notes.sections);
+            if (!notesData) notesData = {sections:[]};
+          } else if (cData.error) { chunkError = cData.error; }
+        } catch(e) { chunkError = e.message; }
       }
-      if (notesData) notesData.sections = allNotesSections;
+      if (notesData && allNotesSections.length) {
+        notesData.sections = allNotesSections;
+      } else if (!notesData) {
+        // Fallback: try one single truncated call
+        if(btn) btn.textContent = '⏳ Retrying...';
+        try {
+          const fbFile = [{name:'content.txt',type:'text/plain',mimeType:null,textContent:totalFileText.slice(0,5000),imageData:null}];
+          const fbRes = await fetch('/.netlify/functions/study', {method:'POST', headers:studyHeaders, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...fbFile], urls:[], difficulty:genDiff})});
+          const fbData = await fbRes.json().catch(()=>({}));
+          if (fbRes.ok && fbData.results && fbData.results.notes) { notesData = fbData.results.notes; }
+          else { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+(chunkError||fbData.error||'Could not generate notes. Try pasting text directly instead of uploading.')+'</div></div>'); return; }
+        } catch(e) { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+e.message+'</div></div>'); return; }
+      }
 
       // Now handle other modes (non-notes) in a single call with truncated content
       if (otherModes.length) {
@@ -4758,41 +4769,91 @@ async function wzGenerate() {
   rv.style.display = 'flex';
   setResultMode(true);
   switchWsTab('create');
-  // setResultMode hides all .ws-section via inline style; restore ws-create as flex column
-  // so wzResultView (flex:1; height:0) can properly expand to fill the space
   const wsCreate = document.getElementById('ws-create');
   if (wsCreate) { wsCreate.style.display = 'flex'; wsCreate.style.flexDirection = 'column'; wsCreate.style.padding = '0'; wsCreate.style.overflow = 'hidden'; }
-  // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
-  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
+  const loadingEl = document.getElementById('wzResultMain');
+  loadingEl.innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px" id="wzGenStatus">Processing content…</p></div>`;
   const input = (document.getElementById('studyInput')?.value || '').trim();
   let topicStr = input || 'the uploaded content';
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
+  const setStatus = msg => { const el = document.getElementById('wzGenStatus'); if (el) el.textContent = msg; };
   try {
     const topicArg = input || 'the uploaded content';
     const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
-    const fetchMode = mode => fetch('/.netlify/functions/study', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topicArg, modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})
-    }).then(r => r.json().catch(() => ({error: r.ok ? 'Invalid response from server.' : 'Request timed out. Try selecting fewer modes or a shorter topic.'}))).catch(() => ({error: 'Network error. Check your connection and try again.'}));
-
-    const responses = await Promise.all(methods.map(fetchMode));
-
+    const headers = {'Content-Type':'application/json'};
     const combinedResults = {};
     let resolvedTopic = input || 'Study Set';
     let firstError = null;
-    responses.forEach(data => {
-      if (data && !data.error && data.results) {
-        if (data.topic && data.topic !== 'the uploaded content') resolvedTopic = data.topic;
-        Object.assign(combinedResults, data.results);
-      } else if (data && data.error && !firstError) {
-        firstError = data.error;
+
+    const hasNotes = methods.indexOf('notes') !== -1;
+    const otherMethods = methods.filter(m => m !== 'notes');
+    const totalFileText = uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent||'').join('\n\n');
+    const useChunking = hasNotes && totalFileText.length > 3500;
+
+    // Process notes with chunking if file is large
+    if (hasNotes) {
+      if (useChunking) {
+        const CHUNK_SIZE = 4000;
+        const chunks = splitDocIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 5);
+        const totalChunks = chunks.length;
+        const imageFiles = filesPayload.filter(f => f.imageData);
+        const allNotesSections = [];
+        for (let ci = 0; ci < chunks.length; ci++) {
+          setStatus('Processing section ' + (ci+1) + ' of ' + totalChunks + '…');
+          const chunkFile = [{name:'chunk-'+(ci+1)+'.txt',type:'text/plain',mimeType:null,textContent:chunks[ci],imageData:null}];
+          try {
+            const cRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...chunkFile], urls:[], difficulty:settingsDiff, chunkIndex:ci, totalChunks})});
+            const cData = await cRes.json().catch(()=>({}));
+            if (cRes.ok && cData.results && cData.results.notes && cData.results.notes.sections && cData.results.notes.sections.length) {
+              allNotesSections.push(...cData.results.notes.sections);
+              if (cData.topic && cData.topic !== 'the uploaded content') resolvedTopic = cData.topic;
+            } else if (cData.error) {
+              firstError = firstError || cData.error;
+            }
+          } catch(e) { firstError = firstError || e.message; }
+        }
+        if (allNotesSections.length) {
+          combinedResults.notes = {sections: allNotesSections};
+        } else {
+          // Fallback: try one single truncated call
+          setStatus('Retrying with truncated content…');
+          try {
+            const fbFile = [{name:'content.txt',type:'text/plain',mimeType:null,textContent:totalFileText.slice(0,5000),imageData:null}];
+            const fbRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:[...imageFiles,...fbFile], urls:[], difficulty:settingsDiff})});
+            const fbData = await fbRes.json().catch(()=>({}));
+            if (fbRes.ok && fbData.results && fbData.results.notes) { combinedResults.notes = fbData.results.notes; if (fbData.topic && fbData.topic!=='the uploaded content') resolvedTopic=fbData.topic; }
+            else firstError = firstError || fbData.error || 'Could not generate notes. Try a shorter document or paste text directly.';
+          } catch(e) { firstError = firstError || 'Network error. Check your connection.'; }
+        }
+      } else {
+        // Small file or text topic — single notes call
+        setStatus('Generating notes…');
+        try {
+          const nRes = await fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicStr, modes:['notes'], files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff})});
+          const nData = await nRes.json().catch(()=>({error:'Invalid response'}));
+          if (nData && !nData.error && nData.results) { Object.assign(combinedResults, nData.results); if (nData.topic && nData.topic!=='the uploaded content') resolvedTopic=nData.topic; }
+          else firstError = firstError || (nData && nData.error) || 'Could not generate notes.';
+        } catch(e) { firstError = firstError || 'Network error generating notes.'; }
       }
-    });
+    }
+
+    // Process other modes in parallel (each its own call, truncated file for speed)
+    if (otherMethods.length) {
+      setStatus('Generating ' + otherMethods.join(', ') + '…');
+      const truncPayload = filesPayload.map(f=>({...f, textContent:f.textContent?f.textContent.slice(0,6000):null}));
+      const fetchMode = mode => fetch('/.netlify/functions/study', {method:'POST', headers, body:JSON.stringify({topic:topicArg, modes:[mode], files:truncPayload, urls:uploadedUrls||[], difficulty:settingsDiff})})
+        .then(r => r.json().catch(()=>({error:'Invalid response'}))).catch(()=>({error:'Network error'}));
+      const responses = await Promise.all(otherMethods.map(fetchMode));
+      responses.forEach(data => {
+        if (data && !data.error && data.results) { if (data.topic && data.topic!=='the uploaded content') resolvedTopic=data.topic; Object.assign(combinedResults, data.results); }
+        else if (data && data.error && !firstError) firstError = data.error;
+      });
+    }
 
     if (!Object.keys(combinedResults).length) {
-      const msg = firstError || 'The request timed out. Try selecting fewer modes or a shorter topic, then generate again.';
+      const msg = firstError || 'The request failed. Try selecting fewer modes or a shorter topic, then generate again.';
       document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(msg)}</div></div>`;
       return;
     }
