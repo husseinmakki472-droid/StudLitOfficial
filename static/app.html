@@ -1533,7 +1533,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-result-topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#f0efff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wz-result-topbar-save{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .wz-result-3panel{display:flex;flex:1;height:0;overflow:hidden;user-select:none}
-.wz-resize-handle{width:6px;flex-shrink:0;cursor:col-resize;display:flex;align-items:center;justify-content:center;background:transparent;transition:background .15s;z-index:10;position:relative}
+.wz-resize-handle{width:12px;flex-shrink:0;cursor:col-resize;display:flex;align-items:center;justify-content:center;background:transparent;transition:background .15s;z-index:10;position:relative;touch-action:none}
 .wz-resize-handle:hover,.wz-resize-handle.dragging{background:rgba(124,92,252,0.12)}
 .wz-resize-handle-line{width:2px;height:40px;border-radius:999px;background:rgba(255,255,255,0.1);transition:background .15s,height .15s}
 .wz-resize-handle:hover .wz-resize-handle-line,.wz-resize-handle.dragging .wz-resize-handle-line{background:#7c5cfc;height:60px}
@@ -4948,16 +4948,18 @@ async function wzSendChat2() {
 }
 function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();wzSendChat2();} }
 
-// Panel resize
+// Panel resize (mouse + touch)
 (function(){
   let _dragging = false, _which = null, _startX = 0, _startW = 0;
   const MIN = 140, MAX_SIDE = 520, MIN_MAIN = 200;
 
-  window.wzStartResize = function(e, which) {
+  function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+  function startResize(e, which) {
     e.preventDefault();
     _dragging = true;
     _which = which;
-    _startX = e.clientX;
+    _startX = getX(e);
     const el = which === 'left'
       ? document.getElementById('wzResultSidebar')
       : document.getElementById('wzPanelRight');
@@ -4966,9 +4968,9 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
       ?.classList.add('dragging');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  };
+  }
 
-  document.addEventListener('mousemove', function(e) {
+  function doResize(e) {
     if (!_dragging) return;
     const container = document.querySelector('.wz-result-3panel');
     if (!container) return;
@@ -4978,28 +4980,38 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
     if (!sidebar || !rightPanel) return;
     const sideW = sidebar.offsetWidth;
     const rightW = rightPanel.offsetWidth;
-    const mainMinW = MIN_MAIN;
-
+    const x = getX(e);
     if (_which === 'left') {
-      let newW = _startW + (e.clientX - _startX);
-      const maxW = totalW - rightW - mainMinW - 12;
-      newW = Math.max(MIN, Math.min(MAX_SIDE, maxW, newW));
+      let newW = _startW + (x - _startX);
+      newW = Math.max(MIN, Math.min(MAX_SIDE, totalW - rightW - MIN_MAIN - 12, newW));
       sidebar.style.width = newW + 'px';
     } else {
-      let newW = _startW - (e.clientX - _startX);
-      const maxW = totalW - sideW - mainMinW - 12;
-      newW = Math.max(MIN, Math.min(MAX_SIDE, maxW, newW));
+      let newW = _startW - (x - _startX);
+      newW = Math.max(MIN, Math.min(MAX_SIDE, totalW - sideW - MIN_MAIN - 12, newW));
       rightPanel.style.width = newW + 'px';
     }
-  });
+  }
 
-  document.addEventListener('mouseup', function() {
+  function endResize() {
     if (!_dragging) return;
     _dragging = false;
     document.querySelectorAll('.wz-resize-handle').forEach(h => h.classList.remove('dragging'));
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+  }
+
+  window.wzStartResize = function(e, which) { startResize(e, which); };
+
+  // Also wire up touch events on handles after DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('resizeLeft')?.addEventListener('touchstart', function(e){startResize(e,'left');},{passive:false});
+    document.getElementById('resizeRight')?.addEventListener('touchstart', function(e){startResize(e,'right');},{passive:false});
   });
+
+  document.addEventListener('mousemove', doResize);
+  document.addEventListener('touchmove', function(e){if(_dragging)e.preventDefault();doResize(e);},{passive:false});
+  document.addEventListener('mouseup', endResize);
+  document.addEventListener('touchend', endResize);
 })();
 
 // ---- Study Timer ----
