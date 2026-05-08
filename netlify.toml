@@ -18,9 +18,24 @@
   status = 301
   force = true
 
+[functions.create-checkout]
+  timeout = 10
+
+[functions.stripe-webhook]
+  timeout = 10
+
+[functions.set-trial]
+  timeout = 10
+
+[[redirects]]
+  from = "/"
+  to = "/app.html"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
     Access-Control-Allow-Methods = "POST, OPTIONS"
