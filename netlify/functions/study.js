@@ -49,7 +49,7 @@ const handler = async (event) => {
 
   const modeList = modesArr.length ? modesArr.join(', ') : 'solve';
 
-  const systemPrompt = 'You are StudLit AI, a world-class study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Be comprehensive and detailed: notes = 8 sections with 5-6 in-depth bullets each; quiz = 12 questions with full explanations; flashcards = 20 rich cards; tutor = 6 sections with 3 detailed paragraphs each and examples; fitb = 10 sentences; keyconcepts = 15 terms with thorough definitions and real-world importance; practicetest = 3 sections (shortAnswer, multipleChoice, essay) with 4 questions each; studyplan = 7 days with 4-5 tasks each; summary = 8 key points with context. Every field must be filled with rich, substantive content — never leave arrays empty or give one-word answers.';
+  const systemPrompt = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate quality content: notes = 5 sections with 3-4 bullets each; quiz = 8 questions with explanations; flashcards = 12 cards; tutor = 4 sections with 2 paragraphs each; fitb = 7 sentences; keyconcepts = 10 terms with definitions; practicetest = 3 questions per section; studyplan = 5 days; summary = 5 key points. Keep all answers clear and substantive.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
@@ -77,12 +77,12 @@ const handler = async (event) => {
     ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall with simple language; medium=conceptual understanding required with some application; hard=deep analysis, synthesis, and real-world application. Every question must clearly match this level.'
     : '';
 
-  const quantityInstruction = '\n\nQUANTITY REQUIREMENTS (must meet minimums):\n- flashcards: 20 cards\n- quiz: 12 questions\n- fitb: 10 sentences\n- notes: 8 sections × 5 bullets\n- tutor: 6 sections × 3 paragraphs\n- keyconcepts: 15 concepts\n- studyplan: 7 days\n- summary: 8 key points\n- practicetest: 4 questions per section\n- solve: 3+ examples';
+  const quantityInstruction = '\n\nQUANTITY REQUIREMENTS:\n- flashcards: 12 cards\n- quiz: 8 questions\n- fitb: 7 sentences\n- notes: 5 sections × 3-4 bullets\n- tutor: 4 sections × 2 paragraphs\n- keyconcepts: 10 concepts\n- studyplan: 5 days\n- summary: 5 key points\n- practicetest: 3 questions per section\n- solve: 2+ examples';
 
   const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + modeList + difficultyInstruction + quantityInstruction + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
 
   const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan', 'keyconcepts', 'flashcards'];
-  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 4000 : 3000;
+  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 2000 : 1500;
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
@@ -98,7 +98,7 @@ const handler = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         max_tokens: maxTokens,
         temperature: 0.35,
         response_format: { type: 'json_object' },
