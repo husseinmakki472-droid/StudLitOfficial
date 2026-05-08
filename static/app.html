@@ -1741,6 +1741,78 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 @media(max-width:800px){.wz-panel-right{width:260px}.wz-panel-sidebar{width:160px}}
 @media(max-width:700px){.wz-result-3panel{flex-direction:column;height:auto}.wz-panel-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.07);flex-direction:row;flex-wrap:wrap;padding:10px}.wz-panel-right{width:100%;border-left:none;border-top:1px solid rgba(255,255,255,0.07);height:360px}.wz-methods-grid{grid-template-columns:1fr}.sl-result-layout{flex-direction:column}.sl-chat-panel{width:100%;position:static;height:340px}}
 
+/* ── Paper Grader ── */
+.grader-workspace{max-width:860px;margin:0 auto;padding:40px 28px 80px;position:relative;z-index:1}
+.grader-input-card{background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:22px;padding:22px 24px}
+.grader-prompt-toggle{display:flex;align-items:center;gap:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(240,239,255,0.38);cursor:pointer;background:none;border:none;padding:0;transition:color .18s}
+.grader-prompt-toggle:hover{color:rgba(240,239,255,0.65)}
+.grader-prompt-area{display:none}
+.grader-prompt-area.open{display:block}
+.grader-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(240,239,255,0.3);margin-bottom:8px}
+.grader-prompt-input{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:12px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;outline:none;transition:border-color .2s;box-sizing:border-box;margin-bottom:0}
+.grader-prompt-input:focus{border-color:rgba(124,92,252,0.5)}
+.grader-prompt-input::placeholder{color:rgba(240,239,255,0.2)}
+.grader-textarea{width:100%;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 18px;font-family:'DM Sans',sans-serif;font-size:14px;color:#f0efff;line-height:1.8;outline:none;resize:vertical;min-height:280px;transition:border-color .2s;box-sizing:border-box;margin-bottom:0}
+.grader-textarea:focus{border-color:rgba(124,92,252,0.45)}
+.grader-textarea::placeholder{color:rgba(240,239,255,0.18)}
+.grader-actions{display:flex;align-items:center;gap:14px;margin-top:14px}
+.btn-grade{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:14px;padding:11px 30px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(124,92,252,0.25)}
+.btn-grade:hover{opacity:.88;transform:translateY(-1px)}
+.btn-grade:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.grader-wc{font-size:12px;color:rgba(240,239,255,0.28);font-weight:600}
+/* Grade results */
+.grade-result{animation:fadeUp .5s cubic-bezier(0.22,1,0.36,1) both;margin-top:24px}
+.grade-overall-card{background:linear-gradient(135deg,rgba(124,92,252,0.12),rgba(176,110,243,0.07));border:1px solid rgba(124,92,252,0.2);border-radius:24px;padding:28px 30px;display:flex;align-items:center;gap:28px;margin-bottom:16px}
+.grade-letter-wrap{width:96px;height:96px;border-radius:22px;background:linear-gradient(135deg,#7c5cfc,#b06ef3);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 8px 28px rgba(124,92,252,0.35)}
+.grade-letter{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;letter-spacing:-1px}
+.grade-overall-info{flex:1}
+.grade-overall-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#f0efff;margin-bottom:3px}
+.grade-overall-pct{font-size:13px;color:rgba(240,239,255,0.4);margin-bottom:8px}
+.grade-score-bar{height:5px;background:rgba(255,255,255,0.07);border-radius:999px;overflow:hidden}
+.grade-score-fill{height:100%;background:linear-gradient(90deg,#7c5cfc,#b06ef3);border-radius:999px;transition:width 1.1s cubic-bezier(0.22,1,0.36,1)}
+.grade-overall-summary{font-size:13.5px;color:rgba(240,239,255,0.58);line-height:1.55;margin-top:10px}
+.grade-criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.grade-criterion-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:18px 20px}
+.grade-criterion-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.grade-criterion-name{font-size:12.5px;font-weight:700;color:#f0efff}
+.grade-criterion-badge{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;background:linear-gradient(135deg,#7c5cfc,#b06ef3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grade-criterion-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:999px;margin-bottom:10px;overflow:hidden}
+.grade-criterion-fill{height:100%;background:linear-gradient(90deg,#7c5cfc,#b06ef3);border-radius:999px;transition:width 1.1s cubic-bezier(0.22,1,0.36,1)}
+.grade-criterion-feedback{font-size:12.5px;color:rgba(240,239,255,0.48);line-height:1.55}
+.grade-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.grade-section-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:18px 20px}
+.grade-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(240,239,255,0.28);margin-bottom:12px}
+.grade-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.grade-list li{font-size:13px;color:rgba(240,239,255,0.6);line-height:1.45;padding-left:16px;position:relative}
+.grade-list li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%}
+.grade-strengths .grade-list li::before{background:#4ade80}
+.grade-improvements .grade-list li::before{background:#f59e0b}
+.grade-comments-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:20px 22px}
+.grade-comments-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(240,239,255,0.28);margin-bottom:12px}
+.grade-comments-text{font-size:14px;color:rgba(240,239,255,0.68);line-height:1.78}
+@media(max-width:680px){.grade-criteria-grid,.grade-bottom-grid{grid-template-columns:1fr}.grade-overall-card{flex-direction:column;text-align:center}}
+/* Light mode overrides for grader */
+[data-theme="light"] .grader-input-card{background:#fff!important;border-color:rgba(0,0,0,0.09)!important;box-shadow:0 2px 12px rgba(0,0,0,0.05)!important}
+[data-theme="light"] .grader-prompt-toggle{color:rgba(15,14,26,0.4)!important}
+[data-theme="light"] .grader-label{color:rgba(15,14,26,0.4)!important}
+[data-theme="light"] .grader-prompt-input{background:#f9f8ff!important;border-color:rgba(0,0,0,0.1)!important;color:#0f0e1a!important}
+[data-theme="light"] .grader-prompt-input::placeholder{color:rgba(15,14,26,0.28)!important}
+[data-theme="light"] .grader-textarea{background:#f9f8ff!important;border-color:rgba(0,0,0,0.09)!important;color:#0f0e1a!important}
+[data-theme="light"] .grader-textarea::placeholder{color:rgba(15,14,26,0.25)!important}
+[data-theme="light"] .grader-wc{color:rgba(15,14,26,0.35)!important}
+[data-theme="light"] .grade-overall-card{background:linear-gradient(135deg,rgba(124,92,252,0.07),rgba(176,110,243,0.04))!important;border-color:rgba(124,92,252,0.14)!important}
+[data-theme="light"] .grade-overall-title{color:#0f0e1a!important}
+[data-theme="light"] .grade-overall-pct{color:rgba(15,14,26,0.5)!important}
+[data-theme="light"] .grade-score-bar{background:rgba(0,0,0,0.06)!important}
+[data-theme="light"] .grade-overall-summary{color:rgba(15,14,26,0.65)!important}
+[data-theme="light"] .grade-criterion-card,[data-theme="light"] .grade-section-card,[data-theme="light"] .grade-comments-card{background:#fff!important;border-color:rgba(0,0,0,0.08)!important;box-shadow:0 1px 8px rgba(0,0,0,0.04)!important}
+[data-theme="light"] .grade-criterion-name{color:#0f0e1a!important}
+[data-theme="light"] .grade-criterion-bar{background:rgba(0,0,0,0.06)!important}
+[data-theme="light"] .grade-criterion-feedback{color:rgba(15,14,26,0.55)!important}
+[data-theme="light"] .grade-section-label,[data-theme="light"] .grade-comments-label{color:rgba(15,14,26,0.38)!important}
+[data-theme="light"] .grade-list li{color:rgba(15,14,26,0.7)!important}
+[data-theme="light"] .grade-comments-text{color:rgba(15,14,26,0.72)!important}
+
 /* ── Auth Modal ── */
 .auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-card{background:#0d0d1f;border:1px solid rgba(255,255,255,0.12);border-radius:28px;width:100%;max-width:420px;padding:40px 40px 36px;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 40px rgba(124,92,252,0.15);animation:authIn .4s cubic-bezier(0.22,1,0.36,1) both}
@@ -1914,7 +1986,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="page-tabs">
     <button class="page-tab" id="tab-home" onclick="switchTab('home')">Home</button>
     <button class="page-tab active" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
-    <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">🤖 AI Checker</button>
+    <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">📋 Paper Grader</button>
     <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
   </div>
   <div class="nav-right">
@@ -2030,36 +2102,17 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </div>
 <div id="chatWindow" style="display:none"></div>
 
-<!-- ===== AI CHECKER TAB ===== -->
+<!-- ===== PAPER GRADER TAB ===== -->
 <div class="ws-section" id="ws-checker">
   <div class="ws-header">
-    <div class="ws-title">AI Checker &amp; Humanizer</div>
+    <div class="ws-title">Paper Grader</div>
   </div>
-  <div class="ai-checker-tabs">
-    <button class="ai-sub-tab active" id="subtab-checker" onclick="switchAITab('checker')">🔍 AI Detector</button>
-    <button class="ai-sub-tab" id="subtab-humanizer" onclick="switchAITab('humanizer')">✍️ Humanizer</button>
-  </div>
-  <div class="ai-panel active" id="panel-checker">
-    <div class="ai-input-card">
-      <textarea class="ai-textarea" id="checkerInput" placeholder="Paste any text here to check if it was AI-generated..." oninput="updateAIWordCount()"></textarea>
-      <div class="ai-actions">
-        <button class="btn-ai-check" id="checkBtn" onclick="runAICheck()">🔍 Check for AI</button>
-        <button class="btn-ai-clear" onclick="clearChecker()">↺ Clear</button>
-        <span class="ai-wc" id="aiWordCount">0 words</span>
-      </div>
+  <div class="ws-checker-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="ws-checker-prompt-row">
+      <div class="ws-checker-title">📋 Instant Paper Grading</div>
+      <div class="ws-checker-sub">Get a detailed grade breakdown across 5 academic criteria with actionable feedback.</div>
+      <button class="btn-ai-check ws-checker-btn" onclick="switchTab('writing')" style="margin-top:12px">Open Paper Grader →</button>
     </div>
-    <div id="checkerResults"></div>
-  </div>
-  <div class="ai-panel" id="panel-humanizer">
-    <div class="ai-input-card">
-      <textarea class="ai-textarea" id="humanizerInput" placeholder="Paste AI-generated text here and we'll rewrite it to sound more natural..." oninput="updateHumanizerWordCount()"></textarea>
-      <div class="ai-actions">
-        <button class="btn-ai-check" id="humanizeBtn" onclick="runHumanizer()">✍️ Humanize Text</button>
-        <button class="btn-ai-clear" onclick="clearHumanizer()">↺ Clear</button>
-        <span class="ai-wc" id="humanizerWordCount">0 words</span>
-      </div>
-    </div>
-    <div id="humanizerResults"></div>
   </div>
 </div>
 
@@ -2377,37 +2430,35 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </div>
 
 <div class="page-view" id="view-writing">
-<div class="ai-checker-workspace">
-  <div style="margin-bottom:6px">
-    <div class="writing-heading">🤖 AI Checker</div>
-    <div class="writing-sub">Detect AI-generated patterns in any text, then use the Humanizer to rewrite it in a more natural, personal voice.</div>
+<div class="grader-workspace">
+  <div style="margin-bottom:24px">
+    <div class="writing-heading">📋 Paper Grader</div>
+    <div class="writing-sub">Paste your essay or paper and get an instant grade across 5 academic criteria — with detailed feedback and actionable improvements.</div>
   </div>
-  <div class="ai-checker-tabs">
-    <button class="ai-sub-tab active" id="subtab-checker" onclick="switchAITab('checker')">🔍 AI Detector</button>
-    <button class="ai-sub-tab" id="subtab-humanizer" onclick="switchAITab('humanizer')">✍️ Humanizer</button>
-  </div>
-  <div class="ai-panel active" id="panel-checker">
-    <div class="ai-input-card">
-      <textarea class="ai-textarea" id="checkerInput" placeholder="Paste any text here to check if it was AI-generated..." oninput="updateAIWordCount()"></textarea>
-      <div class="ai-actions">
-        <button class="btn-ai-check" onclick="runAICheck()">🔍 Check for AI</button>
-        <button class="btn-ai-clear" onclick="clearChecker()">↺ Clear</button>
-        <span class="ai-wc" id="aiWordCount">0 words</span>
-      </div>
+
+  <!-- Optional: assignment prompt + rubric -->
+  <div class="grader-input-card">
+    <button class="grader-prompt-toggle" id="graderPromptToggle" onclick="togglePromptArea()">▼ Add assignment prompt / rubric (optional)</button>
+    <div class="grader-prompt-area" id="graderPromptArea">
+      <div class="grader-label" style="margin-top:16px">Assignment Prompt or Instructions</div>
+      <input class="grader-prompt-input" id="graderPrompt" placeholder="e.g. Analyze the causes of World War I in 800 words, focusing on nationalism and militarism.">
+      <div class="grader-label" style="margin-top:12px">Grading Rubric (optional)</div>
+      <input class="grader-prompt-input" id="graderRubric" placeholder="e.g. 40% argument strength, 30% evidence quality, 20% structure, 10% grammar">
     </div>
-    <div id="checkerResults"></div>
   </div>
-  <div class="ai-panel" id="panel-humanizer">
-    <div class="ai-input-card">
-      <textarea class="ai-textarea" id="humanizerInput" placeholder="Paste AI-generated text here and we'll rewrite it to sound more natural and human..." oninput="updateHumanizerWordCount()"></textarea>
-      <div class="ai-actions">
-        <button class="btn-ai-check" onclick="runHumanizer()">✍️ Humanize Text</button>
-        <button class="btn-ai-clear" onclick="clearHumanizer()">↺ Clear</button>
-        <span class="ai-wc" id="humanizerWordCount">0 words</span>
-      </div>
+
+  <!-- Paper input -->
+  <div class="grader-input-card" style="margin-top:12px">
+    <div class="grader-label">Your Paper or Essay</div>
+    <textarea class="grader-textarea" id="graderInput" placeholder="Paste your paper, essay, report, or any written assignment here…" oninput="updateGraderWordCount()"></textarea>
+    <div class="grader-actions">
+      <button class="btn-grade" id="gradeBtn" onclick="runGrader()">📋 Grade My Paper</button>
+      <span class="grader-wc" id="graderWC">0 words</span>
     </div>
-    <div id="humanizerResults"></div>
   </div>
+
+  <!-- Results -->
+  <div id="graderResults"></div>
 </div>
 </div>
 
@@ -3419,51 +3470,134 @@ function podFastForward(){podToggle();podToggle()}
 function podCycleSpeed(){const speeds=[0.75,1,1.25,1.5,2];const idx=speeds.indexOf(podcastSpeed);podcastSpeed=speeds[(idx+1)%speeds.length];const b=document.getElementById('podSpeedBtn');if(b)b.textContent=podcastSpeed+'x';if(podcastPlaying){speechSynthesis.cancel();podcastPlaying=false;podToggle()}}
 function podSeek(e){const pct=e.offsetX/e.currentTarget.offsetWidth;const remaining=podcastScript.slice(Math.floor(pct*podcastScript.length));speechSynthesis.cancel();podcastUtterance=new SpeechSynthesisUtterance(remaining);podcastUtterance.rate=podcastSpeed;const voices=speechSynthesis.getVoices();const pref=voices.find(v=>v.name.includes('Google')&&v.lang==='en-US')||voices.find(v=>v.lang==='en-US');if(pref)podcastUtterance.voice=pref;speechSynthesis.speak(podcastUtterance);podcastPlaying=true;const b=document.getElementById('podPlayBtn');if(b)b.textContent='⏸';const p=document.getElementById('podProgress');if(p)p.style.width=(pct*100)+'%'}
 
-function switchAITab(tab){document.querySelectorAll('.ai-sub-tab').forEach(t=>t.classList.remove('active'));document.getElementById('subtab-'+tab).classList.add('active');document.querySelectorAll('.ai-panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+tab).classList.add('active')}
-function updateAIWordCount(){const w=document.getElementById('checkerInput').value.trim().split(/\s+/).filter(x=>x).length;document.getElementById('aiWordCount').textContent=w+' words'}
-function updateHumanizerWordCount(){const w=document.getElementById('humanizerInput').value.trim().split(/\s+/).filter(x=>x).length;document.getElementById('humanizerWordCount').textContent=w+' words'}
-function clearChecker(){document.getElementById('checkerInput').value='';document.getElementById('checkerResults').innerHTML='';updateAIWordCount()}
-function clearHumanizer(){document.getElementById('humanizerInput').value='';document.getElementById('humanizerResults').innerHTML='';updateHumanizerWordCount()}
-
-async function runAICheck() {
-  const text=document.getElementById('checkerInput').value.trim();
-  if(!text||text.split(/\s+/).length<15){const el=document.getElementById('checkerInput');if(el){el.style.borderColor='#f87171';setTimeout(()=>{el.style.borderColor=''},1800);}return;}
-  const btn=document.getElementById('checkBtn');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Analyzing...';}
-  document.getElementById('checkerResults').innerHTML='<div style="padding:20px;text-align:center;color:rgba(240,239,255,0.38)">Analyzing...</div>';
-  try{
-    const res=await fetch('/.netlify/functions/ai-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-    const data=await res.json();
-    if(!res.ok||data.error){document.getElementById('checkerResults').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>';return;}
-    const score=Math.min(98,Math.max(2,data.score||0));
-    const color=score>=70?'#f87171':score>=40?'#fbbf24':'#4ade80';
-    const circ=2*Math.PI*45;
-    const offset=circ-(score/100)*circ;
-    const variety=data.variety||0;const passive=data.passive||0;const flaggedCount=(data.aiPhrases||[]).length;
-    const flaggedSection=data.flaggedHtml?`<div class="ai-flagged-section"><div class="ai-flagged-title">🔍 Flagged Text <span style="font-size:12px;font-weight:400;color:var(--text-3)">— <span style="color:#f87171">■</span> AI phrases &nbsp;<span style="color:#fbbf24">■</span> passive voice</span></div><div class="ai-flagged-text">${data.flaggedHtml}</div></div>`:'';
-    document.getElementById('checkerResults').innerHTML=`<div class="ai-results"><div class="ai-meter"><div class="ai-meter-label">AI Probability</div><div class="ai-meter-ring-wrap"><svg class="ai-meter-svg" width="120" height="120" viewBox="0 0 120 120"><circle class="ai-meter-track" cx="60" cy="60" r="45"/><circle class="ai-meter-fill" cx="60" cy="60" r="45" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg><div class="ai-meter-val"><div class="ai-meter-pct" style="color:${color}">${score}%</div></div></div><div class="ai-verdict" style="color:${color}">${escHtml(data.verdict||'')}</div><div class="ai-verdict-sub">${escHtml(data.verdictSub||'')}</div></div><div class="ai-breakdown"><div class="ai-break-card"><div class="ai-break-val" style="color:#7c5cfc">${flaggedCount}</div><div class="ai-break-label">AI Phrases</div></div><div class="ai-break-card"><div class="ai-break-val" style="color:#60a5fa">${variety}%</div><div class="ai-break-label">Variety Score</div></div><div class="ai-break-card"><div class="ai-break-val" style="color:#fbbf24">${passive}</div><div class="ai-break-label">Passive Sentences</div></div></div>${flaggedSection}</div>`;
-  }catch(err){document.getElementById('checkerResults').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>';}
-  finally{if(btn){btn.disabled=false;btn.textContent='🔍 Check for AI';}}
+// ── Paper Grader ──────────────────────────────────────────────
+function updateGraderWordCount() {
+  var ta = document.getElementById('graderInput');
+  var wc = document.getElementById('graderWC');
+  if (!ta || !wc) return;
+  var words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  wc.textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words');
 }
 
-async function runHumanizer() {
-  const text=document.getElementById('humanizerInput').value.trim();
-  if(!text||text.split(/\s+/).length<10){const el=document.getElementById('humanizerInput');if(el){el.style.borderColor='#f87171';setTimeout(()=>{el.style.borderColor=''},1800);}return;}
-  const btn=document.getElementById('humanizeBtn');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Humanizing...';}
-  document.getElementById('humanizerResults').innerHTML='<div style="padding:20px;text-align:center;color:rgba(240,239,255,0.38)">Humanizing...</div>';
-  try{
-    const res=await fetch('/.netlify/functions/humanize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-    const data=await res.json();
-    if(!res.ok||data.error){document.getElementById('humanizerResults').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>';return;}
-    document.getElementById('humanizerResults').innerHTML=`<div class="humanizer-output"><div class="humanizer-output-label">✦ Humanized Version</div><div class="humanizer-text" id="humanizedText">${escHtml(data.result)}</div><div class="humanizer-actions"><button class="btn-copy" onclick="copyHumanized()">📋 Copy</button><span class="copy-confirm" id="copyConfirm">✓ Copied!</span></div></div>`;
-  }catch(err){document.getElementById('humanizerResults').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(err.message)+'</div></div>';}
-  finally{if(btn){btn.disabled=false;btn.textContent='✍️ Humanize Text';}}
+function togglePromptArea() {
+  var area = document.getElementById('graderPromptArea');
+  var btn = document.getElementById('graderPromptToggle');
+  if (!area) return;
+  var open = area.classList.toggle('open');
+  if (btn) btn.textContent = open ? '▲ Hide assignment prompt' : '▼ Add assignment prompt / rubric (optional)';
 }
 
-function humanizeText(text){let r=text;const reps=[[/\bit is worth noting that\b/gi,'worth pointing out —'],[/\bfurthermore,?\b/gi,'on top of that,'],[/\bmoreover,?\b/gi,'also,'],[/\bin conclusion,?\b/gi,'to wrap up,'],[/\bin summary,?\b/gi,'in short,'],[/\bit is important to\b/gi,'you need to'],[/\bplays a crucial role\b/gi,'matters a lot'],[/\bsignificantly\b/gi,'a lot'],[/\bit can be seen that\b/gi,'clearly'],[/\bas mentioned (above|previously|earlier)?\b/gi,'as noted'],[/\bin addition,?\b/gi,'also,'],[/\boverall,?\b/gi,'all in all,'],[/\bto summarize,?\b/gi,'in short,'],[/\bdelve into\b/gi,'dig into'],[/\bit goes without saying\b/gi,'obviously'],[/\bneedless to say,?\b/gi,''],[/\bfirst and foremost,?\b/gi,'first off,'],[/\bin today's (world|society|age)\b/gi,'nowadays'],[/\bit is essential to\b/gi,'you should'],[/\bone must consider\b/gi,'think about'],[/\bit should be noted that\b/gi,'note that'],[/\bin order to\b/gi,'to'],[/\bdue to the fact that\b/gi,'because'],[/\bit is clear that\b/gi,'clearly,'],[/\bas a result,?\b/gi,'so,'],[/\bwith regard to\b/gi,'about'],[/\butilize\b/gi,'use'],[/\bfacilitate\b/gi,'help'],[/\bnevertheless,?\b/gi,'still,'],[/\bconsequently,?\b/gi,'so,'],[/\bthus,?\b/gi,'so,'],[/\bhence,?\b/gi,"that's why"]];reps.forEach(([p,rep])=>{r=r.replace(p,rep)});r=r.replace(/\bdo not\b/g,"don't").replace(/\bcannot\b/g,"can't").replace(/\bwill not\b/g,"won't").replace(/\bwould not\b/g,"wouldn't").replace(/\bshould not\b/g,"shouldn't").replace(/\bdoes not\b/g,"doesn't").replace(/\bdid not\b/g,"didn't").replace(/\bis not\b/g,"isn't").replace(/\bare not\b/g,"aren't").replace(/\bI am\b/g,"I'm").replace(/\bthey are\b/g,"they're").replace(/\bwe are\b/g,"we're").replace(/\bit is\b/g,"it's").replace(/\bthat is\b/g,"that's");r=r.replace(/([^.!?]{120,}?),\s+(and|but|so|because|which|while)\s+/g,(m,p1,conj)=>`${p1}. ${conj.charAt(0).toUpperCase()+conj.slice(1)} `);return r.replace(/\s{2,}/g,' ').replace(/,\s*,/g,',').trim()}
+async function runGrader() {
+  if (isTrialExpired()) { showUpgradeModal(); return; }
+  var paper = (document.getElementById('graderInput').value || '').trim();
+  if (!paper || paper.split(/\s+/).length < 20) {
+    var el = document.getElementById('graderInput');
+    if (el) { el.style.borderColor = '#f87171'; setTimeout(function(){ el.style.borderColor = ''; }, 1800); }
+    return;
+  }
+  var prompt = (document.getElementById('graderPrompt') ? document.getElementById('graderPrompt').value : '') || '';
+  var rubric = (document.getElementById('graderRubric') ? document.getElementById('graderRubric').value : '') || '';
+  var btn = document.getElementById('gradeBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Grading…'; }
+  document.getElementById('graderResults').innerHTML = '<div style="text-align:center;padding:48px 20px"><div style="font-size:32px;margin-bottom:14px;animation:fadeUp .4s ease both">📋</div><div style="font-size:14px;color:rgba(240,239,255,0.38);font-weight:600">Grading your paper…</div></div>';
+  try {
+    var token = await getAuthToken();
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    var resp = await fetch('/.netlify/functions/grade', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ paper: paper, prompt: prompt.trim(), rubric: rubric.trim() })
+    });
+    var data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || 'Grading failed');
+    renderGradeResult(data);
+  } catch(e) {
+    document.getElementById('graderResults').innerHTML = '<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">' + escHtml(e.message) + '</div></div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📋 Grade My Paper'; }
+  }
+}
 
-function copyHumanized(){const text=document.getElementById('humanizedText')?.textContent||'';navigator.clipboard.writeText(text).then(()=>{const c=document.getElementById('copyConfirm');c.classList.add('show');setTimeout(()=>c.classList.remove('show'),2000)})}
+function renderGradeResult(data) {
+  var o = data.overall || {};
+  var criteria = Array.isArray(data.criteria) ? data.criteria : [];
+  var strengths = Array.isArray(data.strengths) ? data.strengths : [];
+  var improvements = Array.isArray(data.improvements) ? data.improvements : [];
+  var comments = data.comments || '';
+  var score = Math.min(100, Math.max(0, o.score || 0));
+  var grade = o.grade || scoreToGrade(score);
+
+  var html = '<div class="grade-result">';
+
+  // Overall card
+  html += '<div class="grade-overall-card">';
+  html += '<div class="grade-letter-wrap"><div class="grade-letter">' + escHtml(grade) + '</div></div>';
+  html += '<div class="grade-overall-info">';
+  html += '<div class="grade-overall-title">Overall Grade</div>';
+  html += '<div class="grade-overall-pct">' + score + ' / 100</div>';
+  html += '<div class="grade-score-bar"><div class="grade-score-fill" style="width:0%"></div></div>';
+  if (o.summary) html += '<div class="grade-overall-summary">' + escHtml(o.summary) + '</div>';
+  html += '</div></div>';
+
+  // Criteria
+  if (criteria.length) {
+    html += '<div class="grade-criteria-grid">';
+    criteria.forEach(function(c) {
+      var s = Math.min(100, Math.max(0, c.score || 0));
+      html += '<div class="grade-criterion-card">';
+      html += '<div class="grade-criterion-top"><span class="grade-criterion-name">' + escHtml(c.name || '') + '</span><span class="grade-criterion-badge">' + escHtml(c.grade || scoreToGrade(s)) + '</span></div>';
+      html += '<div class="grade-criterion-bar"><div class="grade-criterion-fill" style="width:0%"></div></div>';
+      html += '<div class="grade-criterion-feedback">' + escHtml(c.feedback || '') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Strengths + Improvements
+  if (strengths.length || improvements.length) {
+    html += '<div class="grade-bottom-grid">';
+    if (strengths.length) {
+      html += '<div class="grade-section-card grade-strengths"><div class="grade-section-label">✦ Strengths</div><ul class="grade-list">';
+      strengths.forEach(function(s) { html += '<li>' + escHtml(s) + '</li>'; });
+      html += '</ul></div>';
+    }
+    if (improvements.length) {
+      html += '<div class="grade-section-card grade-improvements"><div class="grade-section-label">↑ To Improve</div><ul class="grade-list">';
+      improvements.forEach(function(s) { html += '<li>' + escHtml(s) + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+  }
+
+  // Comments
+  if (comments) {
+    html += '<div class="grade-comments-card"><div class="grade-comments-label">📝 Detailed Feedback</div><div class="grade-comments-text">' + escHtml(comments) + '</div></div>';
+  }
+
+  html += '</div>';
+  document.getElementById('graderResults').innerHTML = html;
+
+  // Animate bars after paint
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var overall = document.querySelector('.grade-score-fill');
+      if (overall) overall.style.width = score + '%';
+      var fills = document.querySelectorAll('.grade-criterion-fill');
+      criteria.forEach(function(c, i) {
+        if (fills[i]) fills[i].style.width = Math.min(100, Math.max(0, c.score || 0)) + '%';
+      });
+    });
+  });
+}
+
+function scoreToGrade(s) {
+  if (s >= 97) return 'A+'; if (s >= 93) return 'A'; if (s >= 90) return 'A-';
+  if (s >= 87) return 'B+'; if (s >= 83) return 'B'; if (s >= 80) return 'B-';
+  if (s >= 77) return 'C+'; if (s >= 73) return 'C'; if (s >= 70) return 'C-';
+  if (s >= 67) return 'D+'; if (s >= 63) return 'D'; if (s >= 60) return 'D-';
+  return 'F';
+}
 
 
 // ============================================================
