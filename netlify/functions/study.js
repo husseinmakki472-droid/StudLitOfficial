@@ -82,7 +82,7 @@ const handler = async (event) => {
   const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + modeList + difficultyInstruction + quantityInstruction + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}';
 
   const heavyModes = ['tutor', 'notes', 'practicetest', 'studyplan', 'keyconcepts', 'flashcards'];
-  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 6000 : 4000;
+  const maxTokens = modesArr.some(function(m) { return heavyModes.indexOf(m) !== -1; }) ? 4000 : 3000;
 
   const imageBlocks = filesArr
     .filter(function(f) { return f.imageData && f.mimeType; })
@@ -98,7 +98,7 @@ const handler = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         max_tokens: maxTokens,
         temperature: 0.35,
         response_format: { type: 'json_object' },
