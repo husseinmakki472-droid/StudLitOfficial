@@ -103,7 +103,7 @@ const handler = async (event) => {
   const { requestId, topic, modes, files, urls, difficulty } = body;
   if (!requestId) return;
 
-  const store = getStore({ name: 'study-results', consistency: 'strong' });
+  const store = getStore('study-results');
   const apiKey = process.env.OPENAI_API_KEY;
 
   const modesArr = modes || [];

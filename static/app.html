@@ -3169,13 +3169,16 @@ function splitDocIntoChunks(text, chunkSize) {
 
 async function pollStudyResult(requestId, onProgress) {
   const MAX_ATTEMPTS = 120;
+  let consecutiveErrors = 0;
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
     await new Promise(r => setTimeout(r, 3000));
-    let d;
+    let d, res;
     try {
-      const res = await fetch('/.netlify/functions/study-status', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});
-      d = res.ok ? await res.json() : null;
-    } catch(e) { continue; }
+      res = await fetch('/.netlify/functions/study-status', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});
+      d = await res.json().catch(()=>null);
+    } catch(e) { consecutiveErrors++; if (consecutiveErrors >= 5) throw new Error('Network error — check your connection and try again.'); continue; }
+    if (!res.ok) { consecutiveErrors++; if (d && d.error) throw new Error(d.error); if (consecutiveErrors >= 5) throw new Error('Status check failed. Please try again.'); continue; }
+    consecutiveErrors = 0;
     if (!d) continue;
     if (d.status === 'done') return d.data;
     if (d.status === 'error') throw new Error(d.error || 'Generation failed');

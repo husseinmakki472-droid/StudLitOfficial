@@ -26,7 +26,7 @@ const handler = async (event) => {
   }
 
   try {
-    const store = getStore({ name: 'study-results', consistency: 'strong' });
+    const store = getStore('study-results');
     const result = await store.get(requestId, { type: 'json' });
 
     if (!result) {
