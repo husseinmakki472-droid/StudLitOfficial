@@ -1,7 +1,7 @@
 // Netlify Background Function — runs up to 15 minutes, always returns 202 immediately.
-// The frontend polls study-status.js for the result stored in Netlify Blobs.
+// The frontend polls study-status.js for the result stored in Supabase Storage.
 
-const { getStore } = require('@netlify/blobs');
+const { createClient } = require('@supabase/supabase-js');
 
 function repairJson(str) {
   str = str.replace(/,\s*([}\]])/g, '$1');
@@ -95,6 +95,20 @@ function buildFileCtx(filesArr, urlsArr, maxCharsPerFile) {
   return ctx;
 }
 
+async function saveJob(supabase, requestId, data) {
+  const content = JSON.stringify(data);
+  let { error } = await supabase.storage.from('study-jobs').upload(
+    requestId + '.json', content, { contentType: 'application/json', upsert: true }
+  );
+  if (error && error.message && error.message.toLowerCase().includes('not found')) {
+    await supabase.storage.createBucket('study-jobs', { public: false });
+    ({ error } = await supabase.storage.from('study-jobs').upload(
+      requestId + '.json', content, { contentType: 'application/json', upsert: true }
+    ));
+  }
+  if (error) throw new Error(error.message || 'Storage write failed');
+}
+
 const handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); }
@@ -103,8 +117,16 @@ const handler = async (event) => {
   const { requestId, topic, modes, files, urls, difficulty } = body;
   if (!requestId) return;
 
-  const store = getStore({ name: 'study-results', consistency: 'strong' });
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!supabaseUrl || !serviceKey) return;
+
+  const supabase = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+
+  // Ensure bucket exists on first use
+  await supabase.storage.createBucket('study-jobs', { public: false }).catch(() => {});
 
   const modesArr = modes || [];
   const filesArr = files || [];
@@ -115,11 +137,10 @@ const handler = async (event) => {
   const otherModes = modesArr.filter(m => m !== 'notes');
 
   try {
-    // Mark as processing
-    await store.setJSON(requestId, { status: 'processing', progress: 'Starting…' }, { ttl: 7200 });
+    await saveJob(supabase, requestId, { status: 'processing', progress: 'Starting…' });
 
     if (!apiKey) {
-      await store.setJSON(requestId, { status: 'error', error: 'OPENAI_API_KEY not set' }, { ttl: 7200 });
+      await saveJob(supabase, requestId, { status: 'error', error: 'OPENAI_API_KEY not set' });
       return;
     }
 
@@ -133,7 +154,6 @@ const handler = async (event) => {
       const CHUNK_SIZE = 5000;
       const useChunking = totalFileText.length > CHUNK_SIZE;
 
-      const diffInstr = '';
       const notesQty = '\n\nNOTES REQUIREMENTS: Generate 6-10 rich sections. Each section must have: a full overview paragraph, 2-3 detailed content paragraphs, 5+ detailed bullets, key terms with definitions, 2+ examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept.';
 
       if (useChunking) {
@@ -142,7 +162,7 @@ const handler = async (event) => {
         const allSections = [];
 
         for (let ci = 0; ci < chunks.length; ci++) {
-          await store.setJSON(requestId, { status: 'processing', progress: 'Notes: section ' + (ci + 1) + ' of ' + totalChunks + '…' }, { ttl: 7200 });
+          await saveJob(supabase, requestId, { status: 'processing', progress: 'Notes: section ' + (ci + 1) + ' of ' + totalChunks + '…' });
           const chunkNote = '\n\nCHUNK ' + (ci + 1) + ' of ' + totalChunks + ': Process ONLY the content in this chunk. Do not summarise — expand every concept fully.';
           const imageBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
           const userContent = [
@@ -163,7 +183,7 @@ const handler = async (event) => {
           combinedResults.notes = { sections: allSections };
         } else {
           // Fallback: single call with first 6000 chars
-          await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes (fallback)…' }, { ttl: 7200 });
+          await saveJob(supabase, requestId, { status: 'processing', progress: 'Generating notes (fallback)…' });
           const fbContent = buildFileCtx([{ name: 'content.txt', textContent: totalFileText.slice(0, 6000) }], [], 6000);
           const fbUser = [{ type: 'text', text: fbContent }, { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
           try {
@@ -173,7 +193,7 @@ const handler = async (event) => {
         }
       } else {
         // Small content — single call
-        await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes…' }, { ttl: 7200 });
+        await saveJob(supabase, requestId, { status: 'processing', progress: 'Generating notes…' });
         const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
         const imageBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
         const userContent = [
@@ -191,7 +211,7 @@ const handler = async (event) => {
 
     // ── OTHER MODES ────────────────────────────────────────────────────────
     if (otherModes.length) {
-      await store.setJSON(requestId, { status: 'processing', progress: 'Generating ' + otherModes.join(', ') + '…' }, { ttl: 7200 });
+      await saveJob(supabase, requestId, { status: 'processing', progress: 'Generating ' + otherModes.join(', ') + '…' });
       const modeStructures = buildModeStructures(otherModes);
       const difficultyModes = ['quiz', 'practicetest', 'fitb'];
       const hasDiff = otherModes.some(m => difficultyModes.indexOf(m) !== -1);
@@ -214,14 +234,14 @@ const handler = async (event) => {
     }
 
     // ── STORE RESULT ───────────────────────────────────────────────────────
-    await store.setJSON(requestId, {
+    await saveJob(supabase, requestId, {
       status: 'done',
       data: { topic: resolvedTopic, results: combinedResults }
-    }, { ttl: 7200 });
+    });
 
   } catch (err) {
     try {
-      await store.setJSON(requestId, { status: 'error', error: err.message }, { ttl: 7200 });
+      await saveJob(supabase, requestId, { status: 'error', error: err.message });
     } catch (e2) { /* ignore */ }
   }
 };

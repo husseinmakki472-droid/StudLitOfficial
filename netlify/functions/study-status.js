@@ -1,5 +1,5 @@
 // Polling endpoint — frontend calls this every 3s to check if study-background.js has finished.
-const { getStore } = require('@netlify/blobs');
+const { createClient } = require('@supabase/supabase-js');
 
 const handler = async (event) => {
   const corsHeaders = {
@@ -25,14 +25,22 @@ const handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'requestId required' }) };
   }
 
-  try {
-    const store = getStore({ name: 'study-results', consistency: 'strong' });
-    const result = await store.get(requestId, { type: 'json' });
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Storage not configured' }) };
+  }
 
-    if (!result) {
+  try {
+    const supabase = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+    const { data, error } = await supabase.storage.from('study-jobs').download(requestId + '.json');
+
+    if (error || !data) {
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ status: 'pending', progress: 'Waiting to start…' }) };
     }
 
+    const text = await data.text();
+    const result = JSON.parse(text);
     return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
   } catch (err) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: err.message }) };
