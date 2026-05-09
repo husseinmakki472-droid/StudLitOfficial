@@ -103,8 +103,12 @@ const handler = async (event) => {
   const { requestId, topic, modes, files, urls, difficulty } = body;
   if (!requestId) return;
 
-  const store = getStore('study-results');
   const apiKey = process.env.OPENAI_API_KEY;
+  const store = getStore({
+    name: 'study-results',
+    siteID: process.env.SITE_ID,
+    token: process.env.NETLIFY_TOKEN
+  });
 
   const modesArr = modes || [];
   const filesArr = files || [];
@@ -115,7 +119,6 @@ const handler = async (event) => {
   const otherModes = modesArr.filter(m => m !== 'notes');
 
   try {
-    // Mark as processing
     await store.setJSON(requestId, { status: 'processing', progress: 'Starting…' }, { ttl: 7200 });
 
     if (!apiKey) {
@@ -133,7 +136,6 @@ const handler = async (event) => {
       const CHUNK_SIZE = 5000;
       const useChunking = totalFileText.length > CHUNK_SIZE;
 
-      const diffInstr = '';
       const notesQty = '\n\nNOTES REQUIREMENTS: Generate 6-10 rich sections. Each section must have: a full overview paragraph, 2-3 detailed content paragraphs, 5+ detailed bullets, key terms with definitions, 2+ examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept.';
 
       if (useChunking) {
@@ -162,7 +164,6 @@ const handler = async (event) => {
         if (allSections.length) {
           combinedResults.notes = { sections: allSections };
         } else {
-          // Fallback: single call with first 6000 chars
           await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes (fallback)…' }, { ttl: 7200 });
           const fbContent = buildFileCtx([{ name: 'content.txt', textContent: totalFileText.slice(0, 6000) }], [], 6000);
           const fbUser = [{ type: 'text', text: fbContent }, { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
@@ -172,7 +173,6 @@ const handler = async (event) => {
           } catch (e) { /* notes will be missing from result */ }
         }
       } else {
-        // Small content — single call
         await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes…' }, { ttl: 7200 });
         const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
         const imageBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));

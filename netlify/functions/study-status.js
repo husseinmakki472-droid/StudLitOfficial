@@ -26,7 +26,11 @@ const handler = async (event) => {
   }
 
   try {
-    const store = getStore('study-results');
+    const store = getStore({
+      name: 'study-results',
+      siteID: process.env.SITE_ID,
+      token: process.env.NETLIFY_TOKEN
+    });
     const result = await store.get(requestId, { type: 'json' });
 
     if (!result) {
