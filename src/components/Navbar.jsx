@@ -1,13 +1,14 @@
 export default function Navbar({ dark, setDark }) {
-  const navBg = dark ? 'rgba(7,7,15,0.75)' : 'rgba(245,244,255,0.92)'
-  const navBorder = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'
+  const navBg = dark ? 'rgba(7,7,15,0.75)' : 'rgba(237,233,254,0.92)'
+  const navBorder = dark ? 'rgba(255,255,255,0.08)' : 'rgba(124,92,252,0.22)'
   const logoColor = dark ? '#f0efff' : '#0f0e1a'
-  const linkBg = dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-  const linkBorder = dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.1)'
-  const linkColor = dark ? 'rgba(240,239,255,0.55)' : 'rgba(15,14,26,0.55)'
-  const toggleBg = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
-  const toggleBorder = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
-  const toggleColor = dark ? 'rgba(240,239,255,0.55)' : 'rgba(15,14,26,0.55)'
+  const linkBg = dark ? 'rgba(255,255,255,0.05)' : 'rgba(124,92,252,0.08)'
+  const linkBorder = dark ? 'rgba(255,255,255,0.09)' : 'rgba(124,92,252,0.2)'
+  const linkColor = dark ? 'rgba(240,239,255,0.55)' : '#3b3763'
+  const linkHover = dark ? '#f0efff' : '#0f0e1a'
+  const toggleBg = dark ? 'rgba(255,255,255,0.06)' : 'rgba(124,92,252,0.1)'
+  const toggleBorder = dark ? 'rgba(255,255,255,0.12)' : 'rgba(124,92,252,0.25)'
+  const toggleColor = dark ? 'rgba(240,239,255,0.55)' : '#3b3763'
 
   return (
     <nav style={{
@@ -47,7 +48,7 @@ export default function Navbar({ dark, setDark }) {
               transition: 'color 0.18s, background 0.18s',
               whiteSpace: 'nowrap',
             }}
-            onMouseEnter={e => { if (link !== 'Home') e.currentTarget.style.color = dark ? '#f0efff' : '#0f0e1a' }}
+            onMouseEnter={e => { if (link !== 'Home') e.currentTarget.style.color = linkHover }}
             onMouseLeave={e => { if (link !== 'Home') e.currentTarget.style.color = linkColor }}
           >
             {link}

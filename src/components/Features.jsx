@@ -11,61 +11,69 @@ const CARDS = [
 function FeatureCard({ icon, title, desc, gradient, dark, revealDelay = 0 }) {
   const [hovered, setHovered] = useState(false)
   const { ref, revealStyle } = useScrollReveal(revealDelay)
-  const cardBg = dark ? 'rgba(255,255,255,0.035)' : '#fff'
-  const cardBorder = hovered ? 'rgba(124,92,252,0.5)' : (dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.1)')
+  const cardBg     = dark ? 'rgba(255,255,255,0.035)' : '#ffffff'
+  const cardBorder = hovered
+    ? 'rgba(124,92,252,0.55)'
+    : dark ? 'rgba(255,255,255,0.09)' : '#d4c9fb'
   const titleColor = dark ? '#f0efff' : '#0f0e1a'
-  const descColor = dark ? 'rgba(240,239,255,0.45)' : 'rgba(15,14,26,0.55)'
+  const descColor  = dark ? 'rgba(240,239,255,0.45)' : '#6b68a0'
+  const shadow     = hovered
+    ? dark
+      ? '0 0 32px rgba(124,92,252,0.22), 0 16px 48px rgba(0,0,0,0.15)'
+      : '0 0 32px rgba(124,92,252,0.18), 0 8px 32px rgba(124,92,252,0.12)'
+    : dark
+      ? '0 2px 12px rgba(0,0,0,0.2)'
+      : '0 2px 16px rgba(124,92,252,0.1), 0 1px 3px rgba(0,0,0,0.04)'
 
   return (
     <div ref={ref} style={revealStyle}>
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: cardBg,
-        border: `1px solid ${cardBorder}`,
-        borderRadius: 20, padding: '28px 24px', cursor: 'default',
-        transform: hovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)',
-        boxShadow: hovered
-          ? '0 0 32px rgba(124,92,252,0.22), 0 16px 48px rgba(0,0,0,0.15)'
-          : dark ? '0 2px 12px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.06)',
-        transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        position: 'relative', overflow: 'hidden',
-      }}
-    >
-      <div style={{
-        position: 'absolute', inset: 0, background: gradient,
-        opacity: hovered ? 0.35 : 0, transition: 'opacity 0.28s',
-        pointerEvents: 'none', borderRadius: 20,
-      }} />
-      <div style={{
-        width: 48, height: 48, borderRadius: 14, background: gradient,
-        border: '1px solid rgba(124,92,252,0.3)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22, marginBottom: 18, position: 'relative', zIndex: 1,
-        boxShadow: hovered ? '0 4px 16px rgba(124,92,252,0.3)' : 'none',
-        transition: 'box-shadow 0.28s',
-      }}>
-        {icon}
-      </div>
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 16, color: titleColor, marginBottom: 8, letterSpacing: '-0.3px' }}>
-          {title}
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: cardBg,
+          border: `1px solid ${cardBorder}`,
+          borderRadius: 20, padding: '28px 24px', cursor: 'default',
+          transform: hovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)',
+          boxShadow: shadow,
+          transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          position: 'relative', overflow: 'hidden',
+        }}
+      >
+        <div style={{
+          position: 'absolute', inset: 0, background: gradient,
+          opacity: hovered ? (dark ? 0.35 : 0.2) : 0, transition: 'opacity 0.28s',
+          pointerEvents: 'none', borderRadius: 20,
+        }} />
+        <div style={{
+          width: 48, height: 48, borderRadius: 14, background: gradient,
+          border: dark ? '1px solid rgba(124,92,252,0.3)' : '1px solid rgba(124,92,252,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, marginBottom: 18, position: 'relative', zIndex: 1,
+          boxShadow: hovered ? '0 4px 16px rgba(124,92,252,0.3)' : dark ? 'none' : '0 2px 8px rgba(124,92,252,0.15)',
+          transition: 'box-shadow 0.28s',
+        }}>
+          {icon}
         </div>
-        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, color: descColor, lineHeight: 1.7 }}>
-          {desc}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 16, color: titleColor, marginBottom: 8, letterSpacing: '-0.3px' }}>
+            {title}
+          </div>
+          <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13.5, color: descColor, lineHeight: 1.7 }}>
+            {desc}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }
 
 export default function Features({ dark = true }) {
-  const headingColor = dark ? '#f0efff' : '#0f0e1a'
-  const subColor = dark ? 'rgba(240,239,255,0.4)' : 'rgba(15,14,26,0.5)'
-  const dividerColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.09)'
+  const headingColor  = dark ? '#f0efff' : '#0f0e1a'
+  const subColor      = dark ? 'rgba(240,239,255,0.4)' : '#6b68a0'
+  const dividerColor  = dark ? 'rgba(255,255,255,0.08)' : 'rgba(124,92,252,0.18)'
+  const badgeColor    = dark ? '#b06ef3' : '#6d3fc9'
   const { ref: headerRef, revealStyle: headerReveal } = useScrollReveal(0)
 
   return (
@@ -74,10 +82,11 @@ export default function Features({ dark = true }) {
         <div ref={headerRef} style={{ textAlign: 'center', marginBottom: 52, ...headerReveal }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'rgba(124,92,252,0.12)', border: '1px solid rgba(124,92,252,0.25)',
+            background: dark ? 'rgba(124,92,252,0.12)' : 'rgba(124,92,252,0.1)',
+            border: `1px solid ${dark ? 'rgba(124,92,252,0.25)' : 'rgba(124,92,252,0.35)'}`,
             borderRadius: 999, padding: '5px 14px',
             fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
-            color: '#b06ef3', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 16,
+            color: badgeColor, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 16,
           }}>
             ✦ Features
           </div>

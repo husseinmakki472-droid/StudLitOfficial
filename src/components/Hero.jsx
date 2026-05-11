@@ -3,19 +3,20 @@ const AVATAR_COLORS = ['#7c5cfc', '#b06ef3', '#e879f9', '#6366f1', '#8b5cf6']
 
 export default function Hero({ dark = true }) {
   const c = {
-    h1: dark ? '#f0efff' : '#0f0e1a',
-    sub: dark ? 'rgba(240,239,255,0.55)' : 'rgba(15,14,26,0.6)',
-    badgeBg: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    badgeBorder: dark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)',
-    badgeColor: dark ? 'rgba(240,239,255,0.6)' : 'rgba(15,14,26,0.6)',
-    ghostColor: dark ? 'rgba(240,239,255,0.7)' : 'rgba(15,14,26,0.65)',
-    ghostBorder: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.16)',
-    ratingColor: dark ? 'rgba(240,239,255,0.55)' : 'rgba(15,14,26,0.55)',
-    ratingBold: dark ? '#f0efff' : '#0f0e1a',
-    statVal: dark ? '#f0efff' : '#0f0e1a',
-    statLabel: dark ? 'rgba(240,239,255,0.35)' : 'rgba(15,14,26,0.45)',
-    divider: dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.1)',
-    avatarBorder: dark ? '#07070f' : '#f5f4ff',
+    h1:          dark ? '#f0efff'                       : '#0f0e1a',
+    sub:         dark ? 'rgba(240,239,255,0.55)'        : '#3b3763',
+    badgeBg:     dark ? 'rgba(255,255,255,0.05)'        : 'rgba(124,92,252,0.1)',
+    badgeBorder: dark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(124,92,252,0.3)',
+    badgeColor:  dark ? 'rgba(240,239,255,0.6)'         : '#5b4fc9',
+    ghostColor:  dark ? 'rgba(240,239,255,0.7)'         : '#3b3763',
+    ghostBorder: dark ? 'rgba(255,255,255,0.18)'        : 'rgba(124,92,252,0.35)',
+    ghostHover:  dark ? '#7c5cfc'                       : '#7c5cfc',
+    ratingColor: dark ? 'rgba(240,239,255,0.55)'        : '#6b68a0',
+    ratingBold:  dark ? '#f0efff'                       : '#0f0e1a',
+    statVal:     dark ? '#f0efff'                       : '#0f0e1a',
+    statLabel:   dark ? 'rgba(240,239,255,0.35)'        : '#6b68a0',
+    divider:     dark ? 'rgba(255,255,255,0.09)'        : 'rgba(124,92,252,0.18)',
+    avatarBorder: dark ? '#07070f'                      : '#ede9fe',
   }
 
   return (
@@ -71,7 +72,7 @@ export default function Hero({ dark = true }) {
           textDecoration: 'none', cursor: 'pointer',
           transition: 'border-color 0.2s, transform 0.15s',
         }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#7c5cfc'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = c.ghostHover; e.currentTarget.style.transform = 'translateY(-1px)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = c.ghostBorder; e.currentTarget.style.transform = 'translateY(0)' }}
         >
           Explore Features

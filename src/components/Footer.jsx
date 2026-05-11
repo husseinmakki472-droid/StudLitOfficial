@@ -1,9 +1,9 @@
 export default function Footer({ dark = true }) {
-  const textColor = dark ? '#f0efff' : '#0f0e1a'
-  const subColor = dark ? 'rgba(240,239,255,0.3)' : 'rgba(15,14,26,0.5)'
-  const copyColor = dark ? 'rgba(240,239,255,0.2)' : 'rgba(15,14,26,0.35)'
-  const borderColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.09)'
-  const footerBg = dark ? 'rgba(13,13,26,0.6)' : 'rgba(230,229,248,0.7)'
+  const textColor   = dark ? '#f0efff'                 : '#0f0e1a'
+  const subColor    = dark ? 'rgba(240,239,255,0.3)'   : '#6b68a0'
+  const copyColor   = dark ? 'rgba(240,239,255,0.2)'   : '#6b68a0'
+  const borderColor = dark ? 'rgba(255,255,255,0.08)'  : '#d4c9fb'
+  const footerBg    = dark ? 'rgba(13,13,26,0.6)'      : 'rgba(224,218,255,0.85)'
 
   return (
     <footer style={{

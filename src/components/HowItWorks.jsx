@@ -9,22 +9,29 @@ const STEPS = [
 function StepItem({ step, dark, revealDelay }) {
   const { ref, revealStyle } = useScrollReveal(revealDelay)
   const titleColor = dark ? '#f0efff' : '#0f0e1a'
-  const descColor = dark ? 'rgba(240,239,255,0.45)' : 'rgba(15,14,26,0.55)'
+  const descColor  = dark ? 'rgba(240,239,255,0.45)' : '#6b68a0'
+  const stepLabel  = dark ? '#7c5cfc' : '#5b3fc9'
+  const iconBg     = dark
+    ? 'linear-gradient(135deg,rgba(124,92,252,0.2),rgba(176,110,243,0.15))'
+    : 'linear-gradient(135deg,rgba(124,92,252,0.15),rgba(176,110,243,0.1))'
+  const iconBorder = dark ? 'rgba(124,92,252,0.3)' : 'rgba(124,92,252,0.4)'
+  const iconShadow = dark ? 'none' : '0 2px 8px rgba(124,92,252,0.15)'
 
   return (
     <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'relative', ...revealStyle }}>
       <div style={{
         width: 44, height: 44, borderRadius: 12,
-        background: 'linear-gradient(135deg,rgba(124,92,252,0.2),rgba(176,110,243,0.15))',
-        border: '1px solid rgba(124,92,252,0.3)',
+        background: iconBg,
+        border: `1px solid ${iconBorder}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+        boxShadow: iconShadow,
       }}>
         {step.icon}
       </div>
       <div>
         <div style={{
           fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
-          color: '#7c5cfc', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6,
+          color: stepLabel, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6,
         }}>
           Step {step.num}
         </div>
@@ -41,9 +48,10 @@ function StepItem({ step, dark, revealDelay }) {
 
 export default function HowItWorks({ dark = true }) {
   const headingColor = dark ? '#f0efff' : '#0f0e1a'
-  const subColor = dark ? 'rgba(240,239,255,0.4)' : 'rgba(15,14,26,0.5)'
-  const wrapBg = dark ? 'rgba(255,255,255,0.025)' : '#fff'
-  const wrapBorder = dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)'
+  const subColor     = dark ? 'rgba(240,239,255,0.4)' : '#6b68a0'
+  const wrapBg       = dark ? 'rgba(255,255,255,0.025)' : '#ffffff'
+  const wrapBorder   = dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #d4c9fb'
+  const wrapShadow   = dark ? 'none' : '0 4px 32px rgba(124,92,252,0.12), 0 1px 4px rgba(0,0,0,0.04)'
   const { ref: headerRef, revealStyle: headerReveal } = useScrollReveal(0)
 
   return (
@@ -51,7 +59,7 @@ export default function HowItWorks({ dark = true }) {
       <div style={{
         background: wrapBg, border: wrapBorder,
         borderRadius: 28, padding: '52px 40px', backdropFilter: 'blur(8px)',
-        boxShadow: dark ? 'none' : '0 2px 16px rgba(0,0,0,0.06)',
+        boxShadow: wrapShadow,
       }}>
         <div ref={headerRef} style={{ textAlign: 'center', marginBottom: 44, ...headerReveal }}>
           <h2 style={{

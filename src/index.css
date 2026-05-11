@@ -37,6 +37,7 @@ body {
   box-shadow: 0 0 32px rgba(124, 92, 252, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* Dark mode orbs (default since app starts dark) */
 .mesh-orb-1 {
   position: fixed;
   top: -20%;
@@ -47,6 +48,7 @@ body {
   pointer-events: none;
   z-index: 0;
   animation: orbDrift 18s ease-in-out infinite alternate;
+  transition: background 0.4s;
 }
 
 .mesh-orb-2 {
@@ -59,6 +61,16 @@ body {
   pointer-events: none;
   z-index: 0;
   animation: orbDrift 22s ease-in-out infinite alternate-reverse;
+  transition: background 0.4s;
+}
+
+/* Light mode orbs — more vivid so they show on the pale background */
+:not(.dark) .mesh-orb-1 {
+  background: radial-gradient(ellipse, rgba(124, 92, 252, 0.22) 0%, transparent 65%);
+}
+
+:not(.dark) .mesh-orb-2 {
+  background: radial-gradient(ellipse, rgba(176, 110, 243, 0.18) 0%, transparent 65%);
 }
 
 @keyframes orbDrift {

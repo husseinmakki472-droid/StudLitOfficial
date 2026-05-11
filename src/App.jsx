@@ -10,7 +10,7 @@ export default function App() {
   const [dark, setDark] = useState(true)
 
   return (
-    <div className={dark ? 'dark' : ''} style={{ background: dark ? '#07070f' : '#f5f4ff', minHeight: '100vh', transition: 'background 0.3s' }}>
+    <div className={dark ? 'dark' : ''} style={{ background: dark ? '#07070f' : '#ede9fe', minHeight: '100vh', transition: 'background 0.3s' }}>
       <div className="mesh-orb-1" />
       <div className="mesh-orb-2" />
       <Navbar dark={dark} setDark={setDark} />
