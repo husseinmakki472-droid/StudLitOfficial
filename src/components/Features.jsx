@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 
 const CARDS = [
   { icon: '📊', title: 'AI Summaries', desc: 'Get instant, accurate summaries of any content — textbooks, notes, or lecture recordings.', gradient: 'linear-gradient(135deg,rgba(124,92,252,0.28),rgba(176,110,243,0.18))' },
@@ -7,14 +8,16 @@ const CARDS = [
   { icon: '📈', title: 'Study Analytics', desc: 'Track your progress across every session and improve continuously with AI insights.', gradient: 'linear-gradient(135deg,rgba(232,121,249,0.28),rgba(139,92,246,0.18))' },
 ]
 
-function FeatureCard({ icon, title, desc, gradient, dark }) {
+function FeatureCard({ icon, title, desc, gradient, dark, revealDelay = 0 }) {
   const [hovered, setHovered] = useState(false)
+  const { ref, revealStyle } = useScrollReveal(revealDelay)
   const cardBg = dark ? 'rgba(255,255,255,0.035)' : '#fff'
   const cardBorder = hovered ? 'rgba(124,92,252,0.5)' : (dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.1)')
   const titleColor = dark ? '#f0efff' : '#0f0e1a'
   const descColor = dark ? 'rgba(240,239,255,0.45)' : 'rgba(15,14,26,0.55)'
 
   return (
+    <div ref={ref} style={revealStyle}>
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -55,6 +58,7 @@ function FeatureCard({ icon, title, desc, gradient, dark }) {
         </div>
       </div>
     </div>
+    </div>
   )
 }
 
@@ -62,11 +66,12 @@ export default function Features({ dark = true }) {
   const headingColor = dark ? '#f0efff' : '#0f0e1a'
   const subColor = dark ? 'rgba(240,239,255,0.4)' : 'rgba(15,14,26,0.5)'
   const dividerColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.09)'
+  const { ref: headerRef, revealStyle: headerReveal } = useScrollReveal(0)
 
   return (
     <section id="features" style={{ position: 'relative', zIndex: 1, maxWidth: 1160, margin: '0 auto', padding: '72px 28px' }}>
       <div style={{ borderTop: `1px solid ${dividerColor}`, paddingTop: 72 }}>
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
+        <div ref={headerRef} style={{ textAlign: 'center', marginBottom: 52, ...headerReveal }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: 'rgba(124,92,252,0.12)', border: '1px solid rgba(124,92,252,0.25)',
@@ -89,7 +94,7 @@ export default function Features({ dark = true }) {
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          {CARDS.map(card => <FeatureCard key={card.title} {...card} dark={dark} />)}
+          {CARDS.map((card, i) => <FeatureCard key={card.title} {...card} dark={dark} revealDelay={i * 100} />)}
         </div>
       </div>
     </section>

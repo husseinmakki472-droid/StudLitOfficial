@@ -1,3 +1,5 @@
+import { useScrollReveal } from '../hooks/useScrollReveal'
+
 const FEATURES = [
   'All 10 AI study modes unlocked',
   'Upload lessons, notes & images',
@@ -17,9 +19,12 @@ export default function Pricing({ dark = true }) {
   const pricePeriodColor = dark ? 'rgba(240,239,255,0.35)' : 'rgba(15,14,26,0.4)'
   const featureColor = dark ? 'rgba(240,239,255,0.65)' : 'rgba(15,14,26,0.7)'
   const cancelColor = dark ? 'rgba(240,239,255,0.3)' : 'rgba(15,14,26,0.4)'
+  const { ref: headerRef, revealStyle: headerReveal } = useScrollReveal(0)
+  const { ref: cardRef, revealStyle: cardReveal } = useScrollReveal(150)
 
   return (
     <section id="pricing" style={{ position: 'relative', zIndex: 1, maxWidth: 520, margin: '0 auto', padding: '0 28px 96px', textAlign: 'center' }}>
+      <div ref={headerRef} style={{ ...headerReveal }}>
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         background: 'rgba(124,92,252,0.12)', border: '1px solid rgba(124,92,252,0.25)',
@@ -39,7 +44,9 @@ export default function Pricing({ dark = true }) {
       <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: subColor, marginBottom: 36 }}>
         Try free for 2 days. No card required to start.
       </p>
+      </div>
 
+      <div ref={cardRef} style={{ ...cardReveal }}>
       <div style={{
         background: cardBg, border: cardBorder,
         borderRadius: 28, padding: '40px 36px',
@@ -105,6 +112,7 @@ export default function Pricing({ dark = true }) {
         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: cancelColor, marginTop: 12 }}>
           Cancel anytime. No hidden fees.
         </p>
+      </div>
       </div>
     </section>
   )
