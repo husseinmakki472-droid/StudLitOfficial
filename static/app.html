@@ -1985,15 +1985,17 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-chat-send:hover{opacity:.88;transform:scale(1.05)}
 .wz-content-pane{padding:16px;color:rgba(240,239,255,0.7);font-size:13px;line-height:1.7}
 /* Quick Notes panel */
-.qn-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
-.qn-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.35)}
-.qn-actions{display:flex;gap:4px}
-.qn-btn{background:none;border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:rgba(240,239,255,0.4);font-size:13px;padding:4px 8px;cursor:pointer;transition:all .15s}
-.qn-btn:hover{background:rgba(255,255,255,0.08);color:#f0efff}
-.qn-textarea{flex:1;width:100%;background:none;border:none;outline:none;resize:none;padding:14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.8;min-height:0}
-.qn-textarea::placeholder{color:rgba(240,239,255,0.2)}
-.qn-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0}
-.qn-char{font-size:10.5px;color:rgba(240,239,255,0.2)}
+.qn-pane{background:rgba(255,255,255,0.02)}
+.qn-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;background:rgba(255,255,255,0.03)}
+.qn-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(240,239,255,0.45)}
+.qn-actions{display:flex;gap:4px;align-items:center}
+.qn-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;color:rgba(240,239,255,0.55);font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;padding:4px 9px;cursor:pointer;transition:all .15s;line-height:1}
+.qn-btn:hover{background:rgba(255,255,255,0.12);color:#f0efff;border-color:rgba(255,255,255,0.18)}
+.qn-btn-bold{font-weight:800;font-style:italic}
+.qn-textarea{flex:1;width:100%;background:none;border:none;outline:none;resize:none;padding:16px 16px 8px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:rgba(240,239,255,0.88);line-height:1.85;min-height:0;box-sizing:border-box}
+.qn-textarea::placeholder{color:rgba(240,239,255,0.18);font-style:italic}
+.qn-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;background:rgba(255,255,255,0.02)}
+.qn-char{font-size:10.5px;color:rgba(240,239,255,0.22)}
 .qn-saved{font-size:10.5px;color:#4ade80;opacity:0;transition:opacity .3s}
 .qn-saved.show{opacity:1}
 /* Content panel */
@@ -2039,8 +2041,15 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme="light"] .content-slide-text{color:rgba(15,14,26,0.75)}
 [data-theme="light"] .qn-textarea{color:#0f0e1a}
 [data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
-[data-theme="light"] .qn-header,[data-theme="light"] .qn-footer{border-color:rgba(0,0,0,0.07)}
-[data-theme="light"] .qn-btn{border-color:rgba(0,0,0,0.09);color:rgba(15,14,26,0.4)}
+[data-theme="light"] .qn-pane{background:rgba(0,0,0,0.01)}
+[data-theme="light"] .qn-header{background:rgba(124,92,252,0.04);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .qn-footer{background:rgba(0,0,0,0.02);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .qn-title{color:rgba(15,14,26,0.55)}
+[data-theme="light"] .qn-btn{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.55)}
+[data-theme="light"] .qn-btn:hover{background:rgba(124,92,252,0.1);color:#3b3763;border-color:rgba(124,92,252,0.25)}
+[data-theme="light"] .qn-textarea{color:#0f0e1a}
+[data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
+[data-theme="light"] .qn-char{color:rgba(15,14,26,0.3)}
 [data-theme="light"] .content-preview-text{color:rgba(15,14,26,0.7)}
 [data-theme="light"] .content-preview-file-name{color:#0f0e1a}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;color:rgba(240,239,255,0.4);font-size:14px;gap:16px}
@@ -2722,6 +2731,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <div class="wz-right-tabs">
         <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">Chat</button>
         <button class="wz-right-tab" id="wzTabNotes" onclick="wzSwitchRightTab('notes')">Content</button>
+        <button class="wz-right-tab" id="wzTabQN" onclick="wzSwitchRightTab('quicknotes')">Notes</button>
       </div>
       <div class="wz-right-pane active" id="wzRightChat">
         <div class="wz-chat-msgs" id="wzChatMsgs">
@@ -2743,6 +2753,27 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <div id="contentPanelInner" style="display:none;flex-direction:column;flex:1;min-height:0">
           <div id="contentFileList" style="display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0"></div>
           <div id="contentFileViewer" style="flex:1;overflow:auto;padding:12px 14px"></div>
+        </div>
+      </div>
+      <!-- Quick Notes pane -->
+      <div class="wz-right-pane qn-pane" id="wzRightQN" style="flex-direction:column;overflow:hidden">
+        <div class="qn-header">
+          <div class="qn-title">✏️ Quick Notes</div>
+          <div class="qn-actions">
+            <button class="qn-btn" onclick="qnFormat('bullet')" title="Add bullet">•</button>
+            <button class="qn-btn qn-btn-bold" onclick="qnFormat('bold')" title="Bold">B</button>
+            <button class="qn-btn" onclick="qnFormat('divider')" title="Add divider">—</button>
+            <button class="qn-btn" onclick="qnFormat('stamp')" title="Timestamp">🕐</button>
+          </div>
+        </div>
+        <textarea class="qn-textarea" id="qnTextarea" placeholder="Jot anything down — ideas, questions, key points. Auto-saved." oninput="qnSave()"></textarea>
+        <div class="qn-footer">
+          <span class="qn-char" id="qnChar">0 words</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="qn-saved" id="qnSaved">Saved</span>
+            <button class="qn-btn" onclick="qnCopy()" title="Copy all">⎘ Copy</button>
+            <button class="qn-btn" onclick="qnClear()" title="Clear notes">🗑</button>
+          </div>
         </div>
       </div>
     </div>
@@ -5975,9 +6006,12 @@ function wzPickMethod(mode) {
 function wzSwitchRightTab(tab) {
   document.getElementById('wzTabChat').classList.toggle('active', tab==='chat');
   document.getElementById('wzTabNotes').classList.toggle('active', tab==='notes');
+  document.getElementById('wzTabQN').classList.toggle('active', tab==='quicknotes');
   document.getElementById('wzRightChat').classList.toggle('active', tab==='chat');
   document.getElementById('wzRightNotes').classList.toggle('active', tab==='notes');
+  document.getElementById('wzRightQN').classList.toggle('active', tab==='quicknotes');
   if (tab === 'notes') renderContentPanel();
+  if (tab === 'quicknotes') qnLoad();
 }
 
 let _contentSelectedIdx = 0;
@@ -6292,6 +6326,26 @@ function qnUpdateCount() {
   if (!ta || !el) return;
   const wc = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
   el.textContent = wc + (wc === 1 ? ' word' : ' words');
+}
+function qnFormat(type) {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd, val = ta.value;
+  const sel = val.slice(start, end);
+  let insert = '';
+  if (type === 'bullet') insert = '\n• ';
+  else if (type === 'bold') insert = sel ? `**${sel}**` : '**bold**';
+  else if (type === 'divider') insert = '\n─────────────\n';
+  else if (type === 'stamp') {
+    const now = new Date();
+    insert = `\n[${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}] `;
+  }
+  const newVal = val.slice(0, start) + insert + val.slice(end);
+  ta.value = newVal;
+  const cursor = start + insert.length;
+  ta.setSelectionRange(cursor, cursor);
+  ta.focus();
+  qnSave();
 }
 
 </script>
