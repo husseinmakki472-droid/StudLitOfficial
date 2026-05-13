@@ -1985,15 +1985,17 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-chat-send:hover{opacity:.88;transform:scale(1.05)}
 .wz-content-pane{padding:16px;color:rgba(240,239,255,0.7);font-size:13px;line-height:1.7}
 /* Quick Notes panel */
-.qn-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0}
-.qn-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,239,255,0.35)}
-.qn-actions{display:flex;gap:4px}
-.qn-btn{background:none;border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:rgba(240,239,255,0.4);font-size:13px;padding:4px 8px;cursor:pointer;transition:all .15s}
-.qn-btn:hover{background:rgba(255,255,255,0.08);color:#f0efff}
-.qn-textarea{flex:1;width:100%;background:none;border:none;outline:none;resize:none;padding:14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:#f0efff;line-height:1.8;min-height:0}
-.qn-textarea::placeholder{color:rgba(240,239,255,0.2)}
-.qn-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0}
-.qn-char{font-size:10.5px;color:rgba(240,239,255,0.2)}
+.qn-pane{background:rgba(255,255,255,0.02)}
+.qn-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;background:rgba(255,255,255,0.03)}
+.qn-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(240,239,255,0.45)}
+.qn-actions{display:flex;gap:4px;align-items:center}
+.qn-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;color:rgba(240,239,255,0.55);font-size:12px;font-family:'DM Sans',sans-serif;font-weight:600;padding:4px 9px;cursor:pointer;transition:all .15s;line-height:1}
+.qn-btn:hover{background:rgba(255,255,255,0.12);color:#f0efff;border-color:rgba(255,255,255,0.18)}
+.qn-btn-bold{font-weight:800;font-style:italic}
+.qn-textarea{flex:1;width:100%;background:none;border:none;outline:none;resize:none;padding:16px 16px 8px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:rgba(240,239,255,0.88);line-height:1.85;min-height:0;box-sizing:border-box}
+.qn-textarea::placeholder{color:rgba(240,239,255,0.18);font-style:italic}
+.qn-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;background:rgba(255,255,255,0.02)}
+.qn-char{font-size:10.5px;color:rgba(240,239,255,0.22)}
 .qn-saved{font-size:10.5px;color:#4ade80;opacity:0;transition:opacity .3s}
 .qn-saved.show{opacity:1}
 /* Content panel */
@@ -2012,6 +2014,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme="light"] .content-docx-preview td,[data-theme="light"] .content-docx-preview th{border-color:rgba(0,0,0,0.12)}
 [data-theme="light"] .content-text-preview{color:rgba(15,14,26,0.7);background:rgba(0,0,0,0.04)}
 /* Content preview */
+.wz-content-viewer{display:flex;flex-direction:column;height:100%;padding:20px 24px;box-sizing:border-box}
+.wz-content-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;flex-shrink:0}
+.wz-content-viewer-body{flex:1;overflow:auto;min-height:0}
 .content-preview-wrap{max-width:760px;padding:24px 28px}
 .content-preview-section{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06)}
 .content-preview-section:last-child{border-bottom:none}
@@ -2027,10 +2032,24 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .content-img-preview{max-width:100%;max-height:400px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);object-fit:contain}
 .content-img-name{font-size:11px;color:rgba(240,239,255,0.3);margin-top:6px}
 .content-preview-paste-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:7px}
+.content-slides-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:4px}
+.content-slide-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:16px 18px;min-height:70px}
+.content-slide-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,239,255,0.32);margin-bottom:8px}
+.content-slide-text{font-size:13px;line-height:1.6;color:rgba(240,239,255,0.75);white-space:pre-wrap;word-break:break-word}
+[data-theme="light"] .content-slide-card{background:rgba(0,0,0,0.03);border-color:rgba(0,0,0,0.08)}
+[data-theme="light"] .content-slide-num{color:rgba(15,14,26,0.38)}
+[data-theme="light"] .content-slide-text{color:rgba(15,14,26,0.75)}
 [data-theme="light"] .qn-textarea{color:#0f0e1a}
 [data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
-[data-theme="light"] .qn-header,[data-theme="light"] .qn-footer{border-color:rgba(0,0,0,0.07)}
-[data-theme="light"] .qn-btn{border-color:rgba(0,0,0,0.09);color:rgba(15,14,26,0.4)}
+[data-theme="light"] .qn-pane{background:rgba(0,0,0,0.01)}
+[data-theme="light"] .qn-header{background:rgba(124,92,252,0.04);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .qn-footer{background:rgba(0,0,0,0.02);border-color:rgba(0,0,0,0.07)}
+[data-theme="light"] .qn-title{color:rgba(15,14,26,0.55)}
+[data-theme="light"] .qn-btn{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.55)}
+[data-theme="light"] .qn-btn:hover{background:rgba(124,92,252,0.1);color:#3b3763;border-color:rgba(124,92,252,0.25)}
+[data-theme="light"] .qn-textarea{color:#0f0e1a}
+[data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
+[data-theme="light"] .qn-char{color:rgba(15,14,26,0.3)}
 [data-theme="light"] .content-preview-text{color:rgba(15,14,26,0.7)}
 [data-theme="light"] .content-preview-file-name{color:#0f0e1a}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;color:rgba(240,239,255,0.4);font-size:14px;gap:16px}
@@ -2712,6 +2731,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <div class="wz-right-tabs">
         <button class="wz-right-tab active" id="wzTabChat" onclick="wzSwitchRightTab('chat')">Chat</button>
         <button class="wz-right-tab" id="wzTabNotes" onclick="wzSwitchRightTab('notes')">Content</button>
+        <button class="wz-right-tab" id="wzTabQN" onclick="wzSwitchRightTab('quicknotes')">Notes</button>
       </div>
       <div class="wz-right-pane active" id="wzRightChat">
         <div class="wz-chat-msgs" id="wzChatMsgs">
@@ -2733,6 +2753,27 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <div id="contentPanelInner" style="display:none;flex-direction:column;flex:1;min-height:0">
           <div id="contentFileList" style="display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0"></div>
           <div id="contentFileViewer" style="flex:1;overflow:auto;padding:12px 14px"></div>
+        </div>
+      </div>
+      <!-- Quick Notes pane -->
+      <div class="wz-right-pane qn-pane" id="wzRightQN" style="flex-direction:column;overflow:hidden">
+        <div class="qn-header">
+          <div class="qn-title">✏️ Quick Notes</div>
+          <div class="qn-actions">
+            <button class="qn-btn" onclick="qnFormat('bullet')" title="Add bullet">•</button>
+            <button class="qn-btn qn-btn-bold" onclick="qnFormat('bold')" title="Bold">B</button>
+            <button class="qn-btn" onclick="qnFormat('divider')" title="Add divider">—</button>
+            <button class="qn-btn" onclick="qnFormat('stamp')" title="Timestamp">🕐</button>
+          </div>
+        </div>
+        <textarea class="qn-textarea" id="qnTextarea" placeholder="Jot anything down — ideas, questions, key points. Auto-saved." oninput="qnSave()"></textarea>
+        <div class="qn-footer">
+          <span class="qn-char" id="qnChar">0 words</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="qn-saved" id="qnSaved">Saved</span>
+            <button class="qn-btn" onclick="qnCopy()" title="Copy all">⎘ Copy</button>
+            <button class="qn-btn" onclick="qnClear()" title="Clear notes">🗑</button>
+          </div>
         </div>
       </div>
     </div>
@@ -3680,6 +3721,10 @@ function switchWsTab(tab){
   document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));
   var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');
   if(tab==='sets')try{renderSlSets();}catch(e){}
+  if(tab==='create'){
+    var wzv=document.getElementById('wzResultView');var wsc=document.getElementById('ws-create');
+    if(wzv&&wzv.style.display!=='none'&&wsc)wsc.style.cssText='display:flex!important;flex-direction:column;padding:0;height:100%;overflow:hidden';
+  }
 }
 function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';}
 function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';setResultMode(true);switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');const nb=document.getElementById('notesEditorBody');if(nb)nb.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el=>el.addEventListener('input',notesSaveEdits));}
@@ -5892,41 +5937,18 @@ function wzShowTab(mode) {
       main.innerHTML = '<div style="text-align:center;padding:80px 24px"><div style="font-size:48px;margin-bottom:16px;opacity:.3">📂</div><div style="font-size:15px;color:var(--text-3)">No content yet.<br>Upload a file or paste text to preview it here.</div></div>';
       return;
     }
-    let html = '<div class="content-preview-wrap">';
-    // Image files
-    const imageFiles = uploadedFiles.filter(f => f.imageData && f.mimeType);
-    if (imageFiles.length) {
-      html += '<div class="content-preview-section">';
-      html += '<div class="content-preview-section-label">Images</div>';
-      imageFiles.forEach(f => {
-        html += `<div class="content-img-wrap"><img src="data:${escHtml(f.mimeType)};base64,${f.imageData}" class="content-img-preview" alt="${escHtml(f.name)}"><div class="content-img-name">${escHtml(f.name)}</div></div>`;
-      });
-      html += '</div>';
+    const viewable = uploadedFiles.filter(f => f.imageData || f.blobUrl || f.htmlContent || f.textContent);
+    if (!viewable.length && !wzFullContent.trim()) {
+      main.innerHTML = '<div style="text-align:center;padding:80px 24px"><div style="font-size:48px;margin-bottom:16px;opacity:.3">📂</div><div style="font-size:15px;color:var(--text-3)">No content yet.<br>Upload a file or paste text to preview it here.</div></div>';
+      return;
     }
-    // Text files
-    const textFiles = uploadedFiles.filter(f => f.textContent && f.type !== 'URL' && f.type !== 'Text');
-    textFiles.forEach(f => {
-      const wc = f.textContent.trim().split(/\s+/).length;
-      html += `<div class="content-preview-section">`;
-      html += `<div class="content-preview-file-header"><span class="content-preview-file-icon">${f.icon||'📄'}</span><span class="content-preview-file-name">${escHtml(f.name)}</span><span class="content-preview-file-meta">${wc.toLocaleString()} words</span></div>`;
-      html += `<div class="content-preview-text">`;
-      f.textContent.trim().split(/\n+/).filter(l=>l.trim()).slice(0, 80).forEach(line => {
-        html += `<p class="content-preview-para">${escHtml(line.trim())}</p>`;
-      });
-      if (f.textContent.trim().split(/\n+/).length > 80) html += `<div class="content-preview-more">… ${(f.textContent.trim().split(/\n+/).length - 80)} more paragraphs</div>`;
-      html += `</div></div>`;
-    });
-    // Pasted URLs and text
-    const pasteFiles = uploadedFiles.filter(f => f.type === 'URL' || f.type === 'Text');
-    if (pasteFiles.length) {
-      html += '<div class="content-preview-section">';
-      html += '<div class="content-preview-section-label">Pasted Content</div>';
-      pasteFiles.forEach(f => {
-        html += `<div class="content-preview-paste-item"><span style="font-size:16px">${f.icon||'📝'}</span><div><div class="content-preview-file-name">${escHtml(f.name)}</div><div style="font-size:11px;color:var(--text-3)">${f.type}</div></div></div>`;
-      });
-      html += '</div>';
-    }
-    html += '</div>';
+    if (!window._wzContentIdx) window._wzContentIdx = 0;
+    window._wzContentIdx = Math.min(window._wzContentIdx, Math.max(0, viewable.length - 1));
+    const tabsHtml = viewable.map((f, i) =>
+      `<button class="content-file-tab${i===window._wzContentIdx?' active':''}" onclick="window._wzContentIdx=${i};wzShowTab('__content__')">${escHtml(f.icon||'📄')} ${escHtml(f.name.length>20?f.name.slice(0,18)+'…':f.name)}</button>`
+    ).join('');
+    const previewHtml = viewable.length ? _renderFilePreview(viewable[window._wzContentIdx]) : '';
+    const html = `<div class="wz-content-viewer"><div class="wz-content-tabs">${tabsHtml}</div><div class="wz-content-viewer-body">${previewHtml}</div></div>`;
     main.innerHTML = html;
     return;
   }
@@ -5984,9 +6006,12 @@ function wzPickMethod(mode) {
 function wzSwitchRightTab(tab) {
   document.getElementById('wzTabChat').classList.toggle('active', tab==='chat');
   document.getElementById('wzTabNotes').classList.toggle('active', tab==='notes');
+  document.getElementById('wzTabQN').classList.toggle('active', tab==='quicknotes');
   document.getElementById('wzRightChat').classList.toggle('active', tab==='chat');
   document.getElementById('wzRightNotes').classList.toggle('active', tab==='notes');
+  document.getElementById('wzRightQN').classList.toggle('active', tab==='quicknotes');
   if (tab === 'notes') renderContentPanel();
+  if (tab === 'quicknotes') qnLoad();
 }
 
 let _contentSelectedIdx = 0;
@@ -6020,6 +6045,15 @@ function _renderFilePreview(f) {
     return `<div class="content-docx-preview">${f.htmlContent}</div>`;
   }
   if (f.textContent) {
+    const lname = (f.name || '').toLowerCase();
+    if (lname.endsWith('.pptx') || lname.endsWith('.ppt')) {
+      const slides = f.textContent.split(/\n{2,}/).filter(s => s.trim());
+      if (slides.length) {
+        return `<div class="content-slides-wrap">${slides.map((s, i) =>
+          `<div class="content-slide-card"><div class="content-slide-num">Slide ${i + 1}</div><div class="content-slide-text">${escHtml(s.trim())}</div></div>`
+        ).join('')}</div>`;
+      }
+    }
     return `<pre class="content-text-preview">${escHtml(f.textContent.slice(0,60000))}</pre>`;
   }
   return `<div style="text-align:center;padding:40px 20px;color:var(--text-3)">Cannot preview this file type.</div>`;
@@ -6292,6 +6326,26 @@ function qnUpdateCount() {
   if (!ta || !el) return;
   const wc = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
   el.textContent = wc + (wc === 1 ? ' word' : ' words');
+}
+function qnFormat(type) {
+  const ta = document.getElementById('qnTextarea');
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd, val = ta.value;
+  const sel = val.slice(start, end);
+  let insert = '';
+  if (type === 'bullet') insert = '\n• ';
+  else if (type === 'bold') insert = sel ? `**${sel}**` : '**bold**';
+  else if (type === 'divider') insert = '\n─────────────\n';
+  else if (type === 'stamp') {
+    const now = new Date();
+    insert = `\n[${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}] `;
+  }
+  const newVal = val.slice(0, start) + insert + val.slice(end);
+  ta.value = newVal;
+  const cursor = start + insert.length;
+  ta.setSelectionRange(cursor, cursor);
+  ta.focus();
+  qnSave();
 }
 
 </script>
