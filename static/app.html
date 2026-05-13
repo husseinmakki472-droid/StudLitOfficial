@@ -2012,6 +2012,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 [data-theme="light"] .content-docx-preview td,[data-theme="light"] .content-docx-preview th{border-color:rgba(0,0,0,0.12)}
 [data-theme="light"] .content-text-preview{color:rgba(15,14,26,0.7);background:rgba(0,0,0,0.04)}
 /* Content preview */
+.wz-content-viewer{display:flex;flex-direction:column;height:100%;padding:20px 24px;box-sizing:border-box}
+.wz-content-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;flex-shrink:0}
+.wz-content-viewer-body{flex:1;overflow:auto;min-height:0}
 .content-preview-wrap{max-width:760px;padding:24px 28px}
 .content-preview-section{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06)}
 .content-preview-section:last-child{border-bottom:none}
@@ -5892,41 +5895,18 @@ function wzShowTab(mode) {
       main.innerHTML = '<div style="text-align:center;padding:80px 24px"><div style="font-size:48px;margin-bottom:16px;opacity:.3">📂</div><div style="font-size:15px;color:var(--text-3)">No content yet.<br>Upload a file or paste text to preview it here.</div></div>';
       return;
     }
-    let html = '<div class="content-preview-wrap">';
-    // Image files
-    const imageFiles = uploadedFiles.filter(f => f.imageData && f.mimeType);
-    if (imageFiles.length) {
-      html += '<div class="content-preview-section">';
-      html += '<div class="content-preview-section-label">Images</div>';
-      imageFiles.forEach(f => {
-        html += `<div class="content-img-wrap"><img src="data:${escHtml(f.mimeType)};base64,${f.imageData}" class="content-img-preview" alt="${escHtml(f.name)}"><div class="content-img-name">${escHtml(f.name)}</div></div>`;
-      });
-      html += '</div>';
+    const viewable = uploadedFiles.filter(f => f.imageData || f.blobUrl || f.htmlContent || f.textContent);
+    if (!viewable.length && !wzFullContent.trim()) {
+      main.innerHTML = '<div style="text-align:center;padding:80px 24px"><div style="font-size:48px;margin-bottom:16px;opacity:.3">📂</div><div style="font-size:15px;color:var(--text-3)">No content yet.<br>Upload a file or paste text to preview it here.</div></div>';
+      return;
     }
-    // Text files
-    const textFiles = uploadedFiles.filter(f => f.textContent && f.type !== 'URL' && f.type !== 'Text');
-    textFiles.forEach(f => {
-      const wc = f.textContent.trim().split(/\s+/).length;
-      html += `<div class="content-preview-section">`;
-      html += `<div class="content-preview-file-header"><span class="content-preview-file-icon">${f.icon||'📄'}</span><span class="content-preview-file-name">${escHtml(f.name)}</span><span class="content-preview-file-meta">${wc.toLocaleString()} words</span></div>`;
-      html += `<div class="content-preview-text">`;
-      f.textContent.trim().split(/\n+/).filter(l=>l.trim()).slice(0, 80).forEach(line => {
-        html += `<p class="content-preview-para">${escHtml(line.trim())}</p>`;
-      });
-      if (f.textContent.trim().split(/\n+/).length > 80) html += `<div class="content-preview-more">… ${(f.textContent.trim().split(/\n+/).length - 80)} more paragraphs</div>`;
-      html += `</div></div>`;
-    });
-    // Pasted URLs and text
-    const pasteFiles = uploadedFiles.filter(f => f.type === 'URL' || f.type === 'Text');
-    if (pasteFiles.length) {
-      html += '<div class="content-preview-section">';
-      html += '<div class="content-preview-section-label">Pasted Content</div>';
-      pasteFiles.forEach(f => {
-        html += `<div class="content-preview-paste-item"><span style="font-size:16px">${f.icon||'📝'}</span><div><div class="content-preview-file-name">${escHtml(f.name)}</div><div style="font-size:11px;color:var(--text-3)">${f.type}</div></div></div>`;
-      });
-      html += '</div>';
-    }
-    html += '</div>';
+    if (!window._wzContentIdx) window._wzContentIdx = 0;
+    window._wzContentIdx = Math.min(window._wzContentIdx, Math.max(0, viewable.length - 1));
+    const tabsHtml = viewable.map((f, i) =>
+      `<button class="content-file-tab${i===window._wzContentIdx?' active':''}" onclick="window._wzContentIdx=${i};wzShowTab('__content__')">${escHtml(f.icon||'📄')} ${escHtml(f.name.length>20?f.name.slice(0,18)+'…':f.name)}</button>`
+    ).join('');
+    const previewHtml = viewable.length ? _renderFilePreview(viewable[window._wzContentIdx]) : '';
+    const html = `<div class="wz-content-viewer"><div class="wz-content-tabs">${tabsHtml}</div><div class="wz-content-viewer-body">${previewHtml}</div></div>`;
     main.innerHTML = html;
     return;
   }
