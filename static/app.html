@@ -2030,6 +2030,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .content-img-preview{max-width:100%;max-height:400px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);object-fit:contain}
 .content-img-name{font-size:11px;color:rgba(240,239,255,0.3);margin-top:6px}
 .content-preview-paste-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:7px}
+.content-slides-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:4px}
+.content-slide-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:16px 18px;min-height:70px}
+.content-slide-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,239,255,0.32);margin-bottom:8px}
+.content-slide-text{font-size:13px;line-height:1.6;color:rgba(240,239,255,0.75);white-space:pre-wrap;word-break:break-word}
+[data-theme="light"] .content-slide-card{background:rgba(0,0,0,0.03);border-color:rgba(0,0,0,0.08)}
+[data-theme="light"] .content-slide-num{color:rgba(15,14,26,0.38)}
+[data-theme="light"] .content-slide-text{color:rgba(15,14,26,0.75)}
 [data-theme="light"] .qn-textarea{color:#0f0e1a}
 [data-theme="light"] .qn-textarea::placeholder{color:rgba(15,14,26,0.22)}
 [data-theme="light"] .qn-header,[data-theme="light"] .qn-footer{border-color:rgba(0,0,0,0.07)}
@@ -3683,6 +3690,10 @@ function switchWsTab(tab){
   document.querySelectorAll('.sl-nav-item[id^="wstab-"]').forEach(b=>b.classList.remove('active'));
   var btn=document.getElementById('wstab-'+tab);if(btn)btn.classList.add('active');
   if(tab==='sets')try{renderSlSets();}catch(e){}
+  if(tab==='create'){
+    var wzv=document.getElementById('wzResultView');var wsc=document.getElementById('ws-create');
+    if(wzv&&wzv.style.display!=='none'&&wsc)wsc.style.cssText='display:flex!important;flex-direction:column;padding:0;height:100%;overflow:hidden';
+  }
 }
 function showEmpty(){document.getElementById('emptyState').style.display='flex';document.getElementById('resultArea').style.display='none';document.getElementById('saveBar').classList.remove('visible');document.getElementById('slHomeView').style.display='block';document.getElementById('slResultView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';}
 function showResult(html){document.getElementById('emptyState').style.display='none';const r=document.getElementById('resultArea');r.style.display='block';r.innerHTML=html;document.getElementById('slHomeView').style.display='none';document.getElementById('slStep2View').style.display='none';document.getElementById('wzResultView').style.display='none';document.getElementById('slResultView').style.display='block';setResultMode(true);switchWsTab('create');const fileCtx=uploadedFiles.filter(f=>f.textContent).map(f=>f.textContent.slice(0,4000)).join('\n\n');const topicCtx=(document.getElementById('studyInput')?.value||'').trim();wzInitChat2(fileCtx||topicCtx||'');const nb=document.getElementById('notesEditorBody');if(nb)nb.querySelectorAll('.notes-editable-heading,.notes-editable-content').forEach(el=>el.addEventListener('input',notesSaveEdits));}
@@ -6000,6 +6011,15 @@ function _renderFilePreview(f) {
     return `<div class="content-docx-preview">${f.htmlContent}</div>`;
   }
   if (f.textContent) {
+    const lname = (f.name || '').toLowerCase();
+    if (lname.endsWith('.pptx') || lname.endsWith('.ppt')) {
+      const slides = f.textContent.split(/\n{2,}/).filter(s => s.trim());
+      if (slides.length) {
+        return `<div class="content-slides-wrap">${slides.map((s, i) =>
+          `<div class="content-slide-card"><div class="content-slide-num">Slide ${i + 1}</div><div class="content-slide-text">${escHtml(s.trim())}</div></div>`
+        ).join('')}</div>`;
+      }
+    }
     return `<pre class="content-text-preview">${escHtml(f.textContent.slice(0,60000))}</pre>`;
   }
   return `<div style="text-align:center;padding:40px 20px;color:var(--text-3)">Cannot preview this file type.</div>`;
