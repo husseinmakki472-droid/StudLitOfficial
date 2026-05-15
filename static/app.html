@@ -1729,7 +1729,7 @@ LEADERBOARD PAGE
 .lb-level-card-xp{font-size:12px;color:var(--text-3);font-weight:600}
 .lb-level-track{height:8px;background:rgba(124,92,252,0.12);border-radius:999px;overflow:hidden;margin-bottom:8px}
 .lb-level-fill{height:100%;background:linear-gradient(90deg,#7c5cfc,#b06ef3);border-radius:999px;transition:width .6s ease}
-.lb-level-next{font-size:11px;color:#9b85ef;font-weight:600}
+.lb-level-next{font-size:11px;color:#9b85ef;font-weight:600;display:block;margin-top:6px;background:none}
 .lb-earn-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:20px;padding:18px;margin-bottom:16px}
 .lb-earn-title{font-family:’Syne’,sans-serif;font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px}
 .lb-earn-list{display:flex;flex-direction:column;gap:9px}
@@ -2899,6 +2899,15 @@ document.addEventListener('DOMContentLoaded',function(){
   try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}
   // Restore accent color
   try{var ac=localStorage.getItem('sl-accent');var ac2=localStorage.getItem('sl-accent2');if(ac)applyAccentColor(ac,ac2);}catch(e){}
+  // Daily visit bonus — fires once per calendar day
+  try{
+    var _today=new Date().toDateString();
+    if(localStorage.getItem('sl-last-visit')!==_today){
+      localStorage.setItem('sl-last-visit',_today);
+      var _vs=lbLoadStats();
+      scoreEventServer('daily_visit',{streak:_vs.streak||0}).then(function(g){if(g.xp>0)addXP(g.xp,'visit',{});});
+    }
+  }catch(e){}
   // Restore font size
   try{var fs=localStorage.getItem('sl-font-size');if(fs)applyFontSize(parseInt(fs));}catch(e){}
   // Restore name in sidebar
@@ -3613,6 +3622,7 @@ function saveToSet(setId) {
   saveSets(); renderSets(); renderSlSets();
   closeSaveModal();
   showInfoToast('Saved to "' + set.name + '"!');
+  try { var _sd=lbGetDailyCount('save_set'); if(_sd<2){scoreEventServer('save_set',{savedToday:_sd}).then(function(g){if(g.xp>0){lbIncrDailyCount('save_set');addXP(g.xp,'save',{});}});} } catch(e){}
 }
 
 function saveToNewSetFromModal() {
@@ -3625,6 +3635,7 @@ function saveToNewSetFromModal() {
   saveSets(); renderSets(); renderSlSets();
   closeSaveModal();
   showInfoToast('Saved to "' + name + '"!');
+  try { var _sd=lbGetDailyCount('save_set'); if(_sd<2){scoreEventServer('save_set',{savedToday:_sd}).then(function(g){if(g.xp>0){lbIncrDailyCount('save_set');addXP(g.xp,'save',{});}});} } catch(e){}
 }
 
 function saveSession() { openSaveModal(); }  // legacy compat
@@ -4052,7 +4063,7 @@ function fcFlip(){fcFlipped=!fcFlipped;document.getElementById('flashcard').clas
 function fcUpdateCard(){const c=fcCards[fcIndex];document.getElementById('fcFrontText').textContent=c.q;document.getElementById('fcBackText').textContent=c.a;document.getElementById('fcCount').textContent=`Card ${fcIndex+1} of ${fcCards.length}`;document.getElementById('fcBar').style.width=`${(fcIndex+1)/fcCards.length*100}%`;fcFlipped=false;document.getElementById('flashcard').classList.remove('flipped');const badge=document.getElementById('fcDiffBadge');if(badge){const d=c.diff||'';const s=d==='easy'?'color:#4ade80;border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.08)':d==='hard'?'color:#f87171;border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.08)':d?'color:#f59e0b;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)':'';badge.textContent=d;badge.style.cssText=d?`font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:999px;border:1px solid;${s}`:'';}}
 function fcNext(){fcIndex=(fcIndex+1)%fcCards.length;fcUpdateCard()}
 function fcPrev(){fcIndex=(fcIndex-1+fcCards.length)%fcCards.length;fcUpdateCard()}
-function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
+function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;window._fcRated=(window._fcRated||0)+1;if(window._fcRated>=fcCards.length){window._fcRated=0;try{var _cd=lbGetDailyCount('flashcard_complete');if(_cd<2){scoreEventServer('flashcard_complete',{completedToday:_cd}).then(function(g){if(g.xp>0){lbIncrDailyCount('flashcard_complete');addXP(g.xp,'flashcards',{});}});}}catch(e){}}setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
 function fcSkip(){
   if(fcCards.length<=1)return;
   const card=fcCards[fcIndex];
@@ -4148,6 +4159,10 @@ function renderQuizScore(){
         if(xpEl){xpEl.textContent='+'+grant.xp+' pts';xpEl.style.display='inline-block';}
       }
     }).catch(()=>{});
+  // Perfect score bonus (max 1 per day, min 3 questions)
+  if(quizScore===quizData.length&&quizData.length>=3){
+    try{var _pd=lbGetDailyCount('perfect_quiz');if(_pd<1){scoreEventServer('perfect_quiz',{questions:quizData.length}).then(function(g){if(g.xp>0){lbIncrDailyCount('perfect_quiz');addXP(g.xp,'perfect',{});const xpEl=document.getElementById('quizXPEarned');if(xpEl){xpEl.textContent=(xpEl.textContent||'')+(xpEl.textContent?' + ':'+')+g.xp+' bonus pts';xpEl.style.display='inline-block';}}});}}catch(e){}
+  }
   return`<div class="quiz-score-section"><div class="quiz-score-ring" style="--pct:${pct}%"><div class="quiz-score-num">${pct}%</div></div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px">${msg}</div><div style="font-size:14px;color:var(--text-3);margin-bottom:16px">You got ${quizScore} of ${quizData.length} correct</div><div id="quizXPEarned" style="display:none;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border-radius:999px;padding:5px 16px;font-size:13px;font-weight:700;margin-bottom:20px"></div><button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="quizRetake()">Retake Quiz</button></div>`;
 }
 
@@ -5169,7 +5184,8 @@ function applyAccentColor(accent, accent2) {
     '.lb-you{color:'+accent+'!important;background:rgba('+r+',.15)!important}',
     '.lb-badge-item.earned{background:rgba('+r+',.1)!important;border-color:rgba('+r+',.3)!important}',
     '.lb-level-card{border-color:rgba('+r+',.22)!important}',
-    '.lb-level-next,.lb-level-fill{background:'+gradH+'!important;color:'+a2+'!important}',
+    '.lb-level-fill{background:'+gradH+'!important}',
+    '.lb-level-next{color:'+a2+'!important;background:none!important}',
     '.lb-row.is-me{background:rgba('+r+',.08)!important;border-left-color:'+accent+'!important}',
     // Set card accent inset + mode pills
     '.sl-set-card{box-shadow:inset 3px 0 0 rgba('+r+',.3)!important}',
@@ -5354,6 +5370,19 @@ async function scoreEventServer(type, data) {
   }
 }
 
+// Client-side daily event counter — extra anti-cheat layer on top of server rate limits
+function lbGetDailyCount(type) {
+  var key = 'sl-daily-' + type + '-' + new Date().toDateString();
+  return parseInt(localStorage.getItem(key) || '0');
+}
+function lbIncrDailyCount(type) {
+  var today = new Date().toDateString();
+  var key = 'sl-daily-' + type + '-' + today;
+  var n = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, n.toString());
+  return n;
+}
+
 function addXP(amount, reason, meta) {
   if (!amount || amount <= 0) return;
   var s = lbLoadStats();
@@ -5366,20 +5395,21 @@ function addXP(amount, reason, meta) {
     var key = meta.topic;
     if (!s.topicHistory[key]) s.topicHistory[key] = [];
     s.topicHistory[key].push(today);
-    // Trim old entries (keep last 20)
     if (s.topicHistory[key].length > 20) s.topicHistory[key] = s.topicHistory[key].slice(-20);
   }
 
-  if (reason === 'set' || reason === 'quiz') {
-    if (reason === 'set') s.sets = (s.sets||0) + 1;
-    if (s.lastStudy !== today) {
-      var yesterday = new Date(Date.now()-86400000).toDateString();
-      s.streak = (s.lastStudy === yesterday) ? (s.streak||0)+1 : 1;
-      s.lastStudy = today;
-    }
+  var histLabels = {set:'Study Set', quiz:'Quiz', save:'Saved Set', flashcards:'Flashcards', perfect:'Perfect Score', visit:'Daily Visit', timer:'Focus Timer'};
+  var studyReasons = new Set(['set','quiz','flashcards','save']);
+
+  if (reason === 'set') s.sets = (s.sets||0) + 1;
+  if (studyReasons.has(reason) && s.lastStudy !== today) {
+    var yesterday = new Date(Date.now()-86400000).toDateString();
+    s.streak = (s.lastStudy === yesterday) ? (s.streak||0)+1 : 1;
+    s.lastStudy = today;
+  }
+  if (histLabels[reason]) {
     if (!s.history) s.history = [];
-    var label = reason === 'quiz' ? 'Quiz' : 'Study Set';
-    s.history.unshift({ date: new Date().toLocaleDateString(), xp: amount, type: label });
+    s.history.unshift({ date: new Date().toLocaleDateString(), xp: amount, type: histLabels[reason] });
     if (s.history.length > 30) s.history.pop();
   }
   if (reason === 'timer') s.timerSessions = (s.timerSessions||0) + 1;
@@ -6844,10 +6874,14 @@ function qnFormat(type) {
         <div class="lb-earn-card">
           <div class="lb-earn-title">⚡ Earn Points</div>
           <div class="lb-earn-list">
-            <div class="lb-earn-row"><span>Generate a study set</span><span class="lb-earn-pts">+10 pts</span></div>
-            <div class="lb-earn-row"><span>Complete a quiz</span><span class="lb-earn-pts">+5 pts</span></div>
-            <div class="lb-earn-row"><span>Daily streak</span><span class="lb-earn-pts">+3 pts</span></div>
-            <div class="lb-earn-row"><span>Use Solve mode</span><span class="lb-earn-pts">+2 pts</span></div>
+            <div class="lb-earn-row"><span>🧠 Generate study set</span><span class="lb-earn-pts">+15 pts</span></div>
+            <div class="lb-earn-row"><span>💾 Save to study set</span><span class="lb-earn-pts">+5 pts</span></div>
+            <div class="lb-earn-row"><span>📝 Complete a quiz</span><span class="lb-earn-pts">+5–60 pts</span></div>
+            <div class="lb-earn-row"><span>🏆 Perfect quiz score</span><span class="lb-earn-pts">+8 bonus</span></div>
+            <div class="lb-earn-row"><span>🃏 Finish flashcard deck</span><span class="lb-earn-pts">+3 pts</span></div>
+            <div class="lb-earn-row"><span>⏱ Focus timer session</span><span class="lb-earn-pts">+4–8 pts</span></div>
+            <div class="lb-earn-row"><span>📅 Daily visit</span><span class="lb-earn-pts">+2 pts</span></div>
+            <div class="lb-earn-row"><span>🔥 Streak milestone</span><span class="lb-earn-pts">+10 bonus</span></div>
           </div>
         </div>
         <div class="lb-badges-card">
