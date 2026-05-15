@@ -585,6 +585,8 @@ font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
 box-shadow:0 0 16px rgba(124,92,252,0.5);
 }
 .sl-sidebar-logo span { background:linear-gradient(135deg,#7c5cfc,#b06ef3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.sl-sidebar-profile { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; }
+.sl-sidebar-profile-info { min-width:0; flex:1; }
 .sl-nav-item {
 display:flex; align-items:center; gap:10px;
 padding:9px 12px; border-radius:12px;
@@ -827,8 +829,9 @@ box-shadow:0 4px 14px rgba(124,92,252,0.2);
   background:var(--bg-2); border:1.5px solid var(--border);
   border-radius:20px; padding:22px 20px; cursor:pointer;
   transition:all .2s cubic-bezier(0.22,1,0.36,1); display:flex; flex-direction:column; gap:14px;
+  box-shadow:inset 3px 0 0 rgba(124,92,252,0.3);
 }
-.sl-set-card:hover { border-color:rgba(124,92,252,0.5); box-shadow:0 8px 32px rgba(124,92,252,0.15); transform:translateY(-2px); }
+.sl-set-card:hover { border-color:rgba(124,92,252,0.5); box-shadow:inset 3px 0 0 rgba(124,92,252,0.55),0 8px 32px rgba(124,92,252,0.15); transform:translateY(-2px); }
 .sl-set-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
 .sl-set-card-title { font-family:’Syne’,sans-serif; font-size:15px; font-weight:800; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sl-set-card-menu { background:none; border:none; color:var(--text-3); cursor:pointer; font-size:18px; padding:0 2px; border-radius:6px; transition:color .15s; }
@@ -838,7 +841,8 @@ box-shadow:0 4px 14px rgba(124,92,252,0.2);
 .sl-set-modes-row { display:flex; gap:5px; flex-wrap:wrap; }
 .sl-set-mode-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; background:rgba(124,92,252,0.1); border:1px solid rgba(124,92,252,0.2); color:rgba(124,92,252,0.9); }
 .sl-set-card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--border); }
-.sl-set-open-btn { font-size:12px; font-weight:700; color:#7c5cfc; display:flex; align-items:center; gap:4px; }
+.sl-set-open-btn { font-size:11px; font-weight:700; color:#7c5cfc; display:flex; align-items:center; gap:4px; background:rgba(124,92,252,0.08); border:1px solid rgba(124,92,252,0.2); border-radius:8px; padding:4px 10px; transition:all .15s; flex-shrink:0; }
+.sl-set-open-btn:hover { background:rgba(124,92,252,0.15); border-color:rgba(124,92,252,0.4); }
 .sl-sets-empty { text-align:center; padding:48px 20px; color:var(--text-3); }
 .sl-sets-empty-icon { font-size:40px; margin-bottom:14px; }
 .sl-sets-empty-text { font-size:14px; line-height:1.7; }
@@ -2368,7 +2372,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <!-- LEFT SIDEBAR NAV -->
 
   <aside class="sl-sidebar">
-    <div class="sl-sidebar-logo"><div class="sl-sidebar-logo-mark">SL</div>Stud<span>Lit</span></div>
+    <div class="sl-sidebar-profile">
+      <div class="sl-user-avatar" id="sidebarUserAvatar">S</div>
+      <div class="sl-sidebar-profile-info">
+        <div class="sl-user-name" id="sidebarUserName">Student</div>
+        <div class="sl-user-plan">Free Plan</div>
+      </div>
+    </div>
     <nav class="sl-nav">
       <button class="sl-nav-item active" id="wstab-create" onclick="switchWsTab('create')">
         <span class="sl-nav-item-icon">✏️</span> Create Set
@@ -2381,16 +2391,9 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       </button>
     </nav>
     <div class="sl-sidebar-bottom">
-      <button class="sl-nav-item" onclick="openSettings()" style="margin-bottom:8px">
+      <button class="sl-nav-item" onclick="openSettings()">
         <span class="sl-nav-item-icon">⚙️</span> Settings
       </button>
-      <div class="sl-user-info">
-        <div class="sl-user-avatar" id="sidebarUserAvatar">S</div>
-        <div>
-          <div class="sl-user-name" id="sidebarUserName">Student</div>
-          <div class="sl-user-plan">Free Plan</div>
-        </div>
-      </div>
     </div>
   </aside>
 
@@ -2956,7 +2959,7 @@ function applyTheme(theme) {
       .page-tab.active { color: #fff !important; }
 
       /* ── Sidebar ── */
-      .sl-sidebar-logo { color: #0f0e1a !important; font-weight: 800 !important; }
+      .sl-sidebar-profile { background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.1) !important; }
       .sl-nav-section-label { color: #6b68a0 !important; font-weight: 700 !important; }
       .sl-nav-item { color: #3b3763 !important; font-weight: 600 !important; }
       .sl-nav-item.active { background: rgba(124,92,252,0.18) !important; color: #6d3fc9 !important; font-weight: 700 !important; }
@@ -3036,8 +3039,8 @@ function applyTheme(theme) {
 
       /* ── Sets / sessions ── */
       .sl-sets-heading { color: #0f0e1a !important; font-weight: 800 !important; }
-      .sl-set-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 2px 16px rgba(124,92,252,0.1) !important; }
-      .sl-set-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.25), 0 4px 20px rgba(124,92,252,0.15) !important; }
+      .sl-set-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: inset 3px 0 0 rgba(124,92,252,0.35), 0 2px 16px rgba(124,92,252,0.08) !important; }
+      .sl-set-card:hover { box-shadow: inset 3px 0 0 rgba(124,92,252,0.55), 0 0 0 2px rgba(124,92,252,0.2), 0 4px 20px rgba(124,92,252,0.12) !important; }
       .sl-set-card-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .sl-sets-empty, .sets-empty { color: #6b68a0 !important; font-weight: 500 !important; }
       .sets-title { color: #0f0e1a !important; font-weight: 800 !important; }
@@ -5159,6 +5162,23 @@ function applyAccentColor(accent, accent2) {
     '.empty-preview-card:hover{border-color:'+accent+'!important}',
     // Grade button
     '.btn-grade{background:'+grad+'!important}',
+    // New leaderboard classes
+    '.lb-header-av{background:'+grad+'!important;box-shadow:0 0 14px rgba('+r+',.35)!important}',
+    '.lb-stat-pill-val.grad{background:'+grad+'!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;background-clip:text!important}',
+    '.lb-earn-pts{color:'+accent+'!important}',
+    '.lb-you{color:'+accent+'!important;background:rgba('+r+',.15)!important}',
+    '.lb-badge-item.earned{background:rgba('+r+',.1)!important;border-color:rgba('+r+',.3)!important}',
+    '.lb-level-card{border-color:rgba('+r+',.22)!important}',
+    '.lb-level-next,.lb-level-fill{background:'+gradH+'!important;color:'+a2+'!important}',
+    '.lb-row.is-me{background:rgba('+r+',.08)!important;border-left-color:'+accent+'!important}',
+    // Set card accent inset + mode pills
+    '.sl-set-card{box-shadow:inset 3px 0 0 rgba('+r+',.3)!important}',
+    '.sl-set-card:hover{box-shadow:inset 3px 0 0 rgba('+r+',.55),0 8px 32px rgba('+r+',.15)!important}',
+    '.sl-set-mode-pill{background:rgba('+r+',.1)!important;border-color:rgba('+r+',.2)!important;color:'+accent+'!important}',
+    '.sl-set-open-btn{color:'+accent+'!important;background:rgba('+r+',.08)!important;border-color:rgba('+r+',.2)!important}',
+    '.sl-set-open-btn:hover{background:rgba('+r+',.15)!important;border-color:rgba('+r+',.4)!important}',
+    // Sidebar profile
+    '.sl-sidebar-profile{border-color:rgba('+r+',.15)!important}',
   ].join('');
 }
 
