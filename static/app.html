@@ -2949,7 +2949,9 @@ function applyTheme(theme) {
   var lbl = document.getElementById('themeLabel');
   if (lbl) lbl.textContent = isLight ? '☀️ Light' : '🌙 Dark';
   try{localStorage.setItem('sl-theme', theme);}catch(e){}
-  
+  // Re-apply accent so theme-toggle and other isLight-conditional rules regenerate
+  try{var _ac=localStorage.getItem('sl-accent');var _ac2=localStorage.getItem('sl-accent2');if(_ac)applyAccentColor(_ac,_ac2);}catch(e){}
+
   // Remove any existing injected light style
   var old = document.getElementById('sl-light-inject');
   if (old) old.remove();
