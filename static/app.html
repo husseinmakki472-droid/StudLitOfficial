@@ -1718,11 +1718,15 @@ LEADERBOARD PAGE
 .lb-badges-card{background:var(--card-bg);border:1.5px solid var(--border);border-radius:20px;padding:18px;margin-bottom:16px}
 .lb-badges-title{font-family:’Syne’,sans-serif;font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px}
 .lb-badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.lb-badge-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center;transition:all .18s}
+.lb-badge-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 6px;text-align:center;transition:all .18s;position:relative;overflow:visible}
 .lb-badge-item.earned{background:rgba(124,92,252,0.1);border-color:rgba(124,92,252,0.3)}
 .lb-badge-item:not(.earned){opacity:.3;filter:grayscale(.8)}
+.lb-badge-item.earned:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(124,92,252,0.2)}
 .lb-badge-icon{font-size:20px;margin-bottom:4px}
 .lb-badge-name{font-size:9px;font-weight:700;color:var(--text-3);line-height:1.2}
+.lb-badge-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:#1a1833;border:1px solid rgba(124,92,252,0.3);border-radius:10px;padding:7px 12px;font-size:10.5px;font-weight:600;color:#f0efff;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+.lb-badge-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1833}
+.lb-badge-item:hover .lb-badge-tip{opacity:1;transform:translateX(-50%) translateY(0)}
 .lb-level-card{background:linear-gradient(135deg,rgba(124,92,252,0.12),rgba(176,110,243,0.06));border:1.5px solid rgba(124,92,252,0.22);border-radius:20px;padding:20px;margin-bottom:16px}
 .lb-level-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .lb-level-card-name{font-family:’Syne’,sans-serif;font-size:15px;font-weight:800;color:var(--text)}
@@ -3328,6 +3332,9 @@ function applyTheme(theme) {
       .lb-tabs { background: rgba(124,92,252,0.06) !important; border-color: #e0d8ff !important; }
       .lb-badge-item:not(.earned) { background: rgba(0,0,0,0.04) !important; border-color: #e0d8ff !important; }
       .lb-level-card { border-color: rgba(124,92,252,0.25) !important; }
+      .lb-level-next { color: #7c5cfc !important; }
+      .lb-badge-tip { background: #fff !important; color: #0f0e1a !important; border-color: rgba(124,92,252,0.2) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important; }
+      .lb-badge-tip::after { border-top-color: #fff !important; }
 
       /* ── AI Checker doc-* page ── */
       .doc-topbar-title { color: #0f0e1a !important; font-weight: 800 !important; }
@@ -5177,6 +5184,18 @@ function applyAccentColor(accent, accent2) {
     '.empty-preview-card:hover{border-color:'+accent+'!important}',
     // Grade button
     '.btn-grade{background:'+grad+'!important}',
+    // Missed focus rings
+    '.study-textarea:focus{border-color:'+accent+'!important;box-shadow:0 0 0 3px rgba('+r+',.2)!important}',
+    '.wz-topic-input:focus{border-color:'+accent+'!important}',
+    // Missed text labels
+    '.lesson-summary-label{color:'+accent+'!important}',
+    '.lesson-think-label{color:'+accent+'!important}',
+    // Quiz option hover
+    '.quiz-option:hover:not(.correct):not(.wrong){border-color:'+accent+'!important}',
+    // FC add card
+    '.fc-add-card-btn:hover{border-color:'+accent+'!important;color:'+a2+'!important}',
+    // Badge tooltip accent
+    '.lb-badge-item.earned .lb-badge-tip{color:'+accent+'!important}',
     // New leaderboard classes
     '.lb-header-av{background:'+grad+'!important;box-shadow:0 0 14px rgba('+r+',.35)!important}',
     '.lb-stat-pill-val.grad{background:'+grad+'!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;background-clip:text!important}',
@@ -5323,15 +5342,15 @@ var LB_LEVELS = [
   {name:'Legend',   icon:'🏆', min:2200,max:Infinity}
 ];
 var LB_BADGES = [
-  {id:'first',  icon:'🎯',name:'First Step',   req:1,   type:'sets'},
-  {id:'five',   icon:'📚',name:'Bookworm',     req:5,   type:'sets'},
-  {id:'ten',    icon:'🎓',name:'Scholar',      req:10,  type:'sets'},
-  {id:'streak3',icon:'🔥',name:'On Fire',      req:3,   type:'streak'},
-  {id:'streak7',icon:'💫',name:'Week Warrior', req:7,   type:'streak'},
-  {id:'xp100',  icon:'⚡',name:'Point Hunter', req:100, type:'xp'},
-  {id:'xp500',  icon:'💎',name:'Point Elite',  req:500, type:'xp'},
-  {id:'timer1', icon:'⏱',name:'Time Keeper',  req:1,   type:'timer'},
-  {id:'legend', icon:'🏆',name:'Legend',       req:2200,type:'xp'}
+  {id:'first',   icon:'🎯', name:'First Step',   req:1,    type:'sets',   desc:'Create your first study set'},
+  {id:'five',    icon:'📚', name:'Bookworm',     req:5,    type:'sets',   desc:'Create 5 study sets'},
+  {id:'ten',     icon:'🎓', name:'Scholar',      req:10,   type:'sets',   desc:'Create 10 study sets'},
+  {id:'streak3', icon:'🔥', name:'On Fire',      req:3,    type:'streak', desc:'Study 3 days in a row'},
+  {id:'streak7', icon:'💫', name:'Week Warrior', req:7,    type:'streak', desc:'Maintain a 7-day streak'},
+  {id:'xp100',   icon:'⚡', name:'Point Hunter', req:100,  type:'xp',     desc:'Earn 100 points total'},
+  {id:'xp500',   icon:'💎', name:'Point Elite',  req:500,  type:'xp',     desc:'Earn 500 points total'},
+  {id:'timer1',  icon:'⏱', name:'Time Keeper',  req:1,    type:'timer',  desc:'Complete a focus timer session'},
+  {id:'legend',  icon:'🏆', name:'Legend',       req:2200, type:'xp',     desc:'Reach 2,200 points — the top rank'}
 ];
 var LB_MOCK = [
   {name:'Alex K.',xp:1840,sets:72,streak:21,color:'#7c5cfc'},
@@ -5502,9 +5521,11 @@ function renderLb() {
   // Badges
   var badgeHTML = LB_BADGES.map(function(b) {
     var earned = s.earnedBadges && s.earnedBadges.indexOf(b.id) !== -1;
-    return '<div class="lb-badge-item'+(earned?' earned':'')+'" title="'+b.name+'">' +
+    var tipText = earned ? '✓ Earned!' : escHtml(b.desc);
+    return '<div class="lb-badge-item'+(earned?' earned':'')+'">' +
       '<div class="lb-badge-icon">'+(earned?b.icon:'🔒')+'</div>' +
-      '<div class="lb-badge-name">'+escHtml(b.name)+'</div></div>';
+      '<div class="lb-badge-name">'+escHtml(b.name)+'</div>' +
+      '<div class="lb-badge-tip">'+tipText+'</div></div>';
   }).join('');
   ['lbBadgeGrid','lbBadgeGrid2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=badgeHTML; });
 
@@ -5948,11 +5969,6 @@ function wzBuildTabbedResult(topic, methods, results) {
   lastResult = { topic, modes: methods.join('+'), html: wzResultTabs[methods[0]] || '' };
   updateSaveSelect();
   wzApplySetContext();
-  try{
-    var _s=lbLoadStats(),_today=new Date().toDateString(),_tk=(topic||'').toLowerCase().slice(0,60);
-    var _seen=((_s.topicHistory||{})[_tk]||[]).filter(function(d){return d===_today;}).length;
-    scoreEventServer('set_generate',{topicSeenToday:_seen}).then(function(g){if(g.xp>0)addXP(g.xp,'set',{topic:_tk});});
-  }catch(e){}
 }
 
 function wzShowTab(mode) {
