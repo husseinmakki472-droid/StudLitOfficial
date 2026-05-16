@@ -1129,7 +1129,8 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme=”light”] .regen-btn { border-color: rgba(0,0,0,0.12) !important; background: rgba(0,0,0,0.04) !important; color: rgba(15,14,26,0.6) !important; }
 [data-theme=”light”] .regen-btn:hover { background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.35) !important; color: #7c5cfc !important; }
 [data-theme=“light”] .highlight-block { background: rgba(124,92,252,0.07) !important; color: #0f0e1a !important; }
-[data-theme=“light”] .shimmer-block { background: linear-gradient(90deg,rgba(0,0,0,0.05) 25%,rgba(0,0,0,0.09) 50%,rgba(0,0,0,0.05) 75%) !important; background-size: 200% 100% !important; }
+[data-theme=”light”] .shimmer-block { background: linear-gradient(90deg,rgba(0,0,0,0.07) 25%,rgba(0,0,0,0.13) 50%,rgba(0,0,0,0.07) 75%) !important; background-size: 200% 100% !important; }
+[data-theme=”light”] .wz-processing p,[data-theme=”light”] .wz-processing-text { color: rgba(15,14,26,0.45) !important; }
 [data-theme=“light”] .error-card { background: rgba(248,113,113,0.07) !important; border-color: rgba(248,113,113,0.2) !important; }
 
 /* ── Flashcards ── */
@@ -1930,6 +1931,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-timer-set{background:rgba(124,92,252,0.18);color:#b494ff;border:1px solid rgba(124,92,252,0.25);border-radius:6px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;transition:background .15s}
 .wz-timer-set:hover{background:rgba(124,92,252,0.3)}
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;gap:20px}
+.wz-processing-text{color:rgba(240,239,255,0.4);font-size:14px}
 .wz-processing-art{font-size:80px;line-height:1;filter:drop-shadow(0 8px 24px rgba(124,92,252,0.2));animation:wzFloat 3s ease-in-out infinite}
 @keyframes wzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .wz-processing-text{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:rgba(240,239,255,0.5)}
@@ -3043,10 +3045,10 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .mode-btn.selected span, .mode-btn.selected div { color: #6d3fc9 !important; font-weight: 700 !important; }
 
       /* ── Cards / panels ── */
-      .sl-panel-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 2px 16px rgba(124,92,252,0.1) !important; }
-      .sl-panel-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.22), 0 4px 20px rgba(124,92,252,0.13) !important; }
-      .content-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 2px 16px rgba(124,92,252,0.08) !important; }
-      .content-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.2), 0 4px 16px rgba(124,92,252,0.12) !important; }
+      .sl-panel-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(124,92,252,0.1) !important; }
+      .sl-panel-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.25), 0 4px 20px rgba(124,92,252,0.14) !important; }
+      .content-card { background: #fff !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 2px 16px rgba(124,92,252,0.08) !important; }
+      .content-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.22), 0 4px 16px rgba(124,92,252,0.12) !important; }
       .card-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .card-body { color: #3b3763 !important; }
       .card-body * { color: #3b3763 !important; }
@@ -3183,7 +3185,7 @@ function buildLightInjectCSS(accent, a2, r, r2) {
 
       /* ── Quiz ── */
       .quiz-question { color: #0f0e1a !important; font-weight: 700 !important; }
-      .quiz-option { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #3b3763 !important; font-weight: 500 !important; }
+      .quiz-option { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.1) !important; color: #0f0e1a !important; font-weight: 500 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important; }
       .quiz-option:hover:not(.correct):not(.wrong) { border-color: #7c5cfc !important; box-shadow: 0 0 0 2px rgba(124,92,252,0.15) !important; color: #0f0e1a !important; }
       .quiz-progress-num { color: #6b68a0 !important; font-weight: 600 !important; }
       .quiz-score-num { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; font-weight: 800 !important; }
@@ -3491,6 +3493,10 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .wz-sidebar-settings-btn { color: rgba(15,14,26,0.38) !important; }
       .wz-sidebar-settings-btn:hover { color: #0f0e1a !important; background: rgba(0,0,0,0.07) !important; }
 
+      /* ── Shimmer loading blocks ── */
+      .shimmer-block { background: linear-gradient(90deg,rgba(0,0,0,0.07) 25%,rgba(0,0,0,0.13) 50%,rgba(0,0,0,0.07) 75%) !important; background-size: 200% 100% !important; }
+      .wz-processing-text, .wz-processing p { color: rgba(15,14,26,0.45) !important; }
+
       /* ── Catch-all: any remaining invisible text ── */
       body.light-mode h1, body.light-mode h2, body.light-mode h3,
       body.light-mode h4, body.light-mode h5, body.light-mode h6 { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; font-weight: 800 !important; }
@@ -3790,7 +3796,7 @@ async function regenerateMode(mode) {
   const input = (document.getElementById('studyInput')?.value || '').trim() || (lastResult && lastResult.topic) || '';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const _reLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
-  const shimmer=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Regenerating…</p></div>`;
+  const shimmer=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Regenerating…</p></div>`;
 
   // Show loading in whichever container is active
   if (isWizard) {
@@ -4429,7 +4435,7 @@ async function pasteGenerate(){
   document.getElementById('slResultView').style.display='none';
   const rv=document.getElementById('wzResultView');rv.style.display='flex';
   setResultMode(true);wzBuildSidebar(modes);
-  document.getElementById('wzResultMain').innerHTML=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
+  document.getElementById('wzResultMain').innerHTML=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Processing content…</p></div>`;
   const filesPayload=uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const topicStr=topic;
   try{
@@ -5984,7 +5990,7 @@ async function wzGenerate() {
   if (_wsc) _wsc.style.display = 'flex';
   // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
-  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p style="margin-top:20px;color:rgba(240,239,255,0.4);font-size:14px">Processing content…</p></div>`;
+  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Processing content…</p></div>`;
   const input = (document.getElementById('studyInput')?.value || '').trim();
   let topicStr = input || 'the uploaded content';
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
