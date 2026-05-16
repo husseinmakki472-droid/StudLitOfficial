@@ -33,21 +33,30 @@ function splitIntoChunks(text, size) {
   return chunks.length ? chunks : [text.slice(0, size)];
 }
 
-async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: maxTokens,
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent }
-      ]
-    })
-  });
+async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens, model) {
+  model = model || 'gpt-4o-mini';
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), 90000);
+  let response;
+  try {
+    response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ]
+      })
+    });
+  } finally {
+    clearTimeout(tid);
+  }
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error((err.error && err.error.message) || 'OpenAI error ' + response.status);
@@ -196,7 +205,7 @@ const handler = async (event) => {
       const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
       const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
 
-      function makeSingleCall(mode, scopeInstr) {
+      function makeSingleCall(mode, scopeInstr, model) {
         const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"comprehensive study material"}');
         const diffInstr = difficultyModes.indexOf(mode) !== -1
           ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.'
@@ -206,51 +215,52 @@ const handler = async (event) => {
           ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
           { type: 'text', text: 'Topic: ' + topicStr + '\n\n' + scopeInstr + diffInstr + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + structure + '\n  }\n}' }
         ];
-        return callOpenAI(apiKey, SYSTEM_OTHER, userContent, 16000).catch(() => null);
+        return callOpenAI(apiKey, SYSTEM_OTHER, userContent, 16000, model).catch(() => null);
       }
 
-      // Quiz: 5 focused calls of 15 questions each = 75 questions total
       const QUIZ_BATCHES = [
-        'Generate EXACTLY 15 multiple-choice quiz questions testing RECALL — definitions, key terms, factual knowledge. Each must have 4 options and an explanation.',
-        'Generate EXACTLY 15 multiple-choice quiz questions testing COMPREHENSION — understanding of concepts, how things work, why they happen. Each must have 4 options and an explanation.',
-        'Generate EXACTLY 15 multiple-choice quiz questions testing APPLICATION — applying concepts to scenarios, real-world situations, problem-solving. Each must have 4 options and an explanation.',
-        'Generate EXACTLY 15 multiple-choice quiz questions testing ANALYSIS — comparing, contrasting, evaluating, cause-and-effect. Each must have 4 options and an explanation.',
-        'Generate EXACTLY 15 multiple-choice quiz questions that are CHALLENGING — synthesis, edge cases, nuanced distinctions, tricky distractors. Each must have 4 options and an explanation.',
+        'Generate EXACTLY 15 multiple-choice questions testing RECALL — definitions, key terms, factual knowledge. Each must have 4 options and a detailed explanation.',
+        'Generate EXACTLY 15 multiple-choice questions testing COMPREHENSION — understanding of concepts, how things work, why they happen. Each must have 4 options and a detailed explanation.',
+        'Generate EXACTLY 15 multiple-choice questions testing APPLICATION — applying concepts to real scenarios and problems. Each must have 4 options and a detailed explanation.',
+        'Generate EXACTLY 15 multiple-choice questions testing ANALYSIS — comparing, contrasting, evaluating, cause-and-effect. Each must have 4 options and a detailed explanation.',
       ];
 
-      // Flashcards: 4 focused calls of 20 cards each = 80 cards total
       const FLASHCARD_BATCHES = [
-        'Generate EXACTLY 20 flashcards covering KEY TERMS AND DEFINITIONS — one card per important term. Front: the term. Back: full definition with context.',
-        'Generate EXACTLY 20 flashcards covering PROCESSES AND MECHANISMS — how things work step by step. Front: "How does X work?" or "What are the steps of X?" Back: detailed explanation.',
-        'Generate EXACTLY 20 flashcards covering COMPARISONS AND RELATIONSHIPS — how concepts relate or differ. Front: "Compare X and Y" or "What is the relationship between X and Y?" Back: thorough comparison.',
-        'Generate EXACTLY 20 flashcards covering APPLICATIONS AND EXAMPLES — real-world uses and scenarios. Front: a scenario or "Give an example of X". Back: concrete example with explanation.',
+        'Generate EXACTLY 20 flashcards for KEY TERMS AND DEFINITIONS. Front: the term. Back: full definition with context and example.',
+        'Generate EXACTLY 20 flashcards for PROCESSES AND MECHANISMS. Front: "How does X work?" Back: step-by-step explanation.',
+        'Generate EXACTLY 20 flashcards for COMPARISONS AND RELATIONSHIPS. Front: "Compare X and Y" or "What connects X and Y?" Back: thorough comparison.',
+        'Generate EXACTLY 20 flashcards for APPLICATIONS AND EXAMPLES. Front: a scenario or "Give an example of X". Back: concrete example with explanation.',
       ];
 
-      const modeCallPromises = otherModes.map(mode => {
-        if (mode === 'quiz') {
-          return Promise.all(QUIZ_BATCHES.map(scope => makeSingleCall('quiz', scope)))
-            .then(results => {
-              const all = results.flatMap(r => (r && r.results && r.results.quiz && r.results.quiz.questions) || []);
-              if (all.length) combinedResults.quiz = { questions: all };
-              const first = results.find(r => r && r.topic && r.topic !== 'the uploaded content');
-              if (first) resolvedTopic = first.topic;
-            });
+      // Sequential batches — one at a time to avoid rate limits, gpt-4o for reliability
+      async function runSequentialBatches(mode, batches, arrayKey) {
+        const all = [];
+        for (let i = 0; i < batches.length; i++) {
+          await store.setJSON(requestId, { status: 'processing', progress: mode + ': batch ' + (i + 1) + ' of ' + batches.length + '…' }, { ttl: 7200 });
+          const r = await makeSingleCall(mode, batches[i], 'gpt-4o').catch(() => null);
+          const items = (r && r.results && r.results[mode] && r.results[mode][arrayKey]) || [];
+          all.push(...items);
+          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
         }
-        if (mode === 'flashcards') {
-          return Promise.all(FLASHCARD_BATCHES.map(scope => makeSingleCall('flashcards', scope)))
-            .then(results => {
-              const all = results.flatMap(r => (r && r.results && r.results.flashcards && r.results.flashcards.cards) || []);
-              if (all.length) combinedResults.flashcards = { cards: all };
-              const first = results.find(r => r && r.topic && r.topic !== 'the uploaded content');
-              if (first) resolvedTopic = first.topic;
-            });
-        }
-        return makeSingleCall(mode, 'Generate comprehensive ' + mode + ' content covering all topics thoroughly.')
-          .then(parsed => {
-            if (parsed && parsed.results) Object.assign(combinedResults, parsed.results);
-            if (parsed && parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
-          });
-      });
+        if (all.length) combinedResults[mode] = { [arrayKey]: all };
+      }
+
+      const hasQuiz = otherModes.indexOf('quiz') !== -1;
+      const hasFlashcards = otherModes.indexOf('flashcards') !== -1;
+      const remainingModes = otherModes.filter(m => m !== 'quiz' && m !== 'flashcards');
+
+      // Run quiz and flashcard batches sequentially (in parallel with each other and other modes)
+      const modeCallPromises = [
+        ...(hasQuiz ? [runSequentialBatches('quiz', QUIZ_BATCHES, 'questions')] : []),
+        ...(hasFlashcards ? [runSequentialBatches('flashcards', FLASHCARD_BATCHES, 'cards')] : []),
+        ...remainingModes.map(mode =>
+          makeSingleCall(mode, 'Generate comprehensive ' + mode + ' content covering all topics thoroughly.')
+            .then(parsed => {
+              if (parsed && parsed.results) Object.assign(combinedResults, parsed.results);
+              if (parsed && parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
+            }).catch(() => {})
+        ),
+      ];
 
       await Promise.all(modeCallPromises);
     }
