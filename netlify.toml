@@ -36,6 +36,8 @@
 [functions.ai-check]
   timeout = 26
 
+# studygen is a background function (.background.js suffix) — 15-minute limit, no timeout needed
+
 [[redirects]]
   from = "/"
   to = "/app.html"
