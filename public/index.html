@@ -2278,7 +2278,28 @@ function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function resultHeader(mode,topic,meta=[]){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div class="result-mode-badge">${names[mode]||mode}</div></div>`}
-function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
+function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div><p id="genProgressMsg" style="margin-top:16px;text-align:center;color:rgba(240,239,255,0.4);font-size:13px">Starting generation…</p>`)}
+function setGenProgress(msg){const el=document.getElementById('genProgressMsg');if(el)el.textContent=msg;const wz=document.getElementById('wzResultMain');if(wz){const p=wz.querySelector('p');if(p)p.textContent=msg;}}
+
+async function generateWithBackground(payload) {
+  const requestId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+  await fetch('/.netlify/functions/study-background', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId,...payload})});
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 120;
+    const iv = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) { clearInterval(iv); reject(new Error('Generation timed out after 6 minutes. Please try again.')); return; }
+      try {
+        const sr = await fetch('/.netlify/functions/study-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})});
+        const s = await sr.json();
+        if (s.progress) setGenProgress(s.progress);
+        if (s.status === 'done') { clearInterval(iv); resolve(s.data); }
+        else if (s.status === 'error') { clearInterval(iv); reject(new Error(s.error || 'Generation failed')); }
+      } catch(e) { /* network blip, keep polling */ }
+    }, 3000);
+  });
+}
 
 async function generate() {
   const input = getInput();
@@ -2295,12 +2316,10 @@ async function generate() {
   const failedFiles = uploadedFiles.filter(f=>f.readError&&!f.imageData);
   if(failedFiles.length&&!uploadedFiles.some(f=>f.textContent||f.imageData)){showResult('<div class="error-card"><div class="error-card-label">⚠ File Read Error</div><div class="error-card-body">Could not read text from: '+escHtml(failedFiles.map(f=>f.name).join(', '))+'. Try a different file format or paste the text directly into the topic box.</div></div>');return;}
   try {
-    let res;
-    try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[]})});}
-    catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
     let data;
-    try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
-    if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
+    try{data=await generateWithBackground({topic:input,modes,files:filesPayload,urls:uploadedUrls||[]});}
+    catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(fetchErr.message||'Could not reach the server.')+'</div></div>');return;}
+    if(!data||data.error){const errMsg=(data&&data.error)||'Server error';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
     const topic = data.topic||input||'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
     let combined='';
@@ -3492,13 +3511,9 @@ async function wzGenerate() {
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   try {
-    const res = await fetch('/.netlify/functions/study', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:input||'the uploaded content', modes:methods, files:filesPayload, urls:uploadedUrls||[]})
-    });
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data.error||'Server error')}</div></div>`;
+    const data = await generateWithBackground({topic:input||'the uploaded content', modes:methods, files:filesPayload, urls:uploadedUrls||[], language:lang});
+    if (!data || data.error) {
+      document.getElementById('wzResultMain').innerHTML = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml((data&&data.error)||'Server error')}</div></div>`;
       return;
     }
     wzBuildTabbedResult(data.topic || input || 'Study Set', methods, data.results || {});

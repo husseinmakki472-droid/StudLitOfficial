@@ -19,9 +19,12 @@ return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set'
 }
 const systemMsg = 'Analyze this text for AI-generated patterns. Return ONLY valid JSON no markdown:\n{"score":<0-100>,"verdict":"<Likely AI-Generated|Mixed Partially AI|Mostly Human>","verdictSub":"<one sentence>","aiPhrases":["phrase1"],"variety":<0-100>,"passive":<count>,"flaggedPhrases":["exact phrase"],"passivePhrases":["exact phrase"]}';
 try {
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 20000);
 const response = await fetch('https://api.openai.com/v1/chat/completions', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+signal: controller.signal,
 body: JSON.stringify({
 model: 'gpt-4o-mini', max_tokens: 1000, temperature: 0.3,
 messages: [
@@ -30,6 +33,7 @@ messages: [
 ]
 })
 });
+clearTimeout(timeoutId);
 if (!response.ok) {
 const err = await response.json().catch(function() { return {}; });
 return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
@@ -60,7 +64,8 @@ flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[\]\\]/g, 
 }
 return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml }) };
 } catch (err) {
-return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+const msg = err.name === 'AbortError' ? 'Request timed out — please try again with shorter text' : err.message;
+return { statusCode: 500, body: JSON.stringify({ error: msg }) };
 }
 };
 
