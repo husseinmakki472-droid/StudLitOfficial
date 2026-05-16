@@ -33,10 +33,9 @@ function splitIntoChunks(text, size) {
   return chunks.length ? chunks : [text.slice(0, size)];
 }
 
-async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens, model) {
-  model = model || 'gpt-4o-mini';
+async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
   const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), 90000);
+  const tid = setTimeout(() => controller.abort(), 55000);
   let response;
   try {
     response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -44,9 +43,9 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens, model) {
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
       body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        temperature: 0.3,
+        model: 'gpt-4o-mini',
+        max_tokens: 4000,
+        temperature: 0.4,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
@@ -67,29 +66,26 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens, model) {
   try { return JSON.parse(content); }
   catch (e) {
     try { return JSON.parse(repairJson(content)); }
-    catch (e2) { throw new Error('JSON parse failed — response may have been cut off'); }
+    catch (e2) { throw new Error('JSON parse failed'); }
   }
 }
 
 const SYSTEM_NOTES = 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational. More content is always better — fill every field completely.';
-const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, substantive content. All answers must be detailed and complete — never truncate.';
+const SYSTEM_BATCH = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate EXACTLY the number of items requested. Every item must be complete and fully filled out. Do not generate fewer items than requested.';
+const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, substantive content. All answers must be detailed and complete.';
 
 const MODE_MAP = {
-  flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
-  quiz: '"quiz":{"questions":[{"question":"full question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"detailed explanation of why this answer is correct and why others are wrong","difficulty":"Medium"}]}',
+  flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example","difficulty":"easy|medium|hard"}]}',
+  quiz: '"quiz":{"questions":[{"question":"full question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why this answer is correct and others are wrong","difficulty":"Easy|Medium|Hard"}]}',
   fitb: '"fitb":{"sentences":[{"text":"The ___ is responsible for ___ and plays a key role in ___.","blanks":["term1","term2","term3"]}]}',
-  summary: '"summary":{"overview":"3-4 sentence overview covering all major themes","keyPoints":["detailed key point 1 with context","detailed key point 2","key point 3","key point 4","key point 5","key point 6","key point 7","key point 8"],"mustRemember":"the single most critical concept to understand"}',
-  notes: '"notes":{"sections":[{"heading":"Section Title","overview":"2-3 sentence introduction explaining what this section covers and why it matters.","content":"Detailed explanatory paragraph 1 that fully explains the concept with context.\\n\\nParagraph 2 building on this with more depth, mechanisms, and nuance.\\n\\nParagraph 3 connecting to broader ideas and implications.","bullets":["Key point 1 — full explanation with sufficient detail for a student","Key point 2 — another important aspect fully explained","Key point 3 — another key idea with context and explanation","Key point 4 — further elaboration","Key point 5 — additional important detail"],"keyTerms":[{"term":"important vocabulary word","definition":"precise and comprehensive definition of this term"}],"examples":["Concrete example 1 that illustrates the concept clearly","Concrete example 2 showing a different application"],"applications":["Real-world application of this concept","Another context where this knowledge is applied"],"causeEffect":"Explanation of cause-and-effect relationships or mechanisms relevant to this section.","keyTakeaway":"The single most important insight a student must remember from this section."}]}',
-  tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section Heading","paragraphs":["First detailed paragraph explaining the concept clearly with analogies.","Second paragraph building on this with examples and applications.","Third paragraph connecting to broader context and implications."],"keyTakeaway":"The one most important insight from this section.","thinkAboutIt":"A thought-provoking question to deepen understanding?"}]}',
-  practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"question text","sampleAnswer":"comprehensive sample answer"}]},{"type":"multipleChoice","questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct"}]},{"type":"essayPrompt","questions":[{"question":"essay prompt","sampleAnswer":"detailed outline and key points to cover"}]}]}',
-  keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"comprehensive 2-3 sentence definition","importance":"why this concept matters and real-world applications"}]}',
-  studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Day Title","tasks":["specific task 1","specific task 2","specific task 3","specific task 4"],"duration":"45 min","focus":"what to prioritise today"}]}',
-  solve: '"solve":{"quickAnswer":"clear direct answer","stepByStep":[{"step":1,"title":"Step title","content":"detailed explanation of this step with examples"}],"keyInsight":"the most important insight or principle","examples":["worked example 1","worked example 2","worked example 3"],"commonMistakes":["mistake to avoid 1","mistake to avoid 2"]}'
+  summary: '"summary":{"overview":"3-4 sentence overview covering all major themes","keyPoints":["detailed key point 1","detailed key point 2","key point 3","key point 4","key point 5","key point 6","key point 7","key point 8","key point 9","key point 10"],"mustRemember":"the single most critical concept"}',
+  notes: '"notes":{"sections":[{"heading":"Section Title","overview":"2-3 sentence introduction.","content":"Detailed paragraph 1.\\n\\nParagraph 2.\\n\\nParagraph 3.","bullets":["Key point 1","Key point 2","Key point 3","Key point 4","Key point 5"],"keyTerms":[{"term":"term","definition":"definition"}],"examples":["Example 1","Example 2"],"applications":["Application 1","Application 2"],"causeEffect":"Cause-effect relationships.","keyTakeaway":"Most important insight."}]}',
+  tutor: '"tutor":{"title":"Full lesson title","sections":[{"number":1,"heading":"Section Heading","paragraphs":["First detailed paragraph.","Second paragraph.","Third paragraph."],"keyTakeaway":"Most important insight.","thinkAboutIt":"Thought-provoking question?"}]}',
+  practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"question text","sampleAnswer":"comprehensive sample answer"}]},{"type":"multipleChoice","questions":[{"question":"question text","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct"}]},{"type":"essayPrompt","questions":[{"question":"essay prompt","sampleAnswer":"detailed outline and key points"}]}]}',
+  keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"comprehensive 2-3 sentence definition","importance":"why this concept matters"}]}',
+  studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Day Title","tasks":["task 1","task 2","task 3","task 4","task 5"],"duration":"45 min","focus":"what to prioritise"}]}',
+  solve: '"solve":{"quickAnswer":"clear direct answer","stepByStep":[{"step":1,"title":"Step title","content":"detailed explanation"}],"keyInsight":"most important insight","examples":["worked example 1","worked example 2","worked example 3"],"commonMistakes":["mistake 1","mistake 2"]}'
 };
-
-function buildModeStructures(modesArr) {
-  return modesArr.map(m => MODE_MAP[m] || ('"' + m + '":{"content":"comprehensive study material"}')).join(',\n    ');
-}
 
 function buildFileCtx(filesArr, urlsArr, maxCharsPerFile) {
   let ctx = '';
@@ -107,7 +103,7 @@ function buildFileCtx(filesArr, urlsArr, maxCharsPerFile) {
 const handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); }
-  catch (e) { return; } // background functions always return 202
+  catch (e) { return; }
 
   const { requestId, topic, modes, files, urls, difficulty } = body;
   if (!requestId) return;
@@ -125,7 +121,9 @@ const handler = async (event) => {
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
   const topicStr = topic || 'the uploaded content';
   const hasNotes = modesArr.indexOf('notes') !== -1;
-  const otherModes = modesArr.filter(m => m !== 'notes');
+  const hasQuiz = modesArr.indexOf('quiz') !== -1;
+  const hasFlashcards = modesArr.indexOf('flashcards') !== -1;
+  const otherModes = modesArr.filter(m => m !== 'notes' && m !== 'quiz' && m !== 'flashcards');
 
   try {
     await store.setJSON(requestId, { status: 'processing', progress: 'Starting…' }, { ttl: 7200 });
@@ -137,135 +135,127 @@ const handler = async (event) => {
 
     const combinedResults = {};
     let resolvedTopic = topic || 'Study Set';
+    const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
+    const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
 
     // ── NOTES ──────────────────────────────────────────────────────────────
-    if (hasNotes) {
+    async function runNotes() {
       const totalFileText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const imageFiles = filesArr.filter(f => f.imageData && f.mimeType);
       const CHUNK_SIZE = 8000;
       const useChunking = totalFileText.length > CHUNK_SIZE;
-
-      const notesQty = '\n\nNOTES REQUIREMENTS: Generate 8-12 rich sections. Each section must have: a full overview paragraph (3-4 sentences), 3-4 detailed content paragraphs (each 4-6 sentences), 6+ detailed bullets with full explanations, key terms with comprehensive definitions, 3+ concrete examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept. More depth is always better.';
+      const notesQty = '\n\nNOTES REQUIREMENTS: Generate 8-12 rich sections. Each section must have: a full overview paragraph (3-4 sentences), 3-4 detailed content paragraphs, 6+ detailed bullets, key terms with definitions, 3+ concrete examples, real-world applications, cause-effect analysis, and a key takeaway.';
 
       if (useChunking) {
         const chunks = splitIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 20);
-        const totalChunks = chunks.length;
         const allSections = [];
-
         for (let ci = 0; ci < chunks.length; ci++) {
-          await store.setJSON(requestId, { status: 'processing', progress: 'Notes: section ' + (ci + 1) + ' of ' + totalChunks + '…' }, { ttl: 7200 });
-          const chunkNote = '\n\nCHUNK ' + (ci + 1) + ' of ' + totalChunks + ': Process ONLY the content in this chunk. Do not summarise — expand every concept fully.';
-          const imageBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
-          const userContent = [
-            ...imageBlocks,
-            { type: 'text', text: '\n\nUploaded materials:\n\n[Chunk ' + (ci + 1) + ']\n' + chunks[ci] },
-            { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + chunkNote + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }
-          ];
+          await store.setJSON(requestId, { status: 'processing', progress: 'Notes: chunk ' + (ci + 1) + ' of ' + chunks.length + '…' }, { ttl: 7200 });
+          const imgBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
+          const uc = [...imgBlocks, { type: 'text', text: '\n\nUploaded materials:\n\n[Chunk ' + (ci + 1) + ']\n' + chunks[ci] }, { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes\n\nCHUNK ' + (ci + 1) + ' of ' + chunks.length + ': Process ONLY this chunk.' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
           try {
-            const parsed = await callOpenAI(apiKey, SYSTEM_NOTES, userContent, 16000);
+            const parsed = await callOpenAI(apiKey, SYSTEM_NOTES, uc, 8000);
             if (parsed.results && parsed.results.notes && parsed.results.notes.sections) {
               allSections.push(...parsed.results.notes.sections);
               if (parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
             }
-          } catch (e) { /* continue with other chunks */ }
+          } catch (e) { /* continue */ }
         }
-
-        if (allSections.length) {
-          combinedResults.notes = { sections: allSections };
-        } else {
-          await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes (fallback)…' }, { ttl: 7200 });
-          const fbContent = buildFileCtx([{ name: 'content.txt', textContent: totalFileText.slice(0, 12000) }], [], 12000);
-          const fbUser = [{ type: 'text', text: fbContent }, { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
-          try {
-            const fbParsed = await callOpenAI(apiKey, SYSTEM_NOTES, fbUser, 16000);
-            if (fbParsed.results && fbParsed.results.notes) combinedResults.notes = fbParsed.results.notes;
-          } catch (e) { /* notes will be missing from result */ }
-        }
+        if (allSections.length) combinedResults.notes = { sections: allSections };
       } else {
         await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes…' }, { ttl: 7200 });
-        const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
-        const imageBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
-        const userContent = [
-          ...imageBlocks,
-          ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
-          { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }
-        ];
+        const imgBlocks = imageFiles.map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
+        const uc = [...imgBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
         try {
-          const parsed = await callOpenAI(apiKey, SYSTEM_NOTES, userContent, 16000);
+          const parsed = await callOpenAI(apiKey, SYSTEM_NOTES, uc, 8000);
           if (parsed.results && parsed.results.notes) combinedResults.notes = parsed.results.notes;
           if (parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
-        } catch (e) { /* notes will be missing */ }
+        } catch (e) { /* notes missing */ }
       }
     }
 
-    // ── OTHER MODES — one dedicated 16k call per mode in parallel ──────────
-    if (otherModes.length) {
-      await store.setJSON(requestId, { status: 'processing', progress: 'Generating ' + otherModes.join(', ') + '…' }, { ttl: 7200 });
-      const difficultyModes = ['quiz', 'practicetest', 'fitb'];
-      const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
-      const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
-
-      function makeSingleCall(mode, scopeInstr, model) {
-        const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"comprehensive study material"}');
-        const diffInstr = difficultyModes.indexOf(mode) !== -1
-          ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.'
-          : '';
-        const userContent = [
-          ...imageBlocks,
-          ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
-          { type: 'text', text: 'Topic: ' + topicStr + '\n\n' + scopeInstr + diffInstr + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + structure + '\n  }\n}' }
-        ];
-        return callOpenAI(apiKey, SYSTEM_OTHER, userContent, 16000, model).catch(() => null);
-      }
-
-      const QUIZ_BATCHES = [
-        'Generate EXACTLY 15 multiple-choice questions testing RECALL — definitions, key terms, factual knowledge. Each must have 4 options and a detailed explanation.',
-        'Generate EXACTLY 15 multiple-choice questions testing COMPREHENSION — understanding of concepts, how things work, why they happen. Each must have 4 options and a detailed explanation.',
-        'Generate EXACTLY 15 multiple-choice questions testing APPLICATION — applying concepts to real scenarios and problems. Each must have 4 options and a detailed explanation.',
-        'Generate EXACTLY 15 multiple-choice questions testing ANALYSIS — comparing, contrasting, evaluating, cause-and-effect. Each must have 4 options and a detailed explanation.',
+    // ── QUIZ — 6 sequential batches of 10 questions = 60 total ─────────────
+    // gpt-4o-mini naturally generates ~10 items per call; we use that to our
+    // advantage: 6 focused calls × ~10 questions = reliable 60-question total
+    async function runQuiz() {
+      const diffInstr = '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '.';
+      const batches = [
+        'Generate 10 multiple-choice questions about DEFINITIONS AND KEY TERMS. Test whether students know the meaning of the most important vocabulary in this topic.',
+        'Generate 10 multiple-choice questions about HOW THINGS WORK. Test understanding of processes, mechanisms, and sequences of events.',
+        'Generate 10 multiple-choice questions that are SCENARIO-BASED. Give a real-world situation or case study; students must identify the correct concept or action.',
+        'Generate 10 multiple-choice questions about CAUSE AND EFFECT. Test whether students understand why things happen and what consequences follow.',
+        'Generate 10 multiple-choice questions that COMPARE AND CONTRAST. Ask students to distinguish between related concepts, methods, or outcomes.',
+        'Generate 10 CHALLENGING multiple-choice questions requiring analysis, synthesis, or evaluation. Use tricky distractors that test deep understanding.',
       ];
-
-      const FLASHCARD_BATCHES = [
-        'Generate EXACTLY 20 flashcards for KEY TERMS AND DEFINITIONS. Front: the term. Back: full definition with context and example.',
-        'Generate EXACTLY 20 flashcards for PROCESSES AND MECHANISMS. Front: "How does X work?" Back: step-by-step explanation.',
-        'Generate EXACTLY 20 flashcards for COMPARISONS AND RELATIONSHIPS. Front: "Compare X and Y" or "What connects X and Y?" Back: thorough comparison.',
-        'Generate EXACTLY 20 flashcards for APPLICATIONS AND EXAMPLES. Front: a scenario or "Give an example of X". Back: concrete example with explanation.',
-      ];
-
-      // Sequential batches — one at a time to avoid rate limits, gpt-4o for reliability
-      async function runSequentialBatches(mode, batches, arrayKey) {
-        const all = [];
-        for (let i = 0; i < batches.length; i++) {
-          await store.setJSON(requestId, { status: 'processing', progress: mode + ': batch ' + (i + 1) + ' of ' + batches.length + '…' }, { ttl: 7200 });
-          const r = await makeSingleCall(mode, batches[i], 'gpt-4o').catch(() => null);
-          const items = (r && r.results && r.results[mode] && r.results[mode][arrayKey]) || [];
+      const all = [];
+      for (let i = 0; i < batches.length; i++) {
+        await store.setJSON(requestId, { status: 'processing', progress: 'Quiz: batch ' + (i + 1) + ' of ' + batches.length + '…' }, { ttl: 7200 });
+        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
+        const uc = [...imageBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: prompt }];
+        try {
+          const r = await callOpenAI(apiKey, SYSTEM_BATCH, uc, 4000);
+          const items = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
           all.push(...items);
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
-        }
-        if (all.length) combinedResults[mode] = { [arrayKey]: all };
+        } catch (e) { /* continue to next batch */ }
       }
-
-      const hasQuiz = otherModes.indexOf('quiz') !== -1;
-      const hasFlashcards = otherModes.indexOf('flashcards') !== -1;
-      const remainingModes = otherModes.filter(m => m !== 'quiz' && m !== 'flashcards');
-
-      // Run quiz and flashcard batches sequentially (in parallel with each other and other modes)
-      const modeCallPromises = [
-        ...(hasQuiz ? [runSequentialBatches('quiz', QUIZ_BATCHES, 'questions')] : []),
-        ...(hasFlashcards ? [runSequentialBatches('flashcards', FLASHCARD_BATCHES, 'cards')] : []),
-        ...remainingModes.map(mode =>
-          makeSingleCall(mode, 'Generate comprehensive ' + mode + ' content covering all topics thoroughly.')
-            .then(parsed => {
-              if (parsed && parsed.results) Object.assign(combinedResults, parsed.results);
-              if (parsed && parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
-            }).catch(() => {})
-        ),
-      ];
-
-      await Promise.all(modeCallPromises);
+      if (all.length) combinedResults.quiz = { questions: all };
     }
 
-    // ── STORE RESULT ───────────────────────────────────────────────────────
+    // ── FLASHCARDS — 6 sequential batches of 10 cards = 60 total ───────────
+    async function runFlashcards() {
+      const batches = [
+        'Generate 10 flashcards for the most important KEY TERMS. Front: the term. Back: clear definition with an example.',
+        'Generate 10 flashcards about PROCESSES AND STEPS. Front: "How does X work?" or "What are the steps of X?". Back: step-by-step explanation.',
+        'Generate 10 flashcards about CAUSE AND EFFECT. Front: "What causes X?" or "What is the effect of X?". Back: thorough causal explanation.',
+        'Generate 10 flashcards that COMPARE TWO THINGS. Front: "What is the difference between X and Y?". Back: clear comparison.',
+        'Generate 10 flashcards with REAL-WORLD EXAMPLES. Front: a scenario or "Give an example of X in practice". Back: concrete real-world example with explanation.',
+        'Generate 10 flashcards for HARDER CONCEPTS requiring analysis. Front: "Why does X happen?" or "What would happen if X changed?". Back: analytical explanation.',
+      ];
+      const all = [];
+      for (let i = 0; i < batches.length; i++) {
+        await store.setJSON(requestId, { status: 'processing', progress: 'Flashcards: batch ' + (i + 1) + ' of ' + batches.length + '…' }, { ttl: 7200 });
+        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
+        const uc = [...imageBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: prompt }];
+        try {
+          const r = await callOpenAI(apiKey, SYSTEM_BATCH, uc, 4000);
+          const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
+          all.push(...items);
+          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+        } catch (e) { /* continue */ }
+      }
+      if (all.length) combinedResults.flashcards = { cards: all };
+    }
+
+    // ── OTHER MODES — all parallel, each its own call ──────────────────────
+    async function runOtherModes() {
+      if (!otherModes.length) return;
+      await store.setJSON(requestId, { status: 'processing', progress: 'Generating ' + otherModes.join(', ') + '…' }, { ttl: 7200 });
+      const difficultyModes = ['practicetest', 'fitb'];
+      await Promise.all(otherModes.map(mode => {
+        const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"comprehensive study material"}');
+        const diffInstr = difficultyModes.indexOf(mode) !== -1 ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '.' : '';
+        const prompt = 'Topic: ' + topicStr + '\n\nGenerate comprehensive ' + mode + ' content covering all key topics.' + diffInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
+        const uc = [...imageBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: prompt }];
+        return callOpenAI(apiKey, SYSTEM_OTHER, uc, 8000)
+          .then(parsed => {
+            if (parsed && parsed.results) Object.assign(combinedResults, parsed.results);
+            if (parsed && parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
+          }).catch(() => {});
+      }));
+    }
+
+    // Run notes + other modes in parallel; run quiz then flashcards sequentially
+    // after each other to avoid any rate limit pressure on the same model tier
+    await Promise.all([
+      hasNotes ? runNotes() : Promise.resolve(),
+      runOtherModes(),
+      (async () => {
+        if (hasQuiz) await runQuiz();
+        if (hasFlashcards) await runFlashcards();
+      })(),
+    ]);
+
     await store.setJSON(requestId, {
       status: 'done',
       data: { topic: resolvedTopic, results: combinedResults }
