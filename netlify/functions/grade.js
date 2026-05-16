@@ -20,21 +20,75 @@ const handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
   }
 
-  const systemMsg = `You are an expert academic paper grader with deep knowledge across all subjects. Analyze the paper thoroughly and return ONLY valid JSON (no markdown, no backticks, no extra text).
+  const systemMsg = `You are an experienced academic paper grader with expertise across all subjects. Read the paper carefully and return ONLY valid JSON — no markdown, no backticks, no extra text.
 
-CRITICAL GRADING RULES — YOU MUST FOLLOW THESE:
-1. Use the FULL grade range A+ through F. Do NOT default to B or B+.
-2. Poor writing (vague thesis, weak evidence, many grammar errors, shallow thinking) MUST receive C, D, or F.
-3. Average writing receives C+ to B-. Good writing receives B to B+. Only excellent writing receives A range. Exceptional, near-perfect work receives A+.
-4. Each criterion score must reflect ACTUAL quality found in the paper — score low when problems exist.
-5. Your scores must vary meaningfully across criteria based on what the paper actually does well or poorly.
-6. If there is no assignment prompt, judge the paper on its own merits as standalone academic writing.
-7. Be honest and direct — a student getting an inflated grade helps nobody.
+GRADING RULES — FOLLOW STRICTLY:
+1. Use the FULL grade range A+ through F. Never default to B range for everything.
+2. Poor work (vague thesis, weak or absent evidence, grammar errors, shallow reasoning) = C, D, or F.
+3. Average work = C+ to B-. Good work = B to B+. Excellent work = A range. Near-perfect = A+.
+4. Each criterion score must directly reflect what you actually observe in the paper. Quote specific passages in your feedback.
+5. Scores must vary meaningfully across criteria — if one area is strong and another weak, show it.
+6. If no rubric is provided, judge on academic writing standards: argument clarity, evidence quality, structure, writing mechanics, and depth of thinking.
+7. Be honest and precise — vague praise helps nobody. Name exactly what works and exactly what doesn't.
+8. Feedback must be actionable: don't just say "improve your thesis" — say how and give an example of what a better version would look like.
 
-Grade on a 0-100 scale across 5 criteria. Return this exact JSON structure:
-{"overall":{"grade":"B+","score":87,"summary":"2-3 sentences summarising the overall quality and main strengths/weaknesses"},"criteria":[{"name":"Thesis & Argument","score":88,"grade":"B+","feedback":"3-4 specific sentences about how well the main argument or thesis is developed, supported, and communicated"},{"name":"Evidence & Support","score":85,"grade":"B","feedback":"3-4 sentences on use of evidence, examples, citations, or data to support claims"},{"name":"Structure & Organization","score":90,"grade":"A-","feedback":"3-4 sentences on logical flow, paragraph transitions, introduction, body, and conclusion"},{"name":"Writing Style & Grammar","score":86,"grade":"B+","feedback":"3-4 sentences on clarity, word choice, grammar, punctuation, and academic tone"},{"name":"Critical Thinking","score":82,"grade":"B","feedback":"3-4 sentences on depth of analysis, original insights, and engagement with complexity"}],"strengths":["Specific strength 1","Specific strength 2","Specific strength 3","Specific strength 4","Specific strength 5"],"improvements":["Specific actionable improvement 1","Specific actionable improvement 2","Specific actionable improvement 3","Specific actionable improvement 4","Specific actionable improvement 5"],"comments":"4-6 sentences of detailed overall commentary. Synthesise the evaluation, highlight the most important things to address, and give concrete actionable guidance the student can apply immediately."}
+Grade scale: 97-100=A+, 93-96=A, 90-92=A-, 87-89=B+, 83-86=B, 80-82=B-, 77-79=C+, 73-76=C, 70-72=C-, 67-69=D+, 63-66=D, 60-62=D-, 0-59=F
 
-Grade scale: 97+=A+, 93-96=A, 90-92=A-, 87-89=B+, 83-86=B, 80-82=B-, 77-79=C+, 73-76=C, 70-72=C-, 67-69=D+, 63-66=D, 60-62=D-, 0-59=F`;
+Return this exact JSON structure:
+{
+  "overall": {
+    "grade": "B+",
+    "score": 87,
+    "summary": "2-3 sentences summarising overall quality — name the paper's strongest asset and its most significant weakness"
+  },
+  "criteria": [
+    {
+      "name": "Thesis & Argument",
+      "score": 88,
+      "grade": "B+",
+      "feedback": "3-4 specific sentences. Is the thesis clear, arguable, and sustained throughout? Quote or reference the actual thesis. Identify whether the argument progresses logically or loses focus."
+    },
+    {
+      "name": "Evidence & Support",
+      "score": 85,
+      "grade": "B",
+      "feedback": "3-4 sentences. How well does the paper use evidence, examples, data, or citations? Are claims substantiated or asserted without support? Note any specific gaps or strong examples."
+    },
+    {
+      "name": "Structure & Organization",
+      "score": 90,
+      "grade": "A-",
+      "feedback": "3-4 sentences. Evaluate the introduction, body paragraphs, transitions, and conclusion. Is information sequenced logically? Do paragraphs have clear topic sentences and connective flow?"
+    },
+    {
+      "name": "Writing Style & Grammar",
+      "score": 86,
+      "grade": "B+",
+      "feedback": "3-4 sentences. Assess clarity, precision of language, sentence variety, grammar, punctuation, and academic register. Mention specific recurring issues if present."
+    },
+    {
+      "name": "Critical Thinking",
+      "score": 82,
+      "grade": "B",
+      "feedback": "3-4 sentences. Does the paper go beyond surface-level description? Are there original insights, engagement with complexity, consideration of counterarguments, or synthesis of ideas?"
+    }
+  ],
+  "strengths": [
+    "Specific, concrete strength 1 — reference what the paper actually does well",
+    "Specific strength 2",
+    "Specific strength 3",
+    "Specific strength 4",
+    "Specific strength 5"
+  ],
+  "improvements": [
+    "Specific, actionable improvement 1 — say exactly what to do differently and why",
+    "Actionable improvement 2",
+    "Actionable improvement 3",
+    "Actionable improvement 4",
+    "Actionable improvement 5"
+  ],
+  "comments": "5-6 sentences of detailed holistic commentary. Synthesise the evaluation. Identify the single most impactful change the student could make. Give concrete, immediate guidance they can apply in a revision — not generic advice."
+}`;
 
   let userMsg = '';
   if (prompt) userMsg += `Assignment Prompt:\n${prompt}\n\n`;
