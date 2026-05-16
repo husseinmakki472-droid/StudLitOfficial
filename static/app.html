@@ -1369,7 +1369,7 @@ LIGHT MODE — complete override, !important on all visuals
 [data-theme="light"] .wz-panel-right{background:#fff !important}
 
 /* Save button secondary */
-[data-theme="light"] .wz-result-topbar{background:#f0eeff !important}
+[data-theme="light"] .wz-result-topbar{background:#ffffff !important;border-bottom-color:rgba(0,0,0,0.08) !important}
 
 /* Solve wrapper */
 [data-theme="light"] .solve-wrap{background:#fff !important}
@@ -2599,7 +2599,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <!-- STEP 2: METHOD SELECTION -->
 <div id="slStep2View" style="display:none">
   <div class="sl-hero wz-view" style="padding-top:16px;padding-bottom:40px">
-    <button onclick="slShowHome()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:rgba(240,239,255,0.5);font-size:14px;cursor:pointer;padding:0;margin-bottom:16px;transition:color .2s" onmouseover="this.style.color='rgba(240,239,255,0.9)'" onmouseout="this.style.color='rgba(240,239,255,0.5)'">← Back</button>
+    <button onclick="slShowHome()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-3);font-size:14px;cursor:pointer;padding:0;margin-bottom:16px;transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-3)'">← Back</button>
     <div class="wz-step2-title">What would you like to include?</div>
     <div class="wz-step2-sub">Choose all the methods you want included in your study set:</div>
     <div class="wz-methods-grid">
@@ -2965,10 +2965,10 @@ var _tt=document.getElementById('themeToggle');if(_tt)_tt.addEventListener('clic
 function buildLightInjectCSS(accent, a2, r, r2) {
   var css = `
       /* ── Base layout ── */
-      body, .studley-layout, .sl-main { background: #ede9fe !important; }
-      .sl-sidebar { background: #dbd5f9 !important; border-right: 2px solid #d4c9fb !important; }
-      .navbar { background: rgba(237,224,255,0.98) !important; border-bottom: 1.5px solid #d4c9fb !important; }
-      .page-tabs { background: rgba(124,92,252,0.1) !important; border: 1.5px solid #d4c9fb !important; }
+      body, .studley-layout, .sl-main { background: #ffffff !important; }
+      .sl-sidebar { background: #f5f5fa !important; border-right: 1.5px solid rgba(0,0,0,0.08) !important; }
+      .navbar { background: rgba(255,255,255,0.98) !important; border-bottom: 1.5px solid rgba(0,0,0,0.07) !important; }
+      .page-tabs { background: rgba(0,0,0,0.04) !important; border: 1.5px solid rgba(0,0,0,0.09) !important; }
 
       /* ── Navbar / wordmark ── */
       .nav-wordmark { color: #0f0e1a !important; font-weight: 800 !important; }
@@ -3005,8 +3005,8 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .feature-card:hover { box-shadow: 0 0 0 2px rgba(124,92,252,0.25), 0 4px 20px rgba(124,92,252,0.15) !important; }
       .feature-title { color: #0f0e1a !important; font-weight: 700 !important; }
       .feature-desc { color: #3b3763 !important; font-weight: 500 !important; }
-      footer { background: #c8c0f0 !important; border-top: 1.5px solid #d4c9fb !important; }
-      .pricing-card { background: #f0eafe !important; border: 1.5px solid #d4c9fb !important; box-shadow: 0 2px 16px rgba(124,92,252,0.1) !important; }
+      footer { background: #f5f5fa !important; border-top: 1.5px solid rgba(0,0,0,0.08) !important; }
+      .pricing-card { background: #ffffff !important; border: 1.5px solid rgba(0,0,0,0.09) !important; box-shadow: 0 2px 16px rgba(124,92,252,0.08) !important; }
       .price-amount { color: #0f0e1a !important; -webkit-text-fill-color: #0f0e1a !important; font-weight: 800 !important; }
       .pricing-features li { color: #3b3763 !important; font-weight: 500 !important; }
 
@@ -3083,7 +3083,7 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .sl-url-input { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #0f0e1a !important; }
       .sl-url-input::placeholder { color: #a5a2c8 !important; }
       .sl-url-add { background: #e8e0fd !important; border: 1px solid #d4c9fb !important; color: #3b3763 !important; font-weight: 600 !important; }
-      .sl-file-item { background: #ede9fe !important; border: 1px solid #d4c9fb !important; }
+      .sl-file-item { background: #f5f5fa !important; border: 1px solid rgba(0,0,0,0.09) !important; }
       .sl-file-name { color: #3b3763 !important; font-weight: 600 !important; }
       .sl-file-type { color: #6b68a0 !important; }
       .upload-zone-title { color: #0f0e1a !important; font-weight: 700 !important; }
@@ -3170,7 +3170,7 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .meta-tag.accent { background: rgba(124,92,252,0.14) !important; border-color: rgba(124,92,252,0.35) !important; color: #6d3fc9 !important; font-weight: 700 !important; }
       .regen-btn { border: 1.5px solid #d4c9fb !important; background: #fff !important; color: #3b3763 !important; font-weight: 600 !important; }
       .regen-btn:hover { border-color: #7c5cfc !important; color: #6d3fc9 !important; box-shadow: 0 0 0 2px rgba(124,92,252,0.15) !important; }
-      .wz-panel-main { background: #ede9fe !important; padding: 22px !important; }
+      .wz-panel-main { background: #f5f5fa !important; padding: 22px !important; }
       .wz-content-pane { color: #3b3763 !important; }
       .wz-processing-text { color: #6b68a0 !important; font-weight: 500 !important; }
 
