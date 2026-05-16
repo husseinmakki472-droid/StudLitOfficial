@@ -5393,11 +5393,7 @@ function applyFontSize(size) {
 }
 
 function toggleDarkMode(input) {
-  const theme = input.checked ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', theme);
-  document.body.setAttribute('data-theme', theme);
-  document.body.classList.toggle('light-mode', theme==='light');
-  localStorage.setItem('sl-theme', theme);
+  applyTheme(input.checked ? 'dark' : 'light');
 }
 
 function updateFontSize(val) {
@@ -6608,7 +6604,6 @@ document.addEventListener('fullscreenchange', function() {
   <div class="settings-modal settings-modal-wrap">
     <button class="settings-close" onclick="closeSettings()">✕</button>
 
-```
 <!-- Nav -->
 <div class="settings-nav">
   <div class="settings-nav-title">⚙️ Settings</div>
@@ -6645,7 +6640,7 @@ document.addEventListener('fullscreenchange', function() {
           <div class="settings-avatar-name" id="settingsDisplayName">Student</div>
           <div class="settings-avatar-email" id="settingsDisplayEmail"></div>
         </div>
-        <button class="btn-settings-change">Change Photo</button>
+        <button class="btn-settings-change" onclick="showInfoToast('Photo upload coming soon.')">Change Photo</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
@@ -7032,13 +7027,12 @@ document.addEventListener('fullscreenchange', function() {
           <div class="settings-row-title">Delete Account</div>
           <div class="settings-row-sub">Permanently remove your account and all data. This cannot be undone.</div>
         </div>
-        <button class="btn-settings-danger">Delete Account</button>
+        <button class="btn-settings-danger" onclick="if(confirm('Permanently delete your account and all data? This cannot be undone.'))showInfoToast('Account deletion coming soon.')">Delete Account</button>
       </div>
     </div>
   </div>
 
 </div><!-- /settings-content -->
-```
 
   </div><!-- /settings-modal -->
 </div><!-- /settings-overlay -->
