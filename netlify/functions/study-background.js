@@ -63,7 +63,7 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
 }
 
 const SYSTEM_NOTES = 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational. More content is always better — fill every field completely.';
-const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, comprehensive content: quiz = 12 questions with detailed explanations; flashcards = 20 cards with thorough definitions; fitb = 12 sentences; keyconcepts = 15 terms with full definitions and importance; practicetest = 5 questions per section; studyplan = 7 days with 4-5 tasks each; summary = 8-10 detailed key points; tutor = 6 sections; solve = 3+ worked examples. All answers must be clear, detailed, and substantive — never truncate.';
+const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, comprehensive content. MINIMUM quantities for this single mode: quiz = 25+ questions with detailed explanations; flashcards = 40+ cards with thorough definitions and difficulty field; fitb = 20+ sentences; keyconcepts = 20+ terms with full definitions and importance; practicetest = 5+ questions per section type; studyplan = 7 days with 4-5 tasks each; summary = 10+ detailed key points; tutor = 6+ sections with 3 paragraphs each; solve = 4+ worked examples. All answers must be clear, detailed, and substantive — never truncate. Fill every field completely.';
 
 const MODE_MAP = {
   flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
@@ -189,28 +189,32 @@ const handler = async (event) => {
       }
     }
 
-    // ── OTHER MODES ────────────────────────────────────────────────────────
+    // ── OTHER MODES — one dedicated 16k call per mode in parallel ──────────
     if (otherModes.length) {
       await store.setJSON(requestId, { status: 'processing', progress: 'Generating ' + otherModes.join(', ') + '…' }, { ttl: 7200 });
-      const modeStructures = buildModeStructures(otherModes);
       const difficultyModes = ['quiz', 'practicetest', 'fitb'];
-      const hasDiff = otherModes.some(m => difficultyModes.indexOf(m) !== -1);
-      const diffInstr = hasDiff ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.' : '';
-      const qty = '\n\nQUANTITY: flashcards=20 cards; quiz=12 questions; fitb=12 sentences; keyconcepts=15 terms; studyplan=7 days with 4-5 tasks each; summary=8-10 detailed points; practicetest=5 per section; solve=3+ worked examples; tutor=6 sections. Do NOT stop early — generate the full quantity requested.';
       const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
       const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
-      const userContent = [
-        ...imageBlocks,
-        ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
-        { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: ' + otherModes.join(', ') + diffInstr + qty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}' }
-      ];
-      const heavyModes = ['tutor', 'practicetest', 'studyplan', 'keyconcepts', 'flashcards'];
-      const maxTok = otherModes.some(m => heavyModes.indexOf(m) !== -1) ? 12000 : 6000;
-      try {
-        const parsed = await callOpenAI(apiKey, SYSTEM_OTHER, userContent, maxTok);
-        if (parsed.results) Object.assign(combinedResults, parsed.results);
-        if (parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
-      } catch (e) { /* other modes will be missing */ }
+
+      const modeCallPromises = otherModes.map(mode => {
+        const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"comprehensive study material"}');
+        const diffInstr = difficultyModes.indexOf(mode) !== -1
+          ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.'
+          : '';
+        const userContent = [
+          ...imageBlocks,
+          ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
+          { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: ' + mode + diffInstr + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + structure + '\n  }\n}' }
+        ];
+        return callOpenAI(apiKey, SYSTEM_OTHER, userContent, 16000)
+          .then(parsed => {
+            if (parsed.results) Object.assign(combinedResults, parsed.results);
+            if (parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
+          })
+          .catch(() => { /* mode will be missing */ });
+      });
+
+      await Promise.all(modeCallPromises);
     }
 
     // ── STORE RESULT ───────────────────────────────────────────────────────

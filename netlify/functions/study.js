@@ -107,7 +107,7 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI — an expert tutor and curriculum designer. Return ONLY valid JSON — no markdown, no backticks, no extra text.' + langInstr + ' BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic. CRITICAL THINKING: questions and flashcard fronts must go beyond recall — ask students to apply, analyze, compare, explain why, predict, or solve scenarios. Mix difficulty: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis). MINIMUM quantities: flashcards = 100+ cards each with a difficulty field; quiz = 50+ questions each with correct_answer as a letter A/B/C/D; notes = 6+ sections with 5-6 bullets each; tutor = 5+ sections with 4 paragraphs each; fitb = 15+ sentences; keyconcepts = 18+ terms; practicetest = 10+ questions; studyplan = 7 days. QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty. Fill every field. Never leave arrays empty. Never truncate mid-array.';
+  const systemPrompt = 'You are StudLit AI — an expert tutor and curriculum designer. Return ONLY valid JSON — no markdown, no backticks, no extra text.' + langInstr + ' BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic. CRITICAL THINKING: questions and flashcard fronts must go beyond recall — ask students to apply, analyze, compare, explain why, predict, or solve scenarios. Mix difficulty: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis). MINIMUM quantities: flashcards = 40+ cards each with a difficulty field; quiz = 25+ questions each with correct_answer as a letter A/B/C/D; notes = 8+ sections with 6-8 bullets each; tutor = 6+ sections with 3 paragraphs each; fitb = 20+ sentences; keyconcepts = 20+ terms; practicetest = 5+ questions per section; studyplan = 7 days with 4-5 tasks each. QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty. Fill every field. Never leave arrays empty. Never truncate mid-array.';
 
   const modeMap = {
     flashcards: '"flashcards":{"cards":[{"front":"Mix of question types — e.g. \'Why does X happen?\', \'How would you apply X to Y?\', \'What is the difference between X and Y?\', \'What would happen if X changed?\', \'Give an example of X in real life\', or \'Define X\' for core terms. NOT just \'What is X?\'","back":"thorough answer — explain the concept, the reasoning, or the real-world connection, not just a one-line definition","difficulty":"easy|medium|hard — easy=definition/recall, medium=application/understanding, hard=analysis/evaluation/synthesis"}]}',
@@ -143,8 +143,7 @@ const handler = async (event) => {
     const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + tutorInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    // gpt-4o: 4000 tokens; gpt-4o-mini: 4000 tokens
-    const maxTokens = GPT4O_MODES.has(mode) ? 4000 : 4000;
+    const maxTokens = 16000;
     return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
   }
 
