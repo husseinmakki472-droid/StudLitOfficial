@@ -6,7 +6,7 @@ const SECRET = process.env.SCORE_SECRET || 'studlit-dev-secret-change-in-prod';
 const DIFF_XP = { Easy: 5, Medium: 12, Hard: 20 };
 
 // Hard per-event XP caps
-const CAPS = { quiz_complete: 100, set_generate: 15, timer_complete: 8 };
+const CAPS = { quiz_complete: 100, set_generate: 15, timer_complete: 8, save_set: 5, flashcard_complete: 3, daily_visit: 12, perfect_quiz: 8 };
 
 // In-memory rate bucket (resets on cold start; good enough for abuse deterrence)
 // Key: IP → { xp: number, windowStart: ms }
@@ -105,6 +105,37 @@ function scoreTimer(data) {
   return { xp, flags: [] };
 }
 
+function scoreSaveSet(data) {
+  const seen = clamp(parseInt(data.savedToday) || 0, 0, 10);
+  // First save today: 5 pts. Second: 2 pts. After: 0.
+  const xp = seen === 0 ? 5 : seen === 1 ? 2 : 0;
+  return { xp, flags: seen >= 2 ? ['daily_cap'] : [] };
+}
+
+function scoreFlashcardComplete(data) {
+  const seen = clamp(parseInt(data.completedToday) || 0, 0, 10);
+  // Max 2 deck completions per day
+  const xp = seen < 2 ? 3 : 0;
+  return { xp, flags: seen >= 2 ? ['daily_cap'] : [] };
+}
+
+function scoreDailyVisit(data) {
+  const streak = clamp(parseInt(data.streak) || 0, 0, 365);
+  // Streak milestone bonus at day 3, 7, 14, 30 and every 30 after
+  const milestones = new Set([3, 7, 14, 30]);
+  if (milestones.has(streak) || (streak > 30 && streak % 30 === 0)) {
+    return { xp: 10, flags: ['streak_milestone'] };
+  }
+  return { xp: 2, flags: [] };
+}
+
+function scorePerfectQuiz(data) {
+  const q = clamp(parseInt(data.questions) || 0, 0, 100);
+  // Bonus only for real quizzes (3+ questions)
+  const xp = q >= 3 ? 8 : 0;
+  return { xp, flags: [] };
+}
+
 // ----------------------------------------------------------------
 // Handler
 // ----------------------------------------------------------------
@@ -139,6 +170,10 @@ const handler = async (event) => {
   if (type === 'quiz_complete') result = scoreQuiz(data);
   else if (type === 'set_generate') result = scoreSetGenerate(data);
   else if (type === 'timer_complete') result = scoreTimer(data);
+  else if (type === 'save_set') result = scoreSaveSet(data);
+  else if (type === 'flashcard_complete') result = scoreFlashcardComplete(data);
+  else if (type === 'daily_visit') result = scoreDailyVisit(data);
+  else if (type === 'perfect_quiz') result = scorePerfectQuiz(data);
   else return { statusCode: 400, body: JSON.stringify({ error: 'Unknown event type' }) };
 
   if (result.error) {
