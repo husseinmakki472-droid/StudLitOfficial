@@ -1277,39 +1277,49 @@ TIMER
 /* Timer modal overlay */
 .timer-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
 .timer-overlay.open{display:flex;animation:fadeIn .2s ease both}
-.timer-widget{background:linear-gradient(160deg,#12102a 0%,#0d0b1e 100%);border:1.5px solid rgba(255,255,255,0.1);border-radius:26px;padding:26px 28px;width:340px;box-shadow:0 24px 64px rgba(0,0,0,0.7);position:relative}
+.timer-widget{background:linear-gradient(160deg,#12102a 0%,#0d0b1e 100%);border:1.5px solid rgba(255,255,255,0.1);border-radius:26px;padding:24px 26px 22px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,0.7),0 0 0 1px rgba(124,92,252,0.08);position:relative}
 body.light-mode .timer-overlay,[data-theme=”light”] .timer-overlay{background:rgba(0,0,0,0.4)}
 body.light-mode .timer-widget,[data-theme=”light”] .timer-widget{background:#fff;border:1.5px solid rgba(0,0,0,0.1);box-shadow:0 16px 48px rgba(0,0,0,0.15)}
-.timer-w-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.timer-w-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .timer-w-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.45);display:flex;align-items:center;gap:6px}
 body.light-mode .timer-w-label,[data-theme=”light”] .timer-w-label{color:rgba(15,14,26,0.5)}
 .timer-w-close{background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:15px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;line-height:1}
 .timer-w-close:hover{background:rgba(255,255,255,0.15);color:#fff}
 body.light-mode .timer-w-close,[data-theme=”light”] .timer-w-close{background:rgba(0,0,0,0.06);color:rgba(15,14,26,0.5)}
-.timer-w-display{font-family:’Syne’,sans-serif;font-size:62px;font-weight:800;color:#fff;text-align:center;letter-spacing:-3px;margin-bottom:12px;line-height:1;transition:color .3s}
+.timer-mode-tabs{display:flex;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.09);border-radius:12px;padding:3px;gap:3px;margin-bottom:18px}
+body.light-mode .timer-mode-tabs,[data-theme=”light”] .timer-mode-tabs{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.09)}
+.timer-mode-tab{flex:1;background:transparent;border:none;border-radius:9px;padding:7px 0;font-family:’Syne’,sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.timer-mode-tab:hover{color:rgba(255,255,255,0.7)}
+.timer-mode-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 10px rgba(124,92,252,0.35)}
+body.light-mode .timer-mode-tab,[data-theme=”light”] .timer-mode-tab{color:rgba(15,14,26,0.45)}
+body.light-mode .timer-mode-tab.active,[data-theme=”light”] .timer-mode-tab.active{color:#fff}
+.timer-w-display{font-family:’Syne’,sans-serif;font-size:62px;font-weight:800;color:#fff;text-align:center;letter-spacing:-3px;margin-bottom:6px;line-height:1;transition:color .3s,font-size .2s}
+.timer-w-display.hr-mode{font-size:46px;letter-spacing:-2px}
 body.light-mode .timer-w-display,[data-theme=”light”] .timer-w-display{color:#0f0e1a}
 .timer-w-display.warn{color:#fbbf24}
 .timer-w-display.danger{color:#f87171;animation:timerPulse .6s infinite alternate}
 @keyframes timerPulse{from{opacity:1}to{opacity:.5}}
+.timer-w-sublabel{text-align:center;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:14px}
+body.light-mode .timer-w-sublabel,[data-theme=”light”] .timer-w-sublabel{color:rgba(15,14,26,0.3)}
 .timer-w-prog{height:4px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;margin-bottom:20px}
 body.light-mode .timer-w-prog,[data-theme=”light”] .timer-w-prog{background:rgba(0,0,0,0.08)}
 .timer-w-prog-fill{height:100%;background:linear-gradient(90deg,#7c5cfc,#b06ef3);border-radius:999px;transition:width .5s linear;width:100%}
 .timer-w-controls{display:flex;gap:10px;margin-bottom:14px}
-.timer-w-play{flex:1;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:14px;padding:13px;font-family:’Syne’,sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,92,252,0.35);transition:opacity .2s}
-.timer-w-play:hover{opacity:.88}
+.timer-w-play{flex:1;background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;border:none;border-radius:14px;padding:13px;font-family:’Syne’,sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,92,252,0.35);transition:opacity .2s,transform .15s}
+.timer-w-play:hover{opacity:.88;transform:translateY(-1px)}
 .timer-w-reset{background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.1);border-radius:14px;padding:13px 16px;font-size:16px;cursor:pointer;color:rgba(255,255,255,0.6);transition:background .15s,color .15s;flex-shrink:0}
 .timer-w-reset:hover{background:rgba(255,255,255,0.14);color:#fff}
 body.light-mode .timer-w-reset,[data-theme=”light”] .timer-w-reset{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.1);color:rgba(15,14,26,0.55)}
 .timer-w-presets{display:flex;gap:6px;margin-bottom:14px}
 .timer-w-preset{flex:1;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:7px 4px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);cursor:pointer;text-align:center;transition:all .15s}
 .timer-w-preset:hover,.timer-w-preset.active{background:rgba(124,92,252,0.2);border-color:#7c5cfc;color:#a78bfa}
-body.light-mode .timer-w-preset,[data-theme=”light”] .timer-w-preset{background:#f0eeff;border:1.5px solid rgba(0,0,0,0.09);color:rgba(15,14,26,0.5)}
+body.light-mode .timer-w-preset,[data-theme=”light”] .timer-w-preset{background:rgba(124,92,252,0.05);border:1.5px solid rgba(0,0,0,0.09);color:rgba(15,14,26,0.5)}
 body.light-mode .timer-w-preset.active,[data-theme=”light”] .timer-w-preset.active{background:rgba(124,92,252,0.12);border-color:#7c5cfc;color:#7c5cfc}
-.timer-w-custom{display:flex;align-items:center;gap:7px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07)}
+.timer-w-custom{display:flex;align-items:center;gap:6px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap}
 body.light-mode .timer-w-custom,[data-theme=”light”] .timer-w-custom{border-top:1px solid rgba(0,0,0,0.07)}
 .timer-w-custom-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
 body.light-mode .timer-w-custom-lbl,[data-theme=”light”] .timer-w-custom-lbl{color:rgba(15,14,26,0.4)}
-.timer-w-input{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:9px;padding:7px 8px;font-family:’Syne’,sans-serif;font-size:14px;font-weight:700;color:#fff;width:52px;text-align:center;outline:none}
+.timer-w-input{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:9px;padding:7px 6px;font-family:’Syne’,sans-serif;font-size:13px;font-weight:700;color:#fff;width:46px;text-align:center;outline:none}
 body.light-mode .timer-w-input,[data-theme=”light”] .timer-w-input{background:#fff;border:1.5px solid rgba(0,0,0,0.14);color:#0f0e1a}
 .timer-w-input:focus{border-color:#7c5cfc}
 .timer-w-sep{color:rgba(255,255,255,0.3);font-size:16px;font-weight:700}
@@ -4499,6 +4509,7 @@ var timerRunning = false;
 var timerInterval = null;
 var timerSecs = 25 * 60;
 var timerTotal = 25 * 60;
+var timerMode = 'min'; // 'min' or 'hr'
 
 function toggleTimer() {
   var o = document.getElementById('timerOverlay');
@@ -4506,6 +4517,31 @@ function toggleTimer() {
 }
 function timerOverlayClick(e) {
   if (e.target === document.getElementById('timerOverlay')) toggleTimer();
+}
+
+function timerSwitchMode(mode) {
+  timerMode = mode;
+  document.getElementById('timerTabMin').classList.toggle('active', mode === 'min');
+  document.getElementById('timerTabHr').classList.toggle('active', mode === 'hr');
+  var hoursWrap = document.getElementById('tHoursWrap');
+  if (hoursWrap) hoursWrap.style.display = mode === 'hr' ? 'flex' : 'none';
+  var sublabel = document.getElementById('timerSublabel');
+  if (sublabel) sublabel.textContent = mode === 'hr' ? 'HH : MM : SS' : 'MM : SS';
+  var presets = document.getElementById('timerPresets');
+  if (presets) {
+    if (mode === 'hr') {
+      presets.innerHTML = '<button class="timer-w-preset" onclick="timerPreset(this,30)">30m</button><button class="timer-w-preset" onclick="timerPreset(this,60)">1h</button><button class="timer-w-preset active" onclick="timerPreset(this,90)">1.5h</button><button class="timer-w-preset" onclick="timerPreset(this,120)">2h</button><button class="timer-w-preset" onclick="timerPreset(this,180)">3h</button>';
+    } else {
+      presets.innerHTML = '<button class="timer-w-preset" onclick="timerPreset(this,5)">5m</button><button class="timer-w-preset" onclick="timerPreset(this,10)">10m</button><button class="timer-w-preset active" onclick="timerPreset(this,25)">25m</button><button class="timer-w-preset" onclick="timerPreset(this,45)">45m</button><button class="timer-w-preset" onclick="timerPreset(this,60)">60m</button>';
+    }
+  }
+  timerReset();
+  var defaultMins = mode === 'hr' ? 90 : 25;
+  timerTotal = defaultMins * 60;
+  timerSecs = timerTotal;
+  timerUpdateDisplay();
+  var pb = document.getElementById('timerPlayBtn');
+  if (pb) pb.textContent = '▶ Start';
 }
 
 function timerToggle() {
@@ -4558,9 +4594,10 @@ function timerPreset(btn, mins) {
 }
 
 function timerCustom() {
+  var h = parseInt(document.getElementById('tHours').value) || 0;
   var m = parseInt(document.getElementById('tMins').value) || 0;
   var s = parseInt(document.getElementById('tSecs').value) || 0;
-  var total = m * 60 + s;
+  var total = h * 3600 + m * 60 + s;
   if (!total) return;
   clearInterval(timerInterval);
   timerRunning = false;
@@ -4570,20 +4607,28 @@ function timerCustom() {
   document.querySelectorAll('.timer-w-preset').forEach(function(b){ b.classList.remove('active'); });
   var pb = document.getElementById('timerPlayBtn');
   if (pb) pb.textContent = '▶ Start';
+  document.getElementById('tHours').value = '';
   document.getElementById('tMins').value = '';
   document.getElementById('tSecs').value = '';
 }
 
 function timerUpdateDisplay() {
-  var m = Math.floor(timerSecs / 60);
+  var h = Math.floor(timerSecs / 3600);
+  var m = Math.floor((timerSecs % 3600) / 60);
   var s = timerSecs % 60;
   var d = document.getElementById('timerDisplay');
   var f = document.getElementById('timerFill');
   if (d) {
-    d.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    d.className = 'timer-w-display' + (timerSecs<=60?' danger':timerSecs<=timerTotal*0.25?' warn':'');
+    var isHrMode = timerMode === 'hr' || timerTotal >= 3600;
+    if (isHrMode) {
+      d.className = 'timer-w-display hr-mode' + (timerSecs<=60?' danger':timerSecs<=timerTotal*0.15?' warn':'');
+      d.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    } else {
+      d.className = 'timer-w-display' + (timerSecs<=60?' danger':timerSecs<=timerTotal*0.25?' warn':'');
+      d.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
   }
-  if (f) f.style.width = (timerSecs / timerTotal * 100) + '%';
+  if (f) f.style.width = (timerTotal > 0 ? timerSecs / timerTotal * 100 : 100) + '%';
 }
 
 // Close timer on Escape
@@ -6016,25 +6061,34 @@ function qnUpdateCount() {
 <div class="timer-overlay" id="timerOverlay" onclick="timerOverlayClick(event)">
   <div class="timer-widget" id="timerWidget">
     <div class="timer-w-header">
-      <div class="timer-w-label">🕐 Study Timer</div>
+      <div class="timer-w-label">⏱ Study Timer</div>
       <button class="timer-w-close" onclick="toggleTimer()">✕</button>
     </div>
+    <div class="timer-mode-tabs">
+      <button class="timer-mode-tab active" id="timerTabMin" onclick="timerSwitchMode('min')">⏱ Minutes</button>
+      <button class="timer-mode-tab" id="timerTabHr" onclick="timerSwitchMode('hr')">🕐 Hours</button>
+    </div>
     <div class="timer-w-display" id="timerDisplay">25:00</div>
+    <div class="timer-w-sublabel" id="timerSublabel">MM : SS</div>
     <div class="timer-w-prog"><div class="timer-w-prog-fill" id="timerFill"></div></div>
     <div class="timer-w-controls">
       <button class="timer-w-play" id="timerPlayBtn" onclick="timerToggle()">▶ Start</button>
       <button class="timer-w-reset" onclick="timerReset()" title="Reset">↺</button>
     </div>
-    <div class="timer-w-presets">
+    <div class="timer-w-presets" id="timerPresets">
       <button class="timer-w-preset" onclick="timerPreset(this,5)">5m</button>
       <button class="timer-w-preset" onclick="timerPreset(this,10)">10m</button>
       <button class="timer-w-preset active" onclick="timerPreset(this,25)">25m</button>
       <button class="timer-w-preset" onclick="timerPreset(this,45)">45m</button>
-      <button class="timer-w-preset" onclick="timerPreset(this,60)">1h</button>
+      <button class="timer-w-preset" onclick="timerPreset(this,60)">60m</button>
     </div>
-    <div class="timer-w-custom">
+    <div class="timer-w-custom" id="timerCustomRow">
       <span class="timer-w-custom-lbl">Custom:</span>
-      <input class="timer-w-input" id="tMins" placeholder="mm" type="number" min="0" max="99">
+      <span id="tHoursWrap" style="display:none;align-items:center;gap:4px">
+        <input class="timer-w-input" id="tHours" placeholder="hh" type="number" min="0" max="23">
+        <span class="timer-w-sep">:</span>
+      </span>
+      <input class="timer-w-input" id="tMins" placeholder="mm" type="number" min="0" max="59">
       <span class="timer-w-sep">:</span>
       <input class="timer-w-input" id="tSecs" placeholder="ss" type="number" min="0" max="59">
       <button class="timer-w-set" onclick="timerCustom()">Set</button>
