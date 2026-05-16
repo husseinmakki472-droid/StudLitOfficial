@@ -33,6 +33,9 @@
 [functions.grade]
   timeout = 26
 
+[functions.ai-check]
+  timeout = 26
+
 [[redirects]]
   from = "/"
   to = "/app.html"
