@@ -63,7 +63,7 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
 }
 
 const SYSTEM_NOTES = 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational. More content is always better — fill every field completely.';
-const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. CRITICAL: You MUST fill your ENTIRE token budget — keep generating until you physically cannot add more items. Do not stop early under any circumstances. MINIMUM quantities: quiz = 35+ questions with detailed explanations; flashcards = 50+ cards with thorough definitions and difficulty field; fitb = 25+ sentences; keyconcepts = 25+ terms with full definitions and importance; practicetest = 6+ questions per section type; studyplan = 7 days with 5 tasks each; summary = 12+ detailed key points; tutor = 7+ sections with 3 paragraphs each; solve = 5+ worked examples. All answers must be clear, detailed, and substantive — never truncate. Fill every field completely. KEEP GOING until you hit the token limit.';
+const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, substantive content. All answers must be detailed and complete — never truncate.';
 
 const MODE_MAP = {
   flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
@@ -196,10 +196,7 @@ const handler = async (event) => {
       const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
       const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
 
-      // Modes that get 2 parallel calls (merged afterward for double the content)
-      const DOUBLE_MODES = { flashcards: 'cards', quiz: 'questions', fitb: 'sentences', keyconcepts: 'concepts' };
-
-      function makeModeCall(mode, halfInstr) {
+      function makeSingleCall(mode, scopeInstr) {
         const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"comprehensive study material"}');
         const diffInstr = difficultyModes.indexOf(mode) !== -1
           ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.'
@@ -207,26 +204,48 @@ const handler = async (event) => {
         const userContent = [
           ...imageBlocks,
           ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []),
-          { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: ' + mode + diffInstr + halfInstr + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + structure + '\n  }\n}' }
+          { type: 'text', text: 'Topic: ' + topicStr + '\n\n' + scopeInstr + diffInstr + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + structure + '\n  }\n}' }
         ];
         return callOpenAI(apiKey, SYSTEM_OTHER, userContent, 16000).catch(() => null);
       }
 
+      // Quiz: 5 focused calls of 15 questions each = 75 questions total
+      const QUIZ_BATCHES = [
+        'Generate EXACTLY 15 multiple-choice quiz questions testing RECALL — definitions, key terms, factual knowledge. Each must have 4 options and an explanation.',
+        'Generate EXACTLY 15 multiple-choice quiz questions testing COMPREHENSION — understanding of concepts, how things work, why they happen. Each must have 4 options and an explanation.',
+        'Generate EXACTLY 15 multiple-choice quiz questions testing APPLICATION — applying concepts to scenarios, real-world situations, problem-solving. Each must have 4 options and an explanation.',
+        'Generate EXACTLY 15 multiple-choice quiz questions testing ANALYSIS — comparing, contrasting, evaluating, cause-and-effect. Each must have 4 options and an explanation.',
+        'Generate EXACTLY 15 multiple-choice quiz questions that are CHALLENGING — synthesis, edge cases, nuanced distinctions, tricky distractors. Each must have 4 options and an explanation.',
+      ];
+
+      // Flashcards: 4 focused calls of 20 cards each = 80 cards total
+      const FLASHCARD_BATCHES = [
+        'Generate EXACTLY 20 flashcards covering KEY TERMS AND DEFINITIONS — one card per important term. Front: the term. Back: full definition with context.',
+        'Generate EXACTLY 20 flashcards covering PROCESSES AND MECHANISMS — how things work step by step. Front: "How does X work?" or "What are the steps of X?" Back: detailed explanation.',
+        'Generate EXACTLY 20 flashcards covering COMPARISONS AND RELATIONSHIPS — how concepts relate or differ. Front: "Compare X and Y" or "What is the relationship between X and Y?" Back: thorough comparison.',
+        'Generate EXACTLY 20 flashcards covering APPLICATIONS AND EXAMPLES — real-world uses and scenarios. Front: a scenario or "Give an example of X". Back: concrete example with explanation.',
+      ];
+
       const modeCallPromises = otherModes.map(mode => {
-        if (DOUBLE_MODES[mode]) {
-          const arrayKey = DOUBLE_MODES[mode];
-          const half1Instr = '\n\nSCOPE: Cover FOUNDATIONAL topics — definitions, core concepts, basic mechanics, essential vocabulary. Do NOT include advanced or applied items.';
-          const half2Instr = '\n\nSCOPE: Cover ADVANCED topics — applications, analysis, edge cases, comparisons, scenario-based. Do NOT repeat basic definitions already covered elsewhere.';
-          return Promise.all([makeModeCall(mode, half1Instr), makeModeCall(mode, half2Instr)])
-            .then(([r1, r2]) => {
-              const arr1 = (r1 && r1.results && r1.results[mode] && r1.results[mode][arrayKey]) || [];
-              const arr2 = (r2 && r2.results && r2.results[mode] && r2.results[mode][arrayKey]) || [];
-              const merged = [...arr1, ...arr2];
-              if (merged.length) combinedResults[mode] = Object.assign({}, (r1&&r1.results&&r1.results[mode])||{}, { [arrayKey]: merged });
-              if (r1 && r1.topic && r1.topic !== 'the uploaded content') resolvedTopic = r1.topic;
+        if (mode === 'quiz') {
+          return Promise.all(QUIZ_BATCHES.map(scope => makeSingleCall('quiz', scope)))
+            .then(results => {
+              const all = results.flatMap(r => (r && r.results && r.results.quiz && r.results.quiz.questions) || []);
+              if (all.length) combinedResults.quiz = { questions: all };
+              const first = results.find(r => r && r.topic && r.topic !== 'the uploaded content');
+              if (first) resolvedTopic = first.topic;
             });
         }
-        return makeModeCall(mode, '')
+        if (mode === 'flashcards') {
+          return Promise.all(FLASHCARD_BATCHES.map(scope => makeSingleCall('flashcards', scope)))
+            .then(results => {
+              const all = results.flatMap(r => (r && r.results && r.results.flashcards && r.results.flashcards.cards) || []);
+              if (all.length) combinedResults.flashcards = { cards: all };
+              const first = results.find(r => r && r.topic && r.topic !== 'the uploaded content');
+              if (first) resolvedTopic = first.topic;
+            });
+        }
+        return makeSingleCall(mode, 'Generate comprehensive ' + mode + ' content covering all topics thoroughly.')
           .then(parsed => {
             if (parsed && parsed.results) Object.assign(combinedResults, parsed.results);
             if (parsed && parsed.topic && parsed.topic !== 'the uploaded content') resolvedTopic = parsed.topic;
