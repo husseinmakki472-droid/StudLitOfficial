@@ -1948,7 +1948,8 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 <!-- ── Auth Modal ── -->
 <div class="auth-overlay" id="authOverlay" style="display:none">
-  <div class="auth-card">
+  <div class="auth-card" style="position:relative">
+    <button onclick="document.getElementById('authOverlay').style.display='none'" style="position:absolute;top:12px;right:12px;background:none;border:none;color:rgba(240,239,255,0.4);font-size:20px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:6px;transition:color .2s" onmouseover="this.style.color='rgba(240,239,255,0.9)'" onmouseout="this.style.color='rgba(240,239,255,0.4)'">✕</button>
     <div class="auth-logo">
       <div class="auth-logo-mark">SL</div>
       <div class="auth-logo-name">Stud<span>Lit</span></div>
@@ -2306,6 +2307,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 <!-- STEP 2: METHOD SELECTION -->
 <div id="slStep2View" style="display:none">
   <div class="sl-hero wz-view" style="padding-top:16px;padding-bottom:40px">
+    <button onclick="slShowHome()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:rgba(240,239,255,0.5);font-size:14px;cursor:pointer;padding:0;margin-bottom:16px;transition:color .2s" onmouseover="this.style.color='rgba(240,239,255,0.9)'" onmouseout="this.style.color='rgba(240,239,255,0.5)'">← Back</button>
     <div class="wz-step2-title">What would you like to include?</div>
     <div class="wz-step2-sub">Choose all the methods you want included in your study set:</div>
     <div class="wz-methods-grid">
