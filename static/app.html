@@ -4052,7 +4052,7 @@ function renderTutorHTML(topic, d){
   const rwHtml=d.realWorldApplication?`<div class="lesson-rw"><div class="lesson-rw-label">🌍 Real-World Application</div><p class="lesson-rw-body">${escHtml(d.realWorldApplication)}</p></div>`:'';
   const summaryHtml=d.summary?`<div class="lesson-summary"><div class="lesson-summary-label">📋 Summary</div><p class="lesson-summary-body">${escHtml(d.summary)}</p></div>`:'';
   const quizHtml=(d.quiz&&d.quiz.length)?`<div class="lesson-quiz"><div class="lesson-quiz-label">🧠 Quick Quiz</div>${d.quiz.map((q,qi)=>`<div class="lesson-quiz-item"><div class="lesson-quiz-q"><span class="lesson-quiz-num">Q${qi+1}</span>${escHtml(q.question||'')}</div><div class="lesson-quiz-reveal-wrap"><button class="lesson-quiz-reveal-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Show Answer</button><div class="lesson-quiz-ans" style="display:none"><span class="lesson-quiz-ans-label">Answer:</span>${escHtml(q.answer||'')}</div></div></div>`).join('')}</div>`:'';
-  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}${rwHtml}${summaryHtml}${quizHtml}</div><div class="tutor-followup" onclick="wzShowTab('quiz')">💬 <strong>Want to test what you've learned?</strong> Click to start a quiz on ${escHtml(t)} →</div>`;
+  return`${resultHeader('tutor',t,[{text:'📖 Tutor Lesson',accent:true},{text:sections.length+' Sections'}])}<div class="lesson-body"><h1 class="lesson-title">${escHtml(title)}</h1>${secHtml}${rwHtml}${summaryHtml}${quizHtml}</div>`;
 }
 
 function ptToggleAnswers(show){
