@@ -62,8 +62,8 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
   }
 }
 
-const SYSTEM_NOTES = 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational.';
-const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate quality content: quiz = 8 questions with explanations; flashcards = 12 cards; fitb = 7 sentences; keyconcepts = 10 terms with definitions; practicetest = 3 questions per section; studyplan = 5-7 days; summary = 6-8 key points; tutor = 4 sections. Keep all answers clear and substantive.';
+const SYSTEM_NOTES = 'You are StudLit AI, a university-level study material generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate COMPREHENSIVE, TEXTBOOK-QUALITY notes. Do NOT summarise. Expand every concept fully with detailed explanations, examples, and definitions. Each section must be rich and educational. More content is always better — fill every field completely.';
+const SYSTEM_OTHER = 'You are StudLit AI, a study content generator. Return ONLY valid JSON — no markdown, no backticks, no extra text. Generate rich, comprehensive content: quiz = 12 questions with detailed explanations; flashcards = 20 cards with thorough definitions; fitb = 12 sentences; keyconcepts = 15 terms with full definitions and importance; practicetest = 5 questions per section; studyplan = 7 days with 4-5 tasks each; summary = 8-10 detailed key points; tutor = 6 sections; solve = 3+ worked examples. All answers must be clear, detailed, and substantive — never truncate.';
 
 const MODE_MAP = {
   flashcards: '"flashcards":{"cards":[{"front":"term or concept","back":"thorough definition with context and example"}]}',
@@ -133,13 +133,13 @@ const handler = async (event) => {
     if (hasNotes) {
       const totalFileText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const imageFiles = filesArr.filter(f => f.imageData && f.mimeType);
-      const CHUNK_SIZE = 5000;
+      const CHUNK_SIZE = 8000;
       const useChunking = totalFileText.length > CHUNK_SIZE;
 
-      const notesQty = '\n\nNOTES REQUIREMENTS: Generate 6-10 rich sections. Each section must have: a full overview paragraph, 2-3 detailed content paragraphs, 5+ detailed bullets, key terms with definitions, 2+ examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept.';
+      const notesQty = '\n\nNOTES REQUIREMENTS: Generate 8-12 rich sections. Each section must have: a full overview paragraph (3-4 sentences), 3-4 detailed content paragraphs (each 4-6 sentences), 6+ detailed bullets with full explanations, key terms with comprehensive definitions, 3+ concrete examples, real-world applications, cause-effect analysis, and a key takeaway. Do NOT summarise — fully expand every concept. More depth is always better.';
 
       if (useChunking) {
-        const chunks = splitIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 8);
+        const chunks = splitIntoChunks(totalFileText, CHUNK_SIZE).slice(0, 20);
         const totalChunks = chunks.length;
         const allSections = [];
 
@@ -165,7 +165,7 @@ const handler = async (event) => {
           combinedResults.notes = { sections: allSections };
         } else {
           await store.setJSON(requestId, { status: 'processing', progress: 'Generating notes (fallback)…' }, { ttl: 7200 });
-          const fbContent = buildFileCtx([{ name: 'content.txt', textContent: totalFileText.slice(0, 6000) }], [], 6000);
+          const fbContent = buildFileCtx([{ name: 'content.txt', textContent: totalFileText.slice(0, 12000) }], [], 12000);
           const fbUser = [{ type: 'text', text: fbContent }, { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: notes' + notesQty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}' }];
           try {
             const fbParsed = await callOpenAI(apiKey, SYSTEM_NOTES, fbUser, 16000);
@@ -196,8 +196,8 @@ const handler = async (event) => {
       const difficultyModes = ['quiz', 'practicetest', 'fitb'];
       const hasDiff = otherModes.some(m => difficultyModes.indexOf(m) !== -1);
       const diffInstr = hasDiff ? '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. easy=basic recall; medium=conceptual understanding; hard=deep analysis.' : '';
-      const qty = '\n\nQUANTITY: flashcards=12; quiz=8 questions; fitb=7; keyconcepts=10; studyplan=5+ days; summary=6+ points; practicetest=3 per section; solve=2+ examples; tutor=4 sections.';
-      const fileCtx = buildFileCtx(filesArr, urlsArr, 8000);
+      const qty = '\n\nQUANTITY: flashcards=20 cards; quiz=12 questions; fitb=12 sentences; keyconcepts=15 terms; studyplan=7 days with 4-5 tasks each; summary=8-10 detailed points; practicetest=5 per section; solve=3+ worked examples; tutor=6 sections. Do NOT stop early — generate the full quantity requested.';
+      const fileCtx = buildFileCtx(filesArr, urlsArr, 20000);
       const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
       const userContent = [
         ...imageBlocks,
@@ -205,7 +205,7 @@ const handler = async (event) => {
         { type: 'text', text: 'Topic: ' + topicStr + '\n\nGenerate: ' + otherModes.join(', ') + diffInstr + qty + '\n\nReturn:\n{\n  "topic": "precise topic name",\n  "results": {\n    ' + modeStructures + '\n  }\n}' }
       ];
       const heavyModes = ['tutor', 'practicetest', 'studyplan', 'keyconcepts', 'flashcards'];
-      const maxTok = otherModes.some(m => heavyModes.indexOf(m) !== -1) ? 4000 : 2000;
+      const maxTok = otherModes.some(m => heavyModes.indexOf(m) !== -1) ? 12000 : 6000;
       try {
         const parsed = await callOpenAI(apiKey, SYSTEM_OTHER, userContent, maxTok);
         if (parsed.results) Object.assign(combinedResults, parsed.results);
