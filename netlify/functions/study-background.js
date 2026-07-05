@@ -36,6 +36,17 @@ function splitIntoChunks(text, size) {
   return chunks.length ? chunks : [text.slice(0, size)];
 }
 
+function dedupeFlashcards(cards) {
+  const normalize = s => (s || '').toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+  const byFront = new Map();
+  for (const card of cards) {
+    const key = normalize(card.front);
+    const existing = byFront.get(key);
+    if (!existing || (card.back || '').length > (existing.back || '').length) byFront.set(key, card);
+  }
+  return Array.from(byFront.values());
+}
+
 async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
   for (let attempt = 0; attempt < 4; attempt++) {
     const controller = new AbortController();
@@ -228,8 +239,9 @@ const handler = async (event) => {
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
         } catch (e) { /* skip chunk, continue */ }
       }
-      if (allCards.length) combinedResults.flashcards = { cards: allCards };
-      await saveProgress('Flashcards done — ' + allCards.length + ' cards');
+      const dedupedCards = dedupeFlashcards(allCards);
+      if (dedupedCards.length) combinedResults.flashcards = { cards: dedupedCards };
+      await saveProgress('Flashcards done — ' + dedupedCards.length + ' cards');
     }
 
     // ── NOTES — chunked ──────────────────────────────────────────────────
