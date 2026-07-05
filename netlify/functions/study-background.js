@@ -240,8 +240,28 @@ const handler = async (event) => {
         } catch (e) { /* skip chunk, continue */ }
       }
       const dedupedCards = dedupeFlashcards(allCards);
-      if (dedupedCards.length) combinedResults.flashcards = { cards: dedupedCards };
-      await saveProgress('Flashcards done — ' + dedupedCards.length + ' cards');
+
+      // ── MISSING CONCEPT REVIEW — fill gaps vs. source, then re-dedupe ────
+      const existingFronts = dedupedCards.map(c => c.front).join('\n- ');
+      const reviewCards = [];
+      for (let ci = 0; ci < docChunks.length; ci++) {
+        await saveProgress('Flashcards: reviewing chunk ' + (ci + 1) + ' of ' + docChunks.length + ' for missing concepts…');
+        const reviewPrompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + docChunks.length + ']\n' + docChunks[ci] +
+          '\n\nExisting flashcard fronts (already covered):\n- ' + existingFronts +
+          '\n\nCompare this chunk against the existing flashcard fronts. Identify IMPORTANT concepts, terms, or ideas in this chunk that are NOT already covered. Generate NEW flashcards ONLY for those missing concepts. If everything important in this chunk is already covered, return an empty cards array.' +
+          '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
+        try {
+          const r = anthropicKey
+            ? await callClaude(anthropicKey, SYS_BATCH, reviewPrompt, 4000)
+            : await callOpenAI(openaiKey, SYS_BATCH, [...imageBlocks, { type: 'text', text: reviewPrompt }], 4000);
+          const newCards = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
+          reviewCards.push(...newCards);
+        } catch (e) { /* skip this chunk's review, keep existing deduped flashcards */ }
+      }
+
+      const finalCards = dedupeFlashcards(dedupedCards.concat(reviewCards));
+      if (finalCards.length) combinedResults.flashcards = { cards: finalCards };
+      await saveProgress('Flashcards done — ' + finalCards.length + ' cards');
     }
 
     // ── NOTES — chunked ──────────────────────────────────────────────────
