@@ -156,6 +156,9 @@ const handler = async (event) => {
   const fileCtx = buildFileCtx(filesArr, urlsArr);
   const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
 
+  const fullText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
+  const docChunks = splitIntoChunks(fullText, 8000);
+
   const combinedResults = {};
   let resolvedTopic = topic || 'Study Set';
 
@@ -208,27 +211,25 @@ const handler = async (event) => {
       await saveProgress('Quiz done — ' + all.length + ' questions');
     }
 
-    // ── FLASHCARDS — 5 sequential batches of 10 ──────────────────────────
+    // ── FLASHCARDS — chunked over full document ───────────────────────────
     if (modesArr.indexOf('flashcards') !== -1) {
-      const batches = [
-        'Generate 10 flashcards for KEY TERMS. Front: the term. Back: definition + example.',
-        'Generate 10 flashcards for PROCESSES. Front: "How does X work?". Back: step-by-step.',
-        'Generate 10 flashcards for CAUSE AND EFFECT. Front: "What causes X?". Back: causal chain.',
-        'Generate 10 flashcards COMPARING TWO CONCEPTS. Front: "Difference between X and Y?". Back: comparison.',
-        'Generate 10 flashcards for APPLICATIONS. Front: real-world scenario. Back: which concept applies and why.',
-      ];
-      const all = [];
-      for (let i = 0; i < batches.length; i++) {
-        await saveProgress('Flashcards: set ' + (i + 1) + ' of ' + batches.length + '…');
-        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
+      const allCards = [];
+      for (let ci = 0; ci < docChunks.length; ci++) {
+        await saveProgress('Flashcards: chunk ' + (ci + 1) + ' of ' + docChunks.length + '…');
+        const prompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + docChunks.length + ']\n' + docChunks[ci] +
+          '\n\nGenerate 6-12 flashcards based ONLY on this chunk. Mix key terms, processes, cause-effect, comparisons, and applications.' +
+          '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
-          const r = await callAI(SYS_BATCH, prompt, 4000);
+          const r = anthropicKey
+            ? await callClaude(anthropicKey, SYS_BATCH, prompt, 4000)
+            : await callOpenAI(openaiKey, SYS_BATCH, [...imageBlocks, { type: 'text', text: prompt }], 4000);
           const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
-          all.push(...items);
-        } catch (e) { /* next batch */ }
+          allCards.push(...items);
+          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+        } catch (e) { /* skip chunk, continue */ }
       }
-      if (all.length) combinedResults.flashcards = { cards: all };
-      await saveProgress('Flashcards done — ' + all.length + ' cards');
+      if (allCards.length) combinedResults.flashcards = { cards: allCards };
+      await saveProgress('Flashcards done — ' + allCards.length + ' cards');
     }
 
     // ── NOTES — chunked ──────────────────────────────────────────────────
