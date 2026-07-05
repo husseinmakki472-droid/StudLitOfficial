@@ -42,7 +42,7 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
     const tid = setTimeout(() => controller.abort(), 55000);
     let response;
     try {
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
+      response = await fetch('<https://api.openai.com/v1/chat/completions>', {
         method: 'POST', signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
         body: JSON.stringify({
@@ -83,7 +83,7 @@ async function callClaude(anthropicKey, systemPrompt, userPrompt, maxTokens) {
     const tid = setTimeout(() => controller.abort(), 55000);
     let response;
     try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
+      response = await fetch('<https://api.anthropic.com/v1/messages>', {
         method: 'POST', signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
@@ -137,7 +137,7 @@ function buildFileCtx(filesArr, urlsArr) {
   if (filesArr.length) {
     ctx += '\n\nUploaded materials:\n';
     for (const f of filesArr) {
-      if (typeof f.textContent === 'string' && f.textContent) ctx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 20000) + '\n';
+      if (typeof f.textContent === 'string' && f.textContent) ctx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 60000) + '\n';
       else if (!f.imageData) ctx += '\n[File: ' + f.name + ' — no text]\n';
     }
   }
@@ -167,6 +167,15 @@ const handler = async (event) => {
   const combinedResults = {};
   let resolvedTopic = topic || 'Study Set';
 
+  function extractOutline(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    const headings = lines.filter(l => /^#+\s/.test(l) || /^[A-Z][^a-z]{0,2}[A-Z]/.test(l.trim()) && l.trim().length < 80);
+    if (headings.length >= 3) return 'Key topics in the material: ' + headings.slice(0, 20).join('; ');
+    return text.slice(0, 300).replace(/\n+/g, ' ');
+  }
+  const contentOutline = extractOutline(filesArr.map(f => f.textContent || '').join('\n'));
+
   async function saveProgress(progress) {
     try { await store.setJSON(requestId, { status: 'processing', progress, partial: { topic: resolvedTopic, results: { ...combinedResults } } }, { ttl: 7200 }); }
     catch (e) { /* ignore */ }
@@ -191,22 +200,33 @@ const handler = async (event) => {
 
     const diffInstr = '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '. Match every question to this level.';
 
-    // ── QUIZ — 8 sequential batches of 10 = 80 questions ─────────────────
-    if (modesArr.indexOf('quiz') !== -1) {
-      const batches = [
-        'Generate 10 multiple-choice questions testing DEFINITIONS AND KEY TERMS. Each must have 4 clear options with one unambiguously correct answer.',
-        'Generate 10 multiple-choice questions testing HOW THINGS WORK — processes, mechanisms, sequences, and systems.',
-        'Generate 10 SCENARIO-BASED multiple-choice questions. Present real situations and ask students to identify the concept, explain what happens, or predict the outcome.',
-        'Generate 10 multiple-choice questions testing CAUSE AND EFFECT. Ask what leads to X, what results from Y, or what would change if Z were different.',
-        'Generate 10 COMPARISON multiple-choice questions. Ask students to distinguish between two similar concepts, identify which applies to a situation, or pick the best example.',
-        'Generate 10 HARD multiple-choice questions requiring analysis and synthesis. Students must combine multiple concepts, evaluate arguments, or apply knowledge to novel situations.',
-        'Generate 10 APPLICATION multiple-choice questions. Give students a real-world problem and ask which concept, formula, or principle applies and how.',
-        'Generate 10 CRITICAL THINKING multiple-choice questions. Ask students to evaluate claims, identify flaws, or choose the strongest explanation for a phenomenon.',
-      ];
+    const quizBatches = [
+      'Generate 10 multiple-choice questions testing DEFINITIONS AND KEY TERMS. Each must have 4 clear options with one unambiguously correct answer.',
+      'Generate 10 multiple-choice questions testing HOW THINGS WORK — processes, mechanisms, sequences, and systems.',
+      'Generate 10 SCENARIO-BASED multiple-choice questions. Present real situations and ask students to identify the concept, explain what happens, or predict the outcome.',
+      'Generate 10 multiple-choice questions testing CAUSE AND EFFECT. Ask what leads to X, what results from Y, or what would change if Z were different.',
+      'Generate 10 COMPARISON multiple-choice questions. Ask students to distinguish between two similar concepts, identify which applies to a situation, or pick the best example.',
+      'Generate 10 HARD multiple-choice questions requiring analysis and synthesis. Students must combine multiple concepts, evaluate arguments, or apply knowledge to novel situations.',
+      'Generate 10 APPLICATION multiple-choice questions. Give students a real-world problem and ask which concept, formula, or principle applies and how.',
+      'Generate 10 CRITICAL THINKING multiple-choice questions. Ask students to evaluate claims, identify flaws, or choose the strongest explanation for a phenomenon.',
+    ];
+    const flashBatches = [
+      'Generate 10 flashcards for KEY TERMS AND DEFINITIONS. Front: the term or concept. Back: full definition with context and an example showing it in use.',
+      'Generate 10 flashcards for PROCESSES AND MECHANISMS. Front: "How does X work?" or "What is the sequence of X?". Back: complete step-by-step explanation.',
+      'Generate 10 flashcards for CAUSE AND EFFECT. Front: "What causes X?" or "What happens when Y occurs?". Back: full causal chain with explanation.',
+      'Generate 10 COMPARISON flashcards. Front: "What is the difference between X and Y?" or "Compare X and Y". Back: clear contrast with key distinguishing features.',
+      'Generate 10 APPLICATION flashcards. Front: a real-world scenario or problem. Back: which concept applies, why it applies, and how to use it.',
+      'Generate 10 EXAMPLE-BASED flashcards. Front: give a real-world example and ask which concept it illustrates. Back: the concept + explanation of why this example fits.',
+      'Generate 10 PROBLEM-SOLVING flashcards. Front: a question requiring calculation, prediction, or logical reasoning. Back: full worked solution with explanation.',
+      'Generate 10 SYNTHESIS flashcards. Front: a question connecting two or more concepts. Back: thorough explanation of the connection.',
+    ];
+
+    const outlineHint = contentOutline ? '\n\nContent coverage: ' + contentOutline + '. Ensure questions are spread across ALL these topics, not just the most prominent ones.' : '';
+
+    async function runQuizBatches() {
       const all = [];
-      for (let i = 0; i < batches.length; i++) {
-        await saveProgress('Quiz: set ' + (i + 1) + ' of ' + batches.length + '…');
-        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
+      for (let i = 0; i < quizBatches.length; i++) {
+        const prompt = 'Topic: ' + topicStr + '\n\n' + quizBatches[i] + outlineHint + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
           const r = await callAI(SYS_BATCH, prompt, 5000);
           const items = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
@@ -214,38 +234,51 @@ const handler = async (event) => {
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
         } catch (e) { /* next batch */ }
       }
-      if (all.length) combinedResults.quiz = { questions: all };
-      await saveProgress('Quiz done — ' + all.length + ' questions');
+      return all;
     }
 
-    // ── FLASHCARDS — 8 sequential batches of 10 = 80 cards ───────────────
-    if (modesArr.indexOf('flashcards') !== -1) {
-      const batches = [
-        'Generate 10 flashcards for KEY TERMS AND DEFINITIONS. Front: the term or concept. Back: full definition with context and an example showing it in use.',
-        'Generate 10 flashcards for PROCESSES AND MECHANISMS. Front: "How does X work?" or "What is the sequence of X?". Back: complete step-by-step explanation.',
-        'Generate 10 flashcards for CAUSE AND EFFECT. Front: "What causes X?" or "What happens when Y occurs?". Back: full causal chain with explanation.',
-        'Generate 10 COMPARISON flashcards. Front: "What is the difference between X and Y?" or "Compare X and Y". Back: clear contrast with key distinguishing features.',
-        'Generate 10 APPLICATION flashcards. Front: a real-world scenario or problem. Back: which concept applies, why it applies, and how to use it.',
-        'Generate 10 EXAMPLE-BASED flashcards. Front: give a real-world example and ask which concept it illustrates. Back: the concept + explanation of why this example fits.',
-        'Generate 10 PROBLEM-SOLVING flashcards. Front: a question requiring calculation, prediction, or logical reasoning. Back: full worked solution with explanation.',
-        'Generate 10 SYNTHESIS flashcards. Front: a question connecting two or more concepts ("How does X relate to Y?" or "Why does understanding X require knowing Y?"). Back: thorough explanation of the connection.',
-      ];
+    async function runFlashChunks() {
+      const fullText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const all = [];
-      for (let i = 0; i < batches.length; i++) {
-        await saveProgress('Flashcards: set ' + (i + 1) + ' of ' + batches.length + '…');
-        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
-        try {
-          const r = await callAI(SYS_BATCH, prompt, 5000);
-          const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
-          all.push(...items);
-          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
-        } catch (e) { /* next batch */ }
+      if (fullText.trim()) {
+        const docChunks = splitIntoChunks(fullText, 8000);
+        for (let i = 0; i < docChunks.length; i++) {
+          await saveProgress('Flashcards: chunk ' + (i + 1) + ' of ' + docChunks.length + '…');
+          const prompt = 'Topic: ' + topicStr + '\n\n[Document section ' + (i + 1) + ' of ' + docChunks.length + ']\n' + docChunks[i] + '\n\nGenerate 6-12 flashcards based ONLY on the content in this section. Cover every distinct concept, term, and fact present. Do not repeat cards from other sections.\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
+          try {
+            const r = await callAI(SYS_BATCH, prompt, 5000);
+            const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
+            all.push(...items);
+            if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+          } catch (e) { /* skip chunk, continue */ }
+        }
+      } else {
+        for (let i = 0; i < flashBatches.length; i++) {
+          const prompt = 'Topic: ' + topicStr + '\n\n' + flashBatches[i] + outlineHint + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
+          try {
+            const r = await callAI(SYS_BATCH, prompt, 5000);
+            const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
+            all.push(...items);
+          } catch (e) { /* next batch */ }
+        }
       }
-      if (all.length) combinedResults.flashcards = { cards: all };
-      await saveProgress('Flashcards done — ' + all.length + ' cards');
+      return all;
     }
 
-    // ── NOTES — chunked, textbook-depth ──────────────────────────────────
+    const wantQuiz = modesArr.indexOf('quiz') !== -1;
+    const wantFlash = modesArr.indexOf('flashcards') !== -1;
+
+    if (wantQuiz || wantFlash) {
+      await saveProgress('Generating quiz and flashcards in parallel…');
+      const [quizItems, flashItems] = await Promise.all([
+        wantQuiz ? runQuizBatches() : Promise.resolve([]),
+        wantFlash ? runFlashChunks() : Promise.resolve([]),
+      ]);
+      if (wantQuiz && quizItems.length) combinedResults.quiz = { questions: quizItems };
+      if (wantFlash && flashItems.length) combinedResults.flashcards = { cards: flashItems };
+      await saveProgress('Quiz (' + quizItems.length + ' q) + Flashcards (' + flashItems.length + ' cards) done');
+    }
+
     if (modesArr.indexOf('notes') !== -1) {
       const totalText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const CHUNK = 8000;
@@ -279,7 +312,6 @@ const handler = async (event) => {
       await saveProgress('Notes done');
     }
 
-    // ── FILL IN THE BLANKS — 3 batches of 10 = 30 sentences ──────────────
     if (modesArr.indexOf('fitb') !== -1) {
       const batches = [
         'Generate 10 fill-in-the-blank sentences testing KEY TERMS AND DEFINITIONS. Each sentence must have 2-3 blanks and test whether students know the correct vocabulary.',
@@ -300,7 +332,6 @@ const handler = async (event) => {
       await saveProgress('Fill in the blanks done — ' + allSentences.length + ' sentences');
     }
 
-    // ── KEY CONCEPTS — 3 batches of 10 = 30 terms ────────────────────────
     if (modesArr.indexOf('keyconcepts') !== -1) {
       const batches = [
         'Generate 10 key concepts: the CORE FOUNDATIONAL TERMS that students must know first to understand this topic.',
@@ -321,7 +352,6 @@ const handler = async (event) => {
       await saveProgress('Key concepts done — ' + allConcepts.length + ' terms');
     }
 
-    // ── TUTOR — 2 batches merged into one comprehensive lesson ────────────
     if (modesArr.indexOf('tutor') !== -1) {
       await saveProgress('Generating tutor lesson part 1…');
       const tutorInstr = '\n\nTUTOR RULES: Teach from first principles assuming zero prior knowledge. (1) Define EVERY term before using it. (2) Give 2+ concrete examples per section. (3) Explain the WHY behind every concept. (4) Write 3 full paragraphs per section. (5) Connect each section to the next. Depth over brevity.';
@@ -344,7 +374,6 @@ const handler = async (event) => {
       await saveProgress('Tutor done');
     }
 
-    // ── PRACTICE TEST — 2 batches for depth ──────────────────────────────
     if (modesArr.indexOf('practicetest') !== -1) {
       await saveProgress('Generating practice test part 1…');
       const ptInstr = '\n\nGenerate a comprehensive practice test. Short answer questions should require 3-5 sentence answers. Multiple choice should have 4 options with full explanations. Essay prompts should require argument, evidence, and analysis.' + diffInstr;
@@ -373,7 +402,6 @@ const handler = async (event) => {
       await saveProgress('Practice test done');
     }
 
-    // ── REMAINING MODES — sequential, generous token budget ──────────────
     const remaining = modesArr.filter(m => !['quiz','flashcards','notes','fitb','keyconcepts','tutor','practicetest'].includes(m));
     for (const mode of remaining) {
       await saveProgress('Generating ' + mode + '…');
