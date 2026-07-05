@@ -121,6 +121,7 @@ async function callClaude(anthropicKey, systemPrompt, userPrompt, maxTokens) {
 const SYS_NOTES = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate COMPREHENSIVE textbook-quality notes. Expand every concept fully with examples, mechanisms, cause-effect, and key takeaways. Never summarise.';
 const SYS_BATCH = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate EXACTLY the number of items specified. Every item must be fully complete. Do not stop early.';
 const SYS_OTHER = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate rich comprehensive content with detailed explanations.';
+const SYS_REVIEW = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Only generate flashcards for concepts that are genuinely missing from the existing set. It is correct and expected to return zero cards if everything important is already covered. Every item you do generate must be fully complete.';
 
 const MODE_MAP = {
   flashcards: '"flashcards":{"cards":[{"front":"question or term","back":"thorough answer or definition with context","difficulty":"easy|medium|hard"}]}',
@@ -242,18 +243,19 @@ const handler = async (event) => {
       const dedupedCards = dedupeFlashcards(allCards);
 
       // ── MISSING CONCEPT REVIEW — fill gaps vs. source, then re-dedupe ────
-      const existingFronts = dedupedCards.map(c => c.front).join('\n- ');
+      const existingFronts = dedupedCards.slice(0, 100).map(c => c.front).join('\n- ');
+      const reviewChunks = docChunks.slice(0, 8);
       const reviewCards = [];
-      for (let ci = 0; ci < docChunks.length; ci++) {
-        await saveProgress('Flashcards: reviewing chunk ' + (ci + 1) + ' of ' + docChunks.length + ' for missing concepts…');
-        const reviewPrompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + docChunks.length + ']\n' + docChunks[ci] +
+      for (let ci = 0; ci < reviewChunks.length; ci++) {
+        await saveProgress('Flashcards: reviewing chunk ' + (ci + 1) + ' of ' + reviewChunks.length + ' for missing concepts…');
+        const reviewPrompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + reviewChunks.length + ']\n' + reviewChunks[ci] +
           '\n\nExisting flashcard fronts (already covered):\n- ' + existingFronts +
           '\n\nCompare this chunk against the existing flashcard fronts. Identify IMPORTANT concepts, terms, or ideas in this chunk that are NOT already covered. Generate NEW flashcards ONLY for those missing concepts. If everything important in this chunk is already covered, return an empty cards array.' +
           '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
           const r = anthropicKey
-            ? await callClaude(anthropicKey, SYS_BATCH, reviewPrompt, 4000)
-            : await callOpenAI(openaiKey, SYS_BATCH, [...imageBlocks, { type: 'text', text: reviewPrompt }], 4000);
+            ? await callClaude(anthropicKey, SYS_REVIEW, reviewPrompt, 4000)
+            : await callOpenAI(openaiKey, SYS_REVIEW, [...imageBlocks, { type: 'text', text: reviewPrompt }], 4000);
           const newCards = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
           reviewCards.push(...newCards);
         } catch (e) { /* skip this chunk's review, keep existing deduped flashcards */ }
