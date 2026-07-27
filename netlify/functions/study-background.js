@@ -89,32 +89,46 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
 }
 
 async function callClaude(anthropicKey, systemPrompt, userPrompt, maxTokens) {
-  const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), 50000);
-  let response;
-  try {
-    response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }]
-      })
-    });
-  } catch (e) { clearTimeout(tid); throw e; }
-  clearTimeout(tid);
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error((err.error && err.error.message) || 'Anthropic error ' + response.status);
-  }
-  const data = await response.json();
-  const content = (data.content && data.content[0] && data.content[0].text) || '';
-  if (!content) throw new Error('Empty Claude response');
-  try { return JSON.parse(content); }
-  catch (e) {
-    try { return JSON.parse(repairJson(content)); }
-    catch (e2) { throw new Error('Claude JSON parse failed'); }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 50000);
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', signal: controller.signal,
+        headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        })
+      });
+    } catch (fetchErr) {
+      clearTimeout(tid);
+      if (attempt < 2) { await sleep(8000 * (attempt + 1)); continue; }
+      throw fetchErr;
+    }
+    clearTimeout(tid);
+    if (response.status === 429) {
+      const wait = Math.max(15000, parseInt(response.headers.get('retry-after') || '15', 10) * 1000);
+      if (attempt < 2) { await sleep(wait); continue; }
+      throw new Error('Claude rate limited');
+    }
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error((err.error && err.error.message) || 'Anthropic error ' + response.status);
+    }
+    const data = await response.json();
+    const content = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!content) throw new Error('Empty Claude response');
+    try { return JSON.parse(content); }
+    catch (e) {
+      try { return JSON.parse(repairJson(content)); }
+      catch (e2) {
+        if (attempt < 2) continue;
+        throw new Error('Claude JSON parse failed');
+      }
+    }
   }
 }
 
@@ -173,9 +187,10 @@ const handler = async (event) => {
 
   const combinedResults = {};
   let resolvedTopic = topic || 'Study Set';
+  let flashcardMeta = null;
 
-  async function saveProgress(progress) {
-    try { await store.setJSON(requestId, { status: 'processing', progress, partial: { topic: resolvedTopic, results: { ...combinedResults } } }, { ttl: 7200 }); }
+  async function saveProgress(progress, meta) {
+    try { await store.setJSON(requestId, { status: 'processing', progress, partial: { topic: resolvedTopic, results: { ...combinedResults } }, ...(meta || {}) }, { ttl: 7200 }); }
     catch (e) { /* ignore */ }
   }
 
@@ -223,47 +238,67 @@ const handler = async (event) => {
       await saveProgress('Quiz done — ' + all.length + ' questions');
     }
 
-    // ── FLASHCARDS — chunked over full document ───────────────────────────
+    // ── FLASHCARDS — chunked over full document, bounded concurrency ──────
     if (modesArr.indexOf('flashcards') !== -1) {
-      const allCards = [];
-      for (let ci = 0; ci < docChunks.length; ci++) {
-        await saveProgress('Flashcards: chunk ' + (ci + 1) + ' of ' + docChunks.length + '…');
+      const hasText = fullText.trim().length > 0;
+      const deadline = Date.now() + 13 * 60 * 1000;
+      let successfulChunks = 0;
+      let failedChunks = 0;
+      let deadlineHit = false;
+      const chunkResults = new Array(docChunks.length);
+      let nextIndex = 0;
+
+      async function processChunk(ci) {
+        console.log(JSON.stringify({ event: 'flashcard_chunk_attempt', chunk: ci + 1, total: docChunks.length }));
         const prompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + docChunks.length + ']\n' + docChunks[ci] +
           '\n\nGenerate 6-12 flashcards based ONLY on this chunk. Mix key terms, processes, cause-effect, comparisons, and applications.' +
           '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
           const r = anthropicKey
             ? await callClaude(anthropicKey, SYS_BATCH, prompt, 4000)
-            : await callOpenAI(openaiKey, SYS_BATCH, [...imageBlocks, { type: 'text', text: prompt }], 4000);
+            : await callOpenAI(openaiKey, SYS_BATCH, hasText ? [{ type: 'text', text: prompt }] : [...imageBlocks, { type: 'text', text: prompt }], 4000);
           const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
-          allCards.push(...items);
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
-        } catch (e) { /* skip chunk, continue */ }
-      }
-      const dedupedCards = dedupeFlashcards(allCards);
-
-      // ── MISSING CONCEPT REVIEW — fill gaps vs. source, then re-dedupe ────
-      const existingFronts = dedupedCards.slice(0, 100).map(c => c.front).join('\n- ');
-      const reviewChunks = docChunks.slice(0, 8);
-      const reviewCards = [];
-      for (let ci = 0; ci < reviewChunks.length; ci++) {
-        await saveProgress('Flashcards: reviewing chunk ' + (ci + 1) + ' of ' + reviewChunks.length + ' for missing concepts…');
-        const reviewPrompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + reviewChunks.length + ']\n' + reviewChunks[ci] +
-          '\n\nExisting flashcard fronts (already covered):\n- ' + existingFronts +
-          '\n\nCompare this chunk against the existing flashcard fronts. Identify IMPORTANT concepts, terms, or ideas in this chunk that are NOT already covered. Generate NEW flashcards ONLY for those missing concepts. If everything important in this chunk is already covered, return an empty cards array.' +
-          '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
-        try {
-          const r = anthropicKey
-            ? await callClaude(anthropicKey, SYS_REVIEW, reviewPrompt, 4000)
-            : await callOpenAI(openaiKey, SYS_REVIEW, [...imageBlocks, { type: 'text', text: reviewPrompt }], 4000);
-          const newCards = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
-          reviewCards.push(...newCards);
-        } catch (e) { /* skip this chunk's review, keep existing deduped flashcards */ }
+          successfulChunks++;
+          console.log(JSON.stringify({ event: 'flashcard_chunk_success', chunk: ci + 1, total: docChunks.length, cards: items.length }));
+          chunkResults[ci] = items;
+        } catch (e) {
+          failedChunks++;
+          console.error(JSON.stringify({ event: 'flashcard_chunk_error', chunk: ci + 1, total: docChunks.length, error: e.message }));
+          chunkResults[ci] = [];
+        }
+        await saveProgress(
+          'Flashcards: ' + successfulChunks + '/' + docChunks.length + ' chunks done (' + failedChunks + ' failed)…',
+          { flashcardStats: { totalChunks: docChunks.length, successfulChunks, failedChunks } }
+        );
       }
 
-      const finalCards = dedupeFlashcards(dedupedCards.concat(reviewCards));
+      async function worker() {
+        while (true) {
+          const ci = nextIndex++;
+          if (ci >= docChunks.length) return;
+          if (Date.now() > deadline) { deadlineHit = true; return; }
+          await processChunk(ci);
+        }
+      }
+
+      await Promise.all(Array.from({ length: Math.min(3, docChunks.length) }, worker));
+
+      const allCards = [];
+      for (let ci = 0; ci < chunkResults.length; ci++) allCards.push(...(chunkResults[ci] || []));
+      const totalCardsBeforeDedupe = allCards.length;
+
+      // Missing-concept review disabled during this reliability pass — it
+      // doubles AI calls per document and risks exceeding the 15-min limit.
+      const finalCards = dedupeFlashcards(allCards);
+
+      flashcardMeta = { totalChunks: docChunks.length, successfulChunks, failedChunks, totalCardsBeforeDedupe, partial: deadlineHit };
+
       if (finalCards.length) combinedResults.flashcards = { cards: finalCards };
-      await saveProgress('Flashcards done — ' + finalCards.length + ' cards');
+      await saveProgress(
+        'Flashcards done — ' + finalCards.length + ' cards' + (deadlineHit ? ' (partial — time limit reached)' : ''),
+        { flashcardStats: flashcardMeta }
+      );
     }
 
     // ── NOTES — chunked ──────────────────────────────────────────────────
@@ -315,7 +350,7 @@ const handler = async (event) => {
       await saveProgress(mode + ' done');
     }
 
-    await store.setJSON(requestId, { status: 'done', data: { topic: resolvedTopic, results: combinedResults } }, { ttl: 7200 });
+    await store.setJSON(requestId, { status: 'done', data: { topic: resolvedTopic, results: combinedResults }, flashcardStats: flashcardMeta || undefined }, { ttl: 7200 });
 
   } catch (err) {
     try { await store.setJSON(requestId, { status: 'error', error: err.message }, { ttl: 7200 }); } catch (e2) { /* ignore */ }
