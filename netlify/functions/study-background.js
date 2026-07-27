@@ -22,17 +22,34 @@ function repairJson(str) {
 function splitIntoChunks(text, size) {
   if (!text || text.length <= size) return [text];
   const chunks = [];
-  const paragraphs = text.split(/\n{2,}/);
   let current = '';
+
+  function flush() {
+    if (current.trim()) chunks.push(current.trim());
+    current = '';
+  }
+
+  function addPiece(piece) {
+    if (piece.length > size) {
+      flush();
+      for (let i = 0; i < piece.length; i += size) chunks.push(piece.slice(i, i + size).trim());
+      return;
+    }
+    if (current.length + piece.length + 2 > size && current.length > 0) flush();
+    current += (current ? '\n\n' : '') + piece;
+  }
+
+  const paragraphs = text.split(/\n{2,}/);
   for (const para of paragraphs) {
-    if (current.length + para.length + 2 > size && current.length > 0) {
-      chunks.push(current.trim());
-      current = para;
+    if (para.length <= size) {
+      addPiece(para);
     } else {
-      current += (current ? '\n\n' : '') + para;
+      // Paragraph itself exceeds the cap — fall back to sentence boundaries.
+      const sentences = para.split(/(?<=[.!?])\s+/);
+      for (const sentence of sentences) addPiece(sentence);
     }
   }
-  if (current.trim()) chunks.push(current.trim());
+  flush();
   return chunks.length ? chunks : [text.slice(0, size)];
 }
 
