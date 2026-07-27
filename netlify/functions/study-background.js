@@ -275,9 +275,9 @@ const handler = async (event) => {
 
       async function worker() {
         while (true) {
-          if (Date.now() > deadline) { deadlineHit = true; return; }
           const ci = nextIndex++;
           if (ci >= docChunks.length) return;
+          if (Date.now() > deadline) { deadlineHit = true; return; }
           await processChunk(ci);
         }
       }
