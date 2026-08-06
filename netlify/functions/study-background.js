@@ -76,7 +76,12 @@ function dedupeFlashcards(cards) {
   return Array.from(byFront.values());
 }
 
-async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
+// These modes need the stronger model — matches the split study.js has always
+// used. Everything else stays on mini.
+const GPT4O_MODES = new Set(['quiz', 'solve', 'tutor', 'practicetest']);
+function modelFor(mode) { return GPT4O_MODES.has(mode) ? 'gpt-4o' : 'gpt-4o-mini'; }
+
+async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens, model) {
   for (let attempt = 0; attempt < 4; attempt++) {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 50000);
@@ -86,7 +91,7 @@ async function callOpenAI(apiKey, systemPrompt, userContent, maxTokens) {
         method: 'POST', signal: controller.signal,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
         body: JSON.stringify({
-          model: 'gpt-4o-mini', max_tokens: maxTokens, temperature: 0.4,
+          model: model || 'gpt-4o-mini', max_tokens: maxTokens, temperature: 0.4,
           response_format: { type: 'json_object' },
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }]
         })
@@ -179,6 +184,20 @@ const SYS_BATCH = STUDLIT_CORE + '\nGenerate EXACTLY the number of items specifi
 const SYS_OTHER = STUDLIT_CORE + '\nGenerate rich comprehensive content with detailed explanations.';
 const SYS_REVIEW = STUDLIT_CORE + '\nOnly generate flashcards for concepts that are genuinely missing from the existing set. It is correct and expected to return zero cards if everything important is already covered. Every item you do generate must be fully complete.';
 
+// Explicit floors per mode. Without these the model decides how much to make
+// and consistently under-delivers — "generate comprehensive X content" is not
+// an instruction it can act on. Ported from the study.js system prompt, which
+// is where these numbers were already proven.
+const MODE_QTY = {
+  summary:      'Write an overview of 6-8 full sentences covering every main idea, then AT LEAST 12 keyPoints — one per major concept in the material, each a complete explanatory sentence rather than a fragment. Then the single mustRemember insight.',
+  tutor:        'Produce AT LEAST 8 sections, one per major concept. Every section needs: 3 substantial paragraphs (not one-liners), 2+ defined key terms, 2+ worked examples, a keyTakeaway, and a thinkAboutIt question. Teach a complete beginner — never skip steps.',
+  practicetest: 'Produce three sections — shortAnswer, multipleChoice and essayPrompt — with AT LEAST 6 questions in each. Every question needs a full sampleAnswer that models what a strong student response looks like, not a one-line hint.',
+  fitb:         'Produce AT LEAST 20 fill-in-the-blank sentences. Each sentence needs 2-3 blanks and must be substantial enough to test real understanding, not a trivial one-word gap.',
+  keyconcepts:  'Produce AT LEAST 20 concepts. Each needs a complete 2-3 sentence definition and an importance field explaining why it matters and how it connects to the other concepts.',
+  studyplan:    'Produce all 7 days. Each day needs 4-5 specific, actionable tasks naming the actual topics being studied — never generic filler like "review notes" — plus a duration and a focus area.',
+  solve:        'Give the quickAnswer, then AT LEAST 5 stepByStep entries walking through the full reasoning, the keyInsight, 3 worked examples, and 2+ commonMistakes students make on this type of problem.'
+};
+
 const MODE_MAP = {
   flashcards: '"flashcards":{"cards":[{"front":"question or term","back":"thorough answer or definition with context","difficulty":"easy|medium|hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this card belongs to — reuse the SAME label across every card on that topic","subtopic":"specific sub-concept within that topic"}]}',
   quiz: '"quiz":{"questions":[{"question":"full question","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct and why others are wrong","difficulty":"Easy|Medium|Hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this question belongs to — reuse the SAME label across every question on that topic","subtopic":"specific sub-concept within that topic"}]}',
@@ -270,9 +289,9 @@ const handler = async (event) => {
     return JSON.stringify([...imageBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: prompt }]);
   }
 
-  async function callAI(sys, prompt, maxTok) {
+  async function callAI(sys, prompt, maxTok, mode) {
     if (anthropicKey) return callClaude(anthropicKey, sys, (fileCtx ? fileCtx + '\n\n' : '') + prompt, maxTok);
-    if (openaiKey) return callOpenAI(openaiKey, sys, JSON.parse(makeOAIContent(prompt)), maxTok);
+    if (openaiKey) return callOpenAI(openaiKey, sys, JSON.parse(makeOAIContent(prompt)), maxTok, modelFor(mode));
     throw new Error('No AI key');
   }
 
@@ -300,7 +319,9 @@ const handler = async (event) => {
         await saveProgress('Quiz: set ' + (i + 1) + ' of ' + batches.length + '…');
         const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
-          const r = await callAI(sysWithLang(SYS_BATCH), prompt, 4000);
+          // 6k not 4k: each question now carries options, a full explanation,
+          // and the topic/subtopic/bloom tags, and a truncated batch is lost.
+          const r = await callAI(sysWithLang(SYS_BATCH), prompt, 6000, 'quiz');
           const items = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
           all.push(...items);
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
@@ -310,20 +331,44 @@ const handler = async (event) => {
       await saveProgress('Quiz done — ' + all.length + ' questions');
     }
 
-    // ── FLASHCARDS — chunked over full document, bounded concurrency ──────
+    // ── FLASHCARDS — chunked over document, or themed batches without one ──
     if (modesArr.indexOf('flashcards') !== -1) {
       const hasText = fullText.trim().length > 0;
+
+      // With no uploaded document there is nothing to chunk: splitIntoChunks('')
+      // returns a single empty chunk, so the old path asked for "6-12 cards
+      // based ONLY on this chunk" once and returned a dozen cards for a typed
+      // topic. Fall back to themed batches — the same technique the quiz path
+      // uses to reach 50 questions.
+      const FLASHCARD_THEMES = [
+        'core definitions and the key terms a student must know cold',
+        'processes and mechanisms — how each thing actually works, step by step',
+        'cause-and-effect relationships between the concepts',
+        'comparisons and distinctions between ideas students routinely confuse',
+        'real-world applications and worked examples',
+        'common misconceptions, exceptions and edge cases',
+        'synthesis questions connecting two or more concepts together'
+      ];
+      const units = hasText
+        ? docChunks.map(function (text) { return { chunk: text }; })
+        : FLASHCARD_THEMES.map(function (theme) { return { theme: theme }; });
+
       const deadline = Date.now() + 13 * 60 * 1000;
       let successfulChunks = 0;
       let failedChunks = 0;
       let deadlineHit = false;
-      const chunkResults = new Array(docChunks.length);
+      const chunkResults = new Array(units.length);
       let nextIndex = 0;
 
       async function processChunk(ci) {
-        console.log(JSON.stringify({ event: 'flashcard_chunk_attempt', chunk: ci + 1, total: docChunks.length }));
-        const prompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + docChunks.length + ']\n' + docChunks[ci] +
-          '\n\nGenerate 6-12 flashcards based ONLY on this chunk. Mix key terms, processes, cause-effect, comparisons, and applications.' +
+        console.log(JSON.stringify({ event: 'flashcard_chunk_attempt', chunk: ci + 1, total: units.length, mode: hasText ? 'document' : 'themed' }));
+        const u = units[ci];
+        const body = u.chunk !== undefined
+          ? '\n\n[Chunk ' + (ci + 1) + ' of ' + units.length + ']\n' + u.chunk +
+            '\n\nGenerate 8-14 flashcards based ONLY on this chunk. Mix key terms, processes, cause-effect, comparisons, and applications.'
+          : '\n\nGenerate 8-14 flashcards on this topic covering ' + u.theme + '.' +
+            '\n\nThis is set ' + (ci + 1) + ' of ' + units.length + ' — cover ONLY that angle so the sets do not overlap.';
+        const prompt = 'Topic: ' + topicStr + body +
           '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
           const r = anthropicKey
@@ -332,29 +377,29 @@ const handler = async (event) => {
           const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
           successfulChunks++;
-          console.log(JSON.stringify({ event: 'flashcard_chunk_success', chunk: ci + 1, total: docChunks.length, cards: items.length }));
+          console.log(JSON.stringify({ event: 'flashcard_chunk_success', chunk: ci + 1, total: units.length, cards: items.length }));
           chunkResults[ci] = items;
         } catch (e) {
           failedChunks++;
-          console.error(JSON.stringify({ event: 'flashcard_chunk_error', chunk: ci + 1, total: docChunks.length, error: e.message }));
+          console.error(JSON.stringify({ event: 'flashcard_chunk_error', chunk: ci + 1, total: units.length, error: e.message }));
           chunkResults[ci] = [];
         }
         await saveProgress(
-          'Flashcards: ' + successfulChunks + '/' + docChunks.length + ' chunks done (' + failedChunks + ' failed)…',
-          { flashcardStats: { totalChunks: docChunks.length, successfulChunks, failedChunks } }
+          'Flashcards: ' + successfulChunks + '/' + units.length + ' sets done (' + failedChunks + ' failed)…',
+          { flashcardStats: { totalChunks: units.length, successfulChunks, failedChunks } }
         );
       }
 
       async function worker() {
         while (true) {
           const ci = nextIndex++;
-          if (ci >= docChunks.length) return;
+          if (ci >= units.length) return;
           if (Date.now() > deadline) { deadlineHit = true; return; }
           await processChunk(ci);
         }
       }
 
-      await Promise.all(Array.from({ length: Math.min(3, docChunks.length) }, worker));
+      await Promise.all(Array.from({ length: Math.min(3, units.length) }, worker));
 
       const allCards = [];
       for (let ci = 0; ci < chunkResults.length; ci++) allCards.push(...(chunkResults[ci] || []));
@@ -364,7 +409,7 @@ const handler = async (event) => {
       // doubles AI calls per document and risks exceeding the 15-min limit.
       const finalCards = dedupeFlashcards(allCards);
 
-      flashcardMeta = { totalChunks: docChunks.length, successfulChunks, failedChunks, totalCardsBeforeDedupe, partial: deadlineHit };
+      flashcardMeta = { totalChunks: units.length, successfulChunks, failedChunks, totalCardsBeforeDedupe, partial: deadlineHit };
 
       if (finalCards.length) combinedResults.flashcards = { cards: finalCards };
       await saveProgress(
@@ -413,9 +458,12 @@ const handler = async (event) => {
       await saveProgress('Generating ' + mode + '…');
       const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"study content"}');
       const dInstr = ['practicetest', 'fitb'].indexOf(mode) !== -1 ? diffInstr : '';
-      const prompt = 'Topic: ' + topicStr + '\n\nGenerate comprehensive ' + mode + ' content.' + dInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + structure + '\n  }\n}';
+      const qty = MODE_QTY[mode] ? '\n\nREQUIRED OUTPUT: ' + MODE_QTY[mode] : '';
+      const prompt = 'Topic: ' + topicStr + '\n\nGenerate comprehensive ' + mode + ' content.' + qty + dInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + structure + '\n  }\n}';
       try {
-        const r = await callAI(sysWithLang(SYS_OTHER), prompt, 6000);
+        // 10k rather than 6k — these floors ask for materially more than the
+        // old budget could hold, and a truncated array loses the whole mode.
+        const r = await callAI(sysWithLang(SYS_OTHER), prompt, 10000, mode);
         if (r && r.results) Object.assign(combinedResults, r.results);
         if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
       } catch (e) { /* skip */ }
