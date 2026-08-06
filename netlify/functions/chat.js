@@ -1,3 +1,5 @@
+const { guard } = require('./lib/guard');
+
 // StudLit AI chat/tutor endpoint. Free-form markdown output — the structured
 // JSON generation modes live in study.js / study-background.js.
 
@@ -21,33 +23,19 @@ const STUDLIT_SYSTEM_PROMPT = [
 ].join('\n');
 
 const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
-      body: ''
-    };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  let body;
-  try { body = JSON.parse(event.body || '{}'); }
-  catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+  // Chat is cheap per call but easy to loop — 40 messages per IP per hour.
+  const g = guard(event, { name: 'chat', limit: 40, maxBytes: 512 * 1024 });
+  if (g.response) return g.response;
+  const { headers: cors, body } = g;
 
   const { message, history = [], context = '' } = body;
   if (!message || !message.trim()) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'message is required' }) };
+    return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'message is required' }) };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
   }
 
   const systemText = STUDLIT_SYSTEM_PROMPT + (context ? '\n\nSTUDY CONTEXT — the student is working from this material. Ground your answers in it:\n' + context : '');
@@ -66,17 +54,17 @@ const handler = async (event) => {
     });
     if (!response.ok) {
       const err = await response.json().catch(function() { return {}; });
-      return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
+      return { statusCode: response.status, headers: cors, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
     }
     const data = await response.json();
     const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'No response.';
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: cors,
       body: JSON.stringify({ reply })
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: err.message }) };
   }
 };
 

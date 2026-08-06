@@ -2,6 +2,7 @@
 // Frontend polls study-status.js every 3s for results stored in Netlify Blobs.
 
 const { getStore } = require('@netlify/blobs');
+const { originAllowed, rateLimit } = require('./lib/guard');
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -211,6 +212,32 @@ const handler = async (event) => {
   const { requestId, topic, modes, files, urls, difficulty, language } = body;
   if (!requestId) return;
 
+  // Netlify answers a background invocation with 202 before this runs, so a
+  // rejection can't be returned to the caller — it has to be written where the
+  // status poller will find it. Bailing out here is what stops the model calls.
+  const store = studyStore();
+  async function reject(message) {
+    try { await store.setJSON(requestId, { status: 'error', error: message }, { ttl: 7200 }); }
+    catch (e) { /* nothing left to do */ }
+  }
+
+  if (!originAllowed(event).ok) {
+    await reject('Requests are not allowed from this origin.');
+    return;
+  }
+  // Matches the synchronous endpoint's budget: 5 generations per IP per hour.
+  const rl = rateLimit(event, 'study', 5, 60 * 60 * 1000);
+  if (rl.limited) {
+    const mins = Math.max(1, Math.ceil(rl.retryAfter / 60));
+    await reject('You have hit the usage limit. Try again in about ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.');
+    return;
+  }
+  const filesIn = Array.isArray(files) ? files : [];
+  if (filesIn.length > 10) {
+    await reject('Too many files at once. Upload up to 10.');
+    return;
+  }
+
   const langInstr = (language && language !== 'English')
     ? '\nLANGUAGE: You MUST write ALL output — every word of every field — in ' + language + '. Do not use English.'
     : '';
@@ -218,7 +245,6 @@ const handler = async (event) => {
 
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const store = studyStore();
 
   const modesArr = modes || [];
   const filesArr = files || [];

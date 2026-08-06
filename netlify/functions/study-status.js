@@ -1,16 +1,20 @@
 // Polling endpoint — frontend calls this every 3s to check if study-background.js has finished.
 const { getStore } = require('@netlify/blobs');
+const { originAllowed, corsHeaders: buildCors } = require('./lib/guard');
 
 const handler = async (event) => {
-  const corsHeaders = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-  };
+  // Origin check only, deliberately no rate limit: a single 14-minute job polls
+  // this a few hundred times, so a per-IP budget here would break generation.
+  // There's no model spend behind this endpoint — it reads one blob by an
+  // unguessable request id.
+  const org = originAllowed(event);
+  const corsHeaders = buildCors(org.ok ? org.origin : '');
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+  if (!org.ok) {
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Requests are not allowed from this origin.' }) };
   }
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };

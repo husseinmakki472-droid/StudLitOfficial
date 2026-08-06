@@ -1,3 +1,5 @@
+const { guard } = require('./lib/guard');
+
 function repairJson(str) {
   str = str.replace(/,\s*([}\]])/g, '$1');
   const quoteCount = (str.match(/(?<!\\)"/g) || []).length;
@@ -118,12 +120,10 @@ async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
 }
 
 const handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-  let body;
-  try { body = JSON.parse(event.body || '{}'); }
-  catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+  // Generation is the most expensive thing this site does — 5 per IP per hour.
+  const g = guard(event, { name: 'study', limit: 5 });
+  if (g.response) return g.response;
+  const { headers: cors, body } = g;
 
   const { topic, modes, files, urls, difficulty, language } = body;
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
@@ -133,11 +133,11 @@ const handler = async (event) => {
   const urlsArr = urls || [];
 
   if (!topic && !filesArr.length) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'topic or files required' }) };
+    return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'topic or files required' }) };
   }
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
   }
 
   let fileCtx = '';
@@ -209,11 +209,11 @@ const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: cors,
       body: JSON.stringify({ topic: topicName, results: mergedResults })
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: err.message }) };
   }
 };
 

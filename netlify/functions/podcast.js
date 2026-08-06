@@ -1,18 +1,17 @@
+const { guard } = require('./lib/guard');
+
 const handler = async (event) => {
-if (event.httpMethod !== 'POST') {
-return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-}
-let body;
-try { body = JSON.parse(event.body || '{}'); }
-catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+const g = guard(event, { name: 'podcast', limit: 15, maxBytes: 512 * 1024 });
+if (g.response) return g.response;
+const { headers: cors, body } = g;
 const { topic, context } = body;
 const contextStr = context || '';
 if (!topic) {
-return { statusCode: 400, body: JSON.stringify({ error: 'topic is required' }) };
+return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'topic is required' }) };
 }
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
-return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
+return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
 }
 const userText = (contextStr ? contextStr.slice(0, 3000) + '\n\n' : '') + 'Topic: ' + topic;
 try {
@@ -29,12 +28,12 @@ messages: [
 });
 if (!response.ok) {
 const err = await response.json().catch(function() { return {}; });
-return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
+return { statusCode: response.status, headers: cors, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
 }
 const data = await response.json();
-return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ script: (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '' }) };
+return { statusCode: 200, headers: cors, body: JSON.stringify({ script: (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '' }) };
 } catch (err) {
-return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+return { statusCode: 500, headers: cors, body: JSON.stringify({ error: err.message }) };
 }
 };
 

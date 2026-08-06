@@ -1,21 +1,20 @@
+const { guard } = require('./lib/guard');
+
 function escHtml(s) {
 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 const handler = async (event) => {
-if (event.httpMethod !== 'POST') {
-return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-}
-let body;
-try { body = JSON.parse(event.body || '{}'); }
-catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+const g = guard(event, { name: 'ai-check', limit: 25, maxBytes: 512 * 1024 });
+if (g.response) return g.response;
+const { headers: cors, body } = g;
 const { text } = body;
 if (!text || !text.trim()) {
-return { statusCode: 400, body: JSON.stringify({ error: 'text is required' }) };
+return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'text is required' }) };
 }
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
-return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
+return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
 }
 const systemMsg = 'Analyze this text for AI-generated patterns. Return ONLY valid JSON no markdown:\n{"score":<0-100>,"verdict":"<Likely AI-Generated|Mixed Partially AI|Mostly Human>","verdictSub":"<one sentence>","aiPhrases":["phrase1"],"variety":<0-100>,"passive":<count>,"flaggedPhrases":["exact phrase"],"passivePhrases":["exact phrase"]}';
 try {
@@ -36,13 +35,13 @@ messages: [
 clearTimeout(timeoutId);
 if (!response.ok) {
 const err = await response.json().catch(function() { return {}; });
-return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
+return { statusCode: response.status, headers: cors, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
 }
 const data = await response.json();
 const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
 let parsed;
 try { parsed = JSON.parse(raw.replace(/`json|`/g, '').trim()); }
-catch (e) { return { statusCode: 500, body: JSON.stringify({ error: 'Failed to parse response' }) }; }
+catch (e) { return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'Failed to parse response' }) }; }
 let flaggedHtml = escHtml(text);
 const flagged = Array.isArray(parsed.flaggedPhrases) ? parsed.flaggedPhrases : [];
 for (let i = 0; i < flagged.length; i++) {
@@ -62,10 +61,10 @@ const esc = escHtml(phrase);
 flaggedHtml = flaggedHtml.replace(new RegExp(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '<span class="ai-flag-span-med">' + esc + '</span>');
 } catch(e) { continue; }
 }
-return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml }) };
+return { statusCode: 200, headers: cors, body: JSON.stringify({ score: parsed.score, verdict: parsed.verdict, verdictSub: parsed.verdictSub, aiPhrases: parsed.aiPhrases || [], variety: parsed.variety, passive: parsed.passive, flaggedHtml }) };
 } catch (err) {
 const msg = err.name === 'AbortError' ? 'Request timed out — please try again with shorter text' : err.message;
-return { statusCode: 500, body: JSON.stringify({ error: msg }) };
+return { statusCode: 500, headers: cors, body: JSON.stringify({ error: msg }) };
 }
 };
 

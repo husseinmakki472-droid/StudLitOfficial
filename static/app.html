@@ -356,6 +356,14 @@ footer{position:relative;z-index:1;text-align:center;padding:40px 28px;border-to
 .footer-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#f0efff;margin-bottom:8px}
 .footer-logo span{background:linear-gradient(135deg,#7c5cfc,#b06ef3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .footer-tagline{font-size:13px;color:rgba(240,239,255,0.35);margin-bottom:20px}
+.footer-legal{margin-top:22px;display:flex;justify-content:center;align-items:center;gap:10px;font-size:12px}
+.footer-legal a{color:rgba(240,239,255,0.45);text-decoration:none;transition:color .15s}
+.footer-legal a:hover{color:#b494ff;text-decoration:underline}
+.footer-legal span{color:rgba(240,239,255,0.2)}
+.footer-disclaimer{margin:12px auto 0;max-width:520px;font-size:11px;line-height:1.6;color:rgba(240,239,255,0.28)}
+[data-theme="light"] .footer-legal a{color:rgba(15,14,26,0.5)}
+[data-theme="light"] .footer-legal span{color:rgba(15,14,26,0.25)}
+[data-theme="light"] .footer-disclaimer{color:rgba(15,14,26,0.42)}
 .modes-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .modes-label{margin-bottom:0!important}
 .mode-multi-hint{font-size:10px;color:rgba(240,239,255,0.35);font-weight:500}
@@ -1714,6 +1722,8 @@ LEADERBOARD PAGE
 .lb-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff !important;box-shadow:0 2px 10px rgba(124,92,252,0.3)}
 .lb-panel{display:none}
 .lb-panel.active{display:block;animation:fadeUp .25s ease both}
+.lb-practice-note{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:11px 14px;border:1px solid rgba(124,92,252,0.25);background:rgba(124,92,252,0.08);border-radius:12px;font-size:12.5px;line-height:1.55;color:var(--text-2)}
+.lb-practice-icon{flex-shrink:0;font-size:14px;line-height:1.4}
 .lb-table{background:var(--card-bg);border:1.5px solid var(--border);border-radius:20px;overflow:hidden}
 .lb-thead{display:grid;grid-template-columns:48px 1fr 90px 80px;padding:10px 18px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3)}
 .lb-row{display:grid;grid-template-columns:48px 1fr 90px 80px;padding:13px 18px;align-items:center;border-bottom:1px solid var(--border);transition:background .15s}
@@ -2840,6 +2850,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="footer-logo">Stud<span>Lit</span></div>
   <div class="footer-tagline">The AI study platform built for students who want to actually learn.</div>
   <button class="btn-hero" onclick="showPricingModal()">Start Your Free Trial →</button>
+  <div class="footer-legal">
+    <a href="/privacy.html">Privacy Policy</a>
+    <span aria-hidden="true">·</span>
+    <a href="/terms.html">Terms of Service</a>
+  </div>
+  <p class="footer-disclaimer">AI-generated study material can be inaccurate — check anything that matters against your course material. Don't submit generated text as your own work.</p>
 </footer>
 </div>
 
@@ -5579,15 +5595,17 @@ var LB_BADGES = [
   {id:'timer1',  icon:'⏱', name:'Time Keeper',  req:1,    type:'timer',  desc:'Complete a focus timer session'},
   {id:'legend',  icon:'🏆', name:'Legend',       req:2200, type:'xp',     desc:'Reach 2,200 points — the top rank'}
 ];
+// Pace-setting targets, not real users — the rankings panel says so plainly.
+// Named for the tier they represent so nothing here reads as a real classmate.
 var LB_MOCK = [
-  {name:'Alex K.',xp:1840,sets:72,streak:21,color:'#7c5cfc'},
-  {name:'Sarah M.',xp:1420,sets:58,streak:14,color:'#ec4899'},
-  {name:'Jordan T.',xp:1180,sets:45,streak:9,color:'#3b82f6'},
-  {name:'Riley P.',xp:940,sets:38,streak:12,color:'#10b981'},
-  {name:'Casey W.',xp:780,sets:31,streak:6,color:'#f59e0b'},
-  {name:'Morgan L.',xp:620,sets:24,streak:4,color:'#ef4444'},
-  {name:'Taylor B.',xp:440,sets:18,streak:8,color:'#06b6d4'},
-  {name:'Drew H.',xp:290,sets:12,streak:3,color:'#8b5cf6'}
+  {name:'Scholar tier',xp:1840,sets:72,streak:21,color:'#7c5cfc'},
+  {name:'Honours tier',xp:1420,sets:58,streak:14,color:'#ec4899'},
+  {name:'Dedicated tier',xp:1180,sets:45,streak:9,color:'#3b82f6'},
+  {name:'Consistent tier',xp:940,sets:38,streak:12,color:'#10b981'},
+  {name:'Steady tier',xp:780,sets:31,streak:6,color:'#f59e0b'},
+  {name:'Rising tier',xp:620,sets:24,streak:4,color:'#ef4444'},
+  {name:'Building tier',xp:440,sets:18,streak:8,color:'#06b6d4'},
+  {name:'Starter tier',xp:290,sets:12,streak:3,color:'#8b5cf6'}
 ];
 
 function lbLoadStats() {
@@ -7143,8 +7161,12 @@ document.addEventListener('fullscreenchange', function() {
           <button class="lb-tab" onclick="switchLbTab('history',this)">📋 History</button>
         </div>
         <div class="lb-panel active" id="lbp-rankings">
+          <div class="lb-practice-note">
+            <span class="lb-practice-icon" aria-hidden="true">🎯</span>
+            <span><strong>Practice board.</strong> These are pace-setting targets to beat, not other users. Live rankings against real students arrive with accounts.</span>
+          </div>
           <div class="lb-table">
-            <div class="lb-thead"><div style="text-align:center">#</div><div>Student</div><div style="text-align:right">Points</div><div style="text-align:right">Sets</div></div>
+            <div class="lb-thead"><div style="text-align:center">#</div><div>Target</div><div style="text-align:right">Points</div><div style="text-align:right">Sets</div></div>
             <div id="lbRankList"></div>
           </div>
         </div>

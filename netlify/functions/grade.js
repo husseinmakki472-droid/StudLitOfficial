@@ -1,23 +1,19 @@
-const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Authorization,Content-Type', 'Access-Control-Allow-Methods': 'POST,OPTIONS' }, body: '' };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+const { guard } = require('./lib/guard');
 
-  let body;
-  try { body = JSON.parse(event.body || '{}'); }
-  catch (e) { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+const handler = async (event) => {
+  // Every call is a full gpt-4o pass over a whole paper — 10 per IP per hour.
+  const g = guard(event, { name: 'grade', limit: 10, maxBytes: 1024 * 1024 });
+  if (g.response) return g.response;
+  const { headers: cors, body } = g;
 
   const { paper, prompt, rubric } = body;
   if (!paper || !paper.trim()) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Paper text is required' }) };
+    return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'Paper text is required' }) };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'OPENAI_API_KEY not set' }) };
   }
 
   const systemMsg = `You are an expert academic paper grader with deep knowledge across all subjects. Analyze the paper thoroughly and return ONLY valid JSON (no markdown, no backticks, no extra text).
@@ -59,24 +55,24 @@ Grade scale: 97+=A+, 93-96=A, 90-92=A-, 87-89=B+, 83-86=B, 80-82=B-, 77-79=C+, 7
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      return { statusCode: response.status, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
+      return { statusCode: response.status, headers: cors, body: JSON.stringify({ error: (err.error && err.error.message) || 'OpenAI API error' }) };
     }
 
     const data = await response.json();
     const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-    if (!content) return { statusCode: 500, body: JSON.stringify({ error: 'No content returned from OpenAI' }) };
+    if (!content) return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'No content returned from OpenAI' }) };
 
     let parsed;
     try { parsed = JSON.parse(content); }
-    catch (e) { return { statusCode: 500, body: JSON.stringify({ error: 'Failed to parse grading response' }) }; }
+    catch (e) { return { statusCode: 500, headers: cors, body: JSON.stringify({ error: 'Failed to parse grading response' }) }; }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: cors,
       body: JSON.stringify(parsed),
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: err.message }) };
   }
 };
 

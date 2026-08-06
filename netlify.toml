@@ -47,9 +47,10 @@
   status = 301
   force = true
 
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
+# CORS is set per-function by netlify/functions/lib/guard.js, which echoes back
+# only allowed origins. A wildcard header here would override that and hand the
+# paid AI endpoints to any site on the internet.
+#
+# Set ALLOWED_ORIGINS (comma-separated) in the Netlify environment to your real
+# domain. Netlify's own URL and DEPLOY_PRIME_URL are trusted automatically, so
+# production and deploy previews work without extra configuration.

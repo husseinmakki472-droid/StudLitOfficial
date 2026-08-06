@@ -1,0 +1,78 @@
+/* Shared styling for the standalone legal pages. Deliberately plain — these
+   need to be readable and printable, not branded. */
+:root {
+  --bg: #0f0e1a;
+  --surface: #17162a;
+  --text: #eceafa;
+  --muted: #a49ec4;
+  --rule: #2a2740;
+  --accent: #9b82ff;
+  --flag-bg: #33261a;
+  --flag-border: #b5762a;
+  --flag-text: #f0c98a;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbfaff;
+    --surface: #ffffff;
+    --text: #16142a;
+    --muted: #5c5680;
+    --rule: #e3dff2;
+    --accent: #6d4df6;
+    --flag-bg: #fdf4e3;
+    --flag-border: #d69a3c;
+    --flag-text: #7a5312;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.68;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.4rem 5rem; }
+a { color: var(--accent); }
+.back {
+  display: inline-block; margin-bottom: 2rem; font-size: .9rem;
+  text-decoration: none; color: var(--muted);
+}
+.back:hover { color: var(--accent); }
+.brand {
+  font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em;
+  margin-bottom: .3rem;
+}
+.brand span { color: var(--accent); }
+h1 {
+  font-size: clamp(1.7rem, 5vw, 2.3rem); line-height: 1.15;
+  letter-spacing: -.025em; margin: .2rem 0 .4rem;
+}
+.updated { color: var(--muted); font-size: .88rem; margin: 0 0 2rem; }
+h2 {
+  font-size: 1.15rem; letter-spacing: -.01em; margin: 2.4rem 0 .6rem;
+  padding-top: 1.4rem; border-top: 1px solid var(--rule);
+}
+h3 { font-size: 1rem; margin: 1.5rem 0 .4rem; }
+p, li { color: var(--text); }
+ul { padding-left: 1.3rem; }
+li { margin-bottom: .45rem; }
+strong { font-weight: 650; }
+.flag {
+  background: var(--flag-bg); border: 1px solid var(--flag-border);
+  color: var(--flag-text); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0 0 2rem; font-size: .93rem;
+}
+.flag p { color: inherit; margin: 0 0 .6rem; }
+.flag p:last-child { margin-bottom: 0; }
+.flag code {
+  background: rgba(0,0,0,.22); padding: .1em .4em; border-radius: 3px;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em;
+}
+footer {
+  margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .87rem;
+}
+footer a { margin-right: 1rem; }
