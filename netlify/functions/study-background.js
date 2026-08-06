@@ -305,9 +305,27 @@ const handler = async (event) => {
     return JSON.stringify([...imageBlocks, ...(fileCtx.trim() ? [{ type: 'text', text: fileCtx }] : []), { type: 'text', text: prompt }]);
   }
 
+  // Provider choice, in priority order:
+  //   1. OpenAI, with the per-mode gpt-4o/mini split — the default whenever an
+  //      OpenAI key exists.
+  //   2. Claude, only for modes explicitly named in CLAUDE_MODES.
+  //   3. Claude for everything, only when there is NO OpenAI key at all.
+  // Previously the mere presence of ANTHROPIC_API_KEY silently routed every
+  // mode to Claude and bypassed modelFor() entirely, so setting the key "just
+  // in case" quietly downgraded quiz, tutor, practicetest and solve.
+  const claudeModes = new Set(
+    (process.env.CLAUDE_MODES || '').split(',').map(s => s.trim()).filter(Boolean)
+  );
+  function useClaudeFor(mode) {
+    if (!anthropicKey) return false;
+    if (!openaiKey) return true;
+    return claudeModes.has(mode);
+  }
+
   async function callAI(sys, prompt, maxTok, mode) {
-    if (anthropicKey) return callClaude(anthropicKey, sys, (fileCtx ? fileCtx + '\n\n' : '') + prompt, maxTok);
+    if (useClaudeFor(mode)) return callClaude(anthropicKey, sys, (fileCtx ? fileCtx + '\n\n' : '') + prompt, maxTok);
     if (openaiKey) return callOpenAI(openaiKey, sys, JSON.parse(makeOAIContent(prompt)), maxTok, modelFor(mode));
+    if (anthropicKey) return callClaude(anthropicKey, sys, (fileCtx ? fileCtx + '\n\n' : '') + prompt, maxTok);
     throw new Error('No AI key');
   }
 
@@ -395,9 +413,9 @@ const handler = async (event) => {
         const prompt = 'Topic: ' + topicStr + body +
           '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
-          const r = anthropicKey
+          const r = useClaudeFor('flashcards')
             ? await callClaude(anthropicKey, sysWithLang(SYS_BATCH), prompt, 4000)
-            : await callOpenAI(openaiKey, sysWithLang(SYS_BATCH), hasText ? [{ type: 'text', text: prompt }] : [...imageBlocks, { type: 'text', text: prompt }], 4000);
+            : await callOpenAI(openaiKey, sysWithLang(SYS_BATCH), hasText ? [{ type: 'text', text: prompt }] : [...imageBlocks, { type: 'text', text: prompt }], 4000, modelFor('flashcards'));
           const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
           successfulChunks++;
@@ -448,9 +466,9 @@ const handler = async (event) => {
           await saveProgress('Notes: chunk ' + (ci + 1) + ' of ' + chunks.length + '…');
           const prompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + chunks.length + ']\n' + chunks[ci] + notesQty + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}';
           try {
-            const r = anthropicKey
+            const r = useClaudeFor('notes')
               ? await callClaude(anthropicKey, sysWithLang(SYS_NOTES), prompt, 8000)
-              : await callOpenAI(openaiKey, sysWithLang(SYS_NOTES), [...imageBlocks, { type: 'text', text: prompt }], 8000);
+              : await callOpenAI(openaiKey, sysWithLang(SYS_NOTES), [...imageBlocks, { type: 'text', text: prompt }], 8000, modelFor('notes'));
             if (r && r.results && r.results.notes && r.results.notes.sections) {
               allSections.push(...r.results.notes.sections);
               if (r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
@@ -462,7 +480,7 @@ const handler = async (event) => {
         await saveProgress('Generating notes…');
         const prompt = 'Topic: ' + topicStr + notesQty + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}';
         try {
-          const r = await callAI(sysWithLang(SYS_NOTES), prompt, 8000);
+          const r = await callAI(sysWithLang(SYS_NOTES), prompt, 8000, 'notes');
           if (r && r.results && r.results.notes) combinedResults.notes = r.results.notes;
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
         } catch (e) { /* missing */ }
