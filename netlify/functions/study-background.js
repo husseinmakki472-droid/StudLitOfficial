@@ -65,6 +65,22 @@ function splitIntoChunks(text, size) {
   return chunks.length ? chunks : [text.slice(0, size)];
 }
 
+// Bounded worker pool. Independent model calls were running strictly one after
+// another, which is what made a full generation take many minutes — the wall
+// time was the sum of every request rather than the longest few. Concurrency is
+// deliberately small so a burst doesn't trip OpenAI's per-minute rate limits.
+async function runPool(total, concurrency, task) {
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const i = next++;
+      if (i >= total) return;
+      await task(i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, total) }, worker));
+}
+
 function dedupeFlashcards(cards) {
   const normalize = s => (s || '').toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
   const byFront = new Map();
@@ -305,7 +321,7 @@ const handler = async (event) => {
 
     const diffInstr = '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '.';
 
-    // ── QUIZ — 5 sequential batches of 10 ────────────────────────────────
+    // ── QUIZ — 5 themed batches of 10, run concurrently ──────────────────
     if (modesArr.indexOf('quiz') !== -1) {
       const batches = [
         'Generate 10 multiple-choice questions testing DEFINITIONS AND KEY TERMS.',
@@ -314,19 +330,27 @@ const handler = async (event) => {
         'Generate 10 multiple-choice questions testing CAUSE AND EFFECT relationships.',
         'Generate 10 HARD multiple-choice questions requiring analysis and synthesis of multiple concepts.',
       ];
-      const all = [];
-      for (let i = 0; i < batches.length; i++) {
-        await saveProgress('Quiz: set ' + (i + 1) + ' of ' + batches.length + '…');
+      // Indexed results so concurrency doesn't scramble easy→hard ordering.
+      const slots = new Array(batches.length);
+      let qDone = 0;
+      await runPool(batches.length, 3, async function (i) {
         const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
           // 6k not 4k: each question now carries options, a full explanation,
           // and the topic/subtopic/bloom tags, and a truncated batch is lost.
           const r = await callAI(sysWithLang(SYS_BATCH), prompt, 6000, 'quiz');
-          const items = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
-          all.push(...items);
+          slots[i] = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
-        } catch (e) { /* next batch */ }
-      }
+        } catch (e) { slots[i] = []; }
+        qDone++;
+        // Publish after every batch so the page can show questions early.
+        const sofar = [];
+        for (let k = 0; k < slots.length; k++) if (slots[k]) sofar.push(...slots[k]);
+        if (sofar.length) combinedResults.quiz = { questions: sofar };
+        await saveProgress('Quiz: ' + qDone + ' of ' + batches.length + ' sets done…');
+      });
+      const all = [];
+      for (let k = 0; k < slots.length; k++) if (slots[k]) all.push(...slots[k]);
       if (all.length) combinedResults.quiz = { questions: all };
       await saveProgress('Quiz done — ' + all.length + ' questions');
     }
@@ -390,16 +414,10 @@ const handler = async (event) => {
         );
       }
 
-      async function worker() {
-        while (true) {
-          const ci = nextIndex++;
-          if (ci >= units.length) return;
-          if (Date.now() > deadline) { deadlineHit = true; return; }
-          await processChunk(ci);
-        }
-      }
-
-      await Promise.all(Array.from({ length: Math.min(3, units.length) }, worker));
+      await runPool(units.length, 3, async function (ci) {
+        if (Date.now() > deadline) { deadlineHit = true; return; }
+        await processChunk(ci);
+      });
 
       const allCards = [];
       for (let ci = 0; ci < chunkResults.length; ci++) allCards.push(...(chunkResults[ci] || []));
@@ -452,10 +470,11 @@ const handler = async (event) => {
       await saveProgress('Notes done');
     }
 
-    // ── OTHER MODES — sequential, one at a time ───────────────────────────
+    // ── OTHER MODES — independent of each other, so run them concurrently ──
     const remaining = modesArr.filter(m => m !== 'quiz' && m !== 'flashcards' && m !== 'notes');
-    for (const mode of remaining) {
-      await saveProgress('Generating ' + mode + '…');
+    let rDone = 0;
+    await runPool(remaining.length, 3, async function (i) {
+      const mode = remaining[i];
       const structure = MODE_MAP[mode] || ('"' + mode + '":{"content":"study content"}');
       const dInstr = ['practicetest', 'fitb'].indexOf(mode) !== -1 ? diffInstr : '';
       const qty = MODE_QTY[mode] ? '\n\nREQUIRED OUTPUT: ' + MODE_QTY[mode] : '';
@@ -467,8 +486,11 @@ const handler = async (event) => {
         if (r && r.results) Object.assign(combinedResults, r.results);
         if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
       } catch (e) { /* skip */ }
-      await saveProgress(mode + ' done');
-    }
+      rDone++;
+      // Each completed mode is published immediately so the page can render it
+      // while the rest are still generating.
+      await saveProgress(mode + ' done (' + rDone + ' of ' + remaining.length + ')');
+    });
 
     await store.setJSON(requestId, { status: 'done', data: { topic: resolvedTopic, results: combinedResults }, flashcardStats: flashcardMeta || undefined }, { ttl: 7200 });
 

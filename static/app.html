@@ -3837,8 +3837,10 @@ async function studySyncFetch(payload){
 }
 
 /* Returns {topic, results} on success or {error} on failure — same shape the
-   synchronous endpoint returns, so callers need no branching. */
-async function runStudyJob(payload, onProgress){
+   synchronous endpoint returns, so callers need no branching.
+   onPartial(results, topic) fires as individual modes finish, so the page can
+   show the first one in seconds instead of waiting for the whole job. */
+async function runStudyJob(payload, onProgress, onPartial){
   const requestId = studyRequestId();
   let started = false;
   try{
@@ -3874,7 +3876,13 @@ async function runStudyJob(payload, onProgress){
     if(!st) continue;
     if(st.status === 'done')  return st.data || {error:'No data returned.'};
     if(st.status === 'error') return {error: st.error || 'Generation failed.'};
-    if(st.partial && st.partial.results) lastPartial = st.partial;
+    if(st.partial && st.partial.results){
+      lastPartial = st.partial;
+      if(onPartial){
+        try{ onPartial(st.partial.results, st.partial.topic); }
+        catch(e){ /* a render fault must not kill the poll loop */ }
+      }
+    }
     if(st.progress && onProgress) onProgress(st.progress, st.partial);
   }
   // Timed out waiting — hand back whatever finished rather than nothing.
@@ -4537,20 +4545,30 @@ async function pasteGenerate(){
   try{
     let resolvedTopic2=topic;let firstShown2=false;wzResultTabs={};
     document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
-    const _GPT4O2=new Set(['quiz','solve','tutor','practicetest']);
-    const _mini2=modes.filter(m=>!_GPT4O2.has(m));
-    const _gpt4o2=modes.filter(m=>_GPT4O2.has(m));
-    const _batches2=[_mini2.length&&_mini2,_gpt4o2.length&&_gpt4o2].filter(Boolean);
-    const _fb2=bm=>runStudyJob({topic:topic,modes:bm,files:filesPayload,urls:[],difficulty:genDiff,language:genLang},setGenProgress);
-    await Promise.all(_batches2.map(bm=>_fb2(bm).then(data=>{
+    // Single job for every mode — the backend picks the model per mode, so
+    // splitting the request only burned two of the user's hourly generations.
+    const _shown2=new Set();
+    function _showReady2(results,pt){
+      if(!results)return;
+      if(pt&&pt!=='the uploaded content'){resolvedTopic2=pt;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
+      Object.keys(results).forEach(mode=>{
+        if(_shown2.has(mode)||!results[mode]||modes.indexOf(mode)===-1)return;
+        _shown2.add(mode);
+        wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,results[mode]);
+        wzMarkTabLoaded(mode);
+        if(!firstShown2){firstShown2=true;wzShowTab(mode);}
+      });
+    }
+    await runStudyJob({topic:topic,modes:modes,files:filesPayload,urls:[],difficulty:genDiff,language:genLang},setGenProgress,_showReady2).then(data=>{
       if(data&&!data.error&&data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
-      bm.forEach(mode=>{
-        if(data&&!data.error&&data.results&&data.results[mode]){wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);}
+      modes.forEach(mode=>{
+        if(_shown2.has(mode))return;
+        if(data&&!data.error&&data.results&&data.results[mode]){_shown2.add(mode);wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);}
         else{wzResultTabs[mode]=`<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data.')}</div></div>`;}
         wzMarkTabLoaded(mode);
         if(!firstShown2){firstShown2=true;wzShowTab(mode);}
       });
-    })));
+    });
     if(!firstShown2){document.getElementById('wzResultMain').innerHTML='<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">Could not generate. Try again.</div></div>';return;}
     document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;
   }catch(err){document.getElementById('wzResultMain').innerHTML=`<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(err.message)}</div></div>`;}
@@ -6098,23 +6116,42 @@ async function wzGenerate() {
     const settingsDiff = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();
     const settingsLang = (function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
 
-    // Two batched requests: mini-model modes + gpt4o modes
-    // Backend runs each mode as its own parallel OpenAI call within one function invocation,
-    // eliminating N cold-start overhead and resource contention from N separate Netlify calls.
-    const GPT4O_SET = new Set(['quiz','solve','tutor','practicetest']);
-    const miniModes  = methods.filter(m => !GPT4O_SET.has(m));
-    const gpt4oModes = methods.filter(m =>  GPT4O_SET.has(m));
-    const batches    = [miniModes.length && miniModes, gpt4oModes.length && gpt4oModes].filter(Boolean);
-
-    const fetchBatch = batchModes => runStudyJob(
-      {topic:topicArg, modes:batchModes, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff, language:settingsLang},
-      setGenProgress
-    );
+    // One job for every mode. The split into mini/gpt-4o batches used to matter
+    // when the client picked the model; the backend now chooses per mode by
+    // itself, so splitting only spent two of the user's hourly generations per
+    // click and stopped the backend scheduling all the work in one pool.
+    const batches = [methods];
 
     let resolvedTopic = input || 'Study Set';
     let firstShown = false;
     wzResultTabs = {};
     document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
+
+    /* Render each mode the moment the backend publishes it, rather than making
+       the student wait for every mode to finish. Renders once per mode — a
+       second render would wipe quiz answers or flashcard position. */
+    const shownModes = new Set();
+    function showReadyModes(results, partialTopic){
+      if(!results) return;
+      if(partialTopic && partialTopic !== 'the uploaded content'){
+        resolvedTopic = partialTopic;
+        document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
+      }
+      Object.keys(results).forEach(mode => {
+        if(shownModes.has(mode) || !results[mode]) return;
+        if(methods.indexOf(mode) === -1) return;
+        shownModes.add(mode);
+        wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, results[mode]);
+        wzMarkTabLoaded(mode);
+        if(!firstShown){ firstShown = true; wzShowTab(mode); }
+      });
+    }
+
+    const fetchBatch = batchModes => runStudyJob(
+      {topic:topicArg, modes:batchModes, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff, language:settingsLang},
+      setGenProgress,
+      showReadyModes
+    );
 
     await Promise.all(batches.map(batchModes =>
       fetchBatch(batchModes).then(data => {
@@ -6123,7 +6160,11 @@ async function wzGenerate() {
           document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
         }
         batchModes.forEach(mode => {
+          // Already on screen from a partial update — re-rendering would reset
+          // quiz answers and flashcard position, so leave it alone.
+          if (shownModes.has(mode)) return;
           if (data && !data.error && data.results && data.results[mode]) {
+            shownModes.add(mode);
             wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, data.results[mode]);
           } else {
             const errMsg = (data && data.error) || 'No data returned.';
