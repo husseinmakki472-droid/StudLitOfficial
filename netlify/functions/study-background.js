@@ -81,6 +81,21 @@ async function runPool(total, concurrency, task) {
   await Promise.all(Array.from({ length: Math.min(concurrency, total) }, worker));
 }
 
+// Bound how many chunks of a document we spend model calls on. Unbounded, a
+// long upload turns one click into hundreds of paid requests.
+//
+// Sampled evenly rather than sliced from the front: taking the first N chunks
+// of a textbook means every card comes from chapter one and the rest of the
+// book is silently ignored. Even sampling keeps coverage across the whole
+// document at the same cost.
+function capChunks(chunks, max) {
+  if (chunks.length <= max) return chunks;
+  const out = [];
+  const step = chunks.length / max;
+  for (let i = 0; i < max; i++) out.push(chunks[Math.floor(i * step)]);
+  return out;
+}
+
 function dedupeFlashcards(cards) {
   const normalize = s => (s || '').toLowerCase().trim().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
   const byFront = new Map();
@@ -317,7 +332,11 @@ const handler = async (event) => {
   const imageBlocks = filesArr.filter(f => f.imageData && f.mimeType).map(f => ({ type: 'image_url', image_url: { url: 'data:' + f.mimeType + ';base64,' + f.imageData } }));
 
   const fullText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
-  const docChunks = splitIntoChunks(fullText, 8000);
+  // 20 chunks is roughly 160k characters and up to ~280 cards — generous for a
+  // real study set, and a hard ceiling on what one click can cost.
+  const MAX_DOC_CHUNKS = 20;
+  const allDocChunks = splitIntoChunks(fullText, 8000);
+  const docChunks = capChunks(allDocChunks, MAX_DOC_CHUNKS);
 
   const combinedResults = {};
   let resolvedTopic = topic || 'Study Set';
@@ -486,7 +505,7 @@ const handler = async (event) => {
       const totalText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const CHUNK = 8000;
       const notesQty = '\n\nGenerate 6-10 rich sections, each with: overview, 3 content paragraphs, 6+ bullets, key terms, examples, applications, cause-effect, key takeaway.';
-      const chunks = totalText.length > CHUNK ? splitIntoChunks(totalText, CHUNK).slice(0, 12) : null;
+      const chunks = totalText.length > CHUNK ? capChunks(splitIntoChunks(totalText, CHUNK), 12) : null;
       if (chunks) {
         const allSections = [];
         for (let ci = 0; ci < chunks.length; ci++) {
