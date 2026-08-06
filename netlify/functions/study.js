@@ -81,7 +81,8 @@ const JSON_OUTPUT_RULES = [
   'COVERAGE AND QUANTITY',
   '- BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic.',
   '- Mix difficulty deliberately: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis).',
-  '- MINIMUM quantities: flashcards = 40+ cards; quiz = 25+ questions; notes = 8+ sections with 6-8 bullets each; tutor = 6+ sections with 3 paragraphs each; fitb = 20+ sentences; keyconcepts = 20+ terms; practicetest = 5+ questions per section; studyplan = 7 days with 4-5 tasks each. Treat these as floors, not targets.',
+  '- TARGET quantities: flashcards = 18-22 cards; quiz = 12 questions; notes = 5 sections with 5-6 bullets each; tutor = 4 sections with 2-3 paragraphs each; fitb = 12 sentences; keyconcepts = 12 terms; practicetest = 4 questions per section; studyplan = 7 days with 3-4 tasks each.',
+  '- Hit those numbers and STOP. This endpoint has a hard 20-second budget and an over-long answer is discarded entirely, so a complete smaller set beats a truncated larger one.',
   '- QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty.'
 ].join('\n');
 
@@ -90,21 +91,35 @@ function buildSystemPrompt(model, langInstr) {
   return core + (langInstr || '') + JSON_OUTPUT_RULES;
 }
 
+// This function is capped at 26s by Netlify. Abort our own calls at 20s so we
+// can still assemble and return whatever finished — an overrun past 26s becomes
+// an HTML 504 the browser can't parse, which surfaces as a bare "request took
+// too long" with none of the modes that did succeed.
+const SYNC_CALL_TIMEOUT_MS = 20000;
+
 async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      temperature: 0.5,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent }
-      ]
-    })
-  });
+  const controller = new AbortController();
+  const tid = setTimeout(function () { controller.abort(); }, SYNC_CALL_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        temperature: 0.5,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ]
+      })
+    });
+  } finally {
+    clearTimeout(tid);
+  }
   if (!response.ok) {
     const err = await response.json().catch(function() { return {}; });
     throw new Error((err.error && err.error.message) || 'OpenAI API error ' + response.status);
@@ -188,23 +203,46 @@ const handler = async (event) => {
     const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + tutorInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    const maxTokens = 16000;
+    // 6k, not 16k. A 16k answer takes well over a minute to generate and could
+    // never have landed inside this function's 26s budget — the request just
+    // died mid-stream. A smaller ceiling makes the model plan a shorter answer
+    // that actually arrives.
+    const maxTokens = 6000;
     return callOpenAI(apiKey, model, buildSystemPrompt(model, langInstr), userContent, maxTokens);
   }
 
   try {
-    // One parallel call per mode — each gets its own full 16k token budget
+    // One parallel call per mode. A mode that fails or overruns yields nothing
+    // and the rest are still returned, so a slow mode can't sink the request.
+    const failures = [];
     const modePromises = modesArr.map(function(mode) {
       const model = GPT4O_MODES.has(mode) ? 'gpt-4o' : 'gpt-4o-mini';
       return buildSingleModeCall(mode, model)
         .then(function(result) { return (result && result.results) ? result.results : {}; })
-        .catch(function() { return {}; });
+        .catch(function(err) {
+          failures.push({ mode: mode, error: (err && err.name === 'AbortError') ? 'timed out' : (err && err.message) || 'failed' });
+          return {};
+        });
     });
 
     const resultArr = await Promise.all(modePromises);
     const mergedResults = Object.assign({}, ...resultArr);
 
-    // Get topic name from first successful result
+    // Nothing survived — say so plainly instead of returning an empty success
+    // that the page renders as a wall of "No data returned".
+    if (!Object.keys(mergedResults).length) {
+      const timedOut = failures.some(function(f) { return f.error === 'timed out'; });
+      return {
+        statusCode: 200,
+        headers: cors,
+        body: JSON.stringify({
+          error: timedOut
+            ? 'Generation timed out on this server. Try one mode at a time, or a shorter topic.'
+            : ((failures[0] && failures[0].error) || 'Generation failed. Please try again.')
+        })
+      };
+    }
+
     const topicName = topic || 'Study Material';
 
     return {
