@@ -3859,6 +3859,18 @@ async function runStudyJob(payload, onProgress, onPartial){
   let pollErrors = 0;
   let lastPartial = null;
 
+  /* Watchdog. A background job can accept the request and then die before it
+     writes anything — a missing blob store, a cold-start crash, an unhandled
+     throw. The status then reads 'pending' forever and the page sits silent
+     until the poll window expires. Give it 45s to claim the job, and 4 minutes
+     between signs of life, then fall back to the synchronous endpoint. */
+  const NEVER_STARTED_MS = 45 * 1000;
+  const STALL_MS = 4 * 60 * 1000;
+  const startedAt = Date.now();
+  let everStarted = false;
+  let lastChange = Date.now();
+  let lastSignature = '';
+
   while(Date.now() < deadline){
     await studySleep(STUDY_POLL_INTERVAL);
     let st = null;
@@ -3876,6 +3888,21 @@ async function runStudyJob(payload, onProgress, onPartial){
     if(!st) continue;
     if(st.status === 'done')  return st.data || {error:'No data returned.'};
     if(st.status === 'error') return {error: st.error || 'Generation failed.'};
+
+    if(st.status === 'processing') everStarted = true;
+
+    // Never claimed the job — the background function isn't running. Don't wait.
+    if(!everStarted && Date.now() - startedAt > NEVER_STARTED_MS){
+      return studySyncFetch(payload);
+    }
+
+    // Alive but frozen: no new progress text and no new modes for minutes.
+    const signature = (st.progress || '') + '|' +
+      Object.keys((st.partial && st.partial.results) || {}).sort().join(',');
+    if(signature !== lastSignature){ lastSignature = signature; lastChange = Date.now(); }
+    else if(Date.now() - lastChange > STALL_MS){
+      return lastPartial || studySyncFetch(payload);
+    }
     if(st.partial && st.partial.results){
       lastPartial = st.partial;
       if(onPartial){

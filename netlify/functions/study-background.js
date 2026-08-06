@@ -250,10 +250,37 @@ const handler = async (event) => {
   // Netlify answers a background invocation with 202 before this runs, so a
   // rejection can't be returned to the caller — it has to be written where the
   // status poller will find it. Bailing out here is what stops the model calls.
-  const store = studyStore();
+  // Proves in the Netlify function log that the job was actually invoked.
+  console.log(JSON.stringify({ event: 'study_bg_start', requestId, modes: modes || [] }));
+
+  // getStore throws outright when Blobs isn't configured for the site. This used
+  // to be an unguarded call, so the handler died here without writing anything —
+  // the page then polled a permanently 'pending' status for 14 minutes with no
+  // error to show. Nothing can be reported through the store when the store
+  // itself is the failure, so log it loudly; the client watchdog handles the UI.
+  let store;
+  try {
+    store = studyStore();
+  } catch (e) {
+    console.error(JSON.stringify({
+      event: 'blob_store_unavailable', requestId, error: e.message,
+      hint: 'Enable Netlify Blobs for this site, or set SITE_ID and NETLIFY_TOKEN.'
+    }));
+    return;
+  }
+
   async function reject(message) {
     try { await store.setJSON(requestId, { status: 'error', error: message }, { ttl: 7200 }); }
-    catch (e) { /* nothing left to do */ }
+    catch (e) { console.error(JSON.stringify({ event: 'blob_write_failed', requestId, error: e.message })); }
+  }
+
+  // Claim the job immediately. If this write fails the store is unusable, and
+  // it's better to bail now than to spend money on a job nobody can collect.
+  try {
+    await store.setJSON(requestId, { status: 'processing', progress: 'Starting…' }, { ttl: 7200 });
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'blob_write_failed', requestId, error: e.message }));
+    return;
   }
 
   if (!originAllowed(event).ok) {
