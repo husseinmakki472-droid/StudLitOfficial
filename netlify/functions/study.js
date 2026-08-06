@@ -81,8 +81,8 @@ const JSON_OUTPUT_RULES = [
   'COVERAGE AND QUANTITY',
   '- BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic.',
   '- Mix difficulty deliberately: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis).',
-  '- TARGET quantities: flashcards = 18-22 cards; quiz = 12 questions; notes = 5 sections with 5-6 bullets each; tutor = 4 sections with 2-3 paragraphs each; fitb = 12 sentences; keyconcepts = 12 terms; practicetest = 4 questions per section; studyplan = 7 days with 3-4 tasks each.',
-  '- Hit those numbers and STOP. This endpoint has a hard 20-second budget and an over-long answer is discarded entirely, so a complete smaller set beats a truncated larger one.',
+  '- TARGET quantities: flashcards = 12 cards; quiz = 8 questions; notes = 4 sections with 4-5 bullets each; tutor = 3 sections with 2 paragraphs each; fitb = 10 sentences; keyconcepts = 10 terms; practicetest = 3 questions per section; studyplan = 7 days with 3 tasks each.',
+  '- Hit those numbers and STOP — do not exceed them. This endpoint has a hard 20-second budget and an answer that runs over is discarded in full, so a complete smaller set is worth far more than a truncated larger one. Keep each answer tight: 1-2 sentences, no padding.',
   '- QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty.'
 ].join('\n');
 
@@ -203,11 +203,11 @@ const handler = async (event) => {
     const subjectInstr = subjectHint ? '\n\n' + subjectHint : '';
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + tutorInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
-    // 6k, not 16k. A 16k answer takes well over a minute to generate and could
-    // never have landed inside this function's 26s budget — the request just
-    // died mid-stream. A smaller ceiling makes the model plan a shorter answer
-    // that actually arrives.
-    const maxTokens = 6000;
+    // gpt-4o-mini emits roughly 120 tokens a second, so an 18-second working
+    // window is about 2,200 tokens. 6k was still three times too big — every
+    // mode hit the abort. This ceiling is derived from the deadline, not
+    // guessed.
+    const maxTokens = 2500;
     return callOpenAI(apiKey, model, buildSystemPrompt(model, langInstr), userContent, maxTokens);
   }
 
@@ -216,7 +216,11 @@ const handler = async (event) => {
     // and the rest are still returned, so a slow mode can't sink the request.
     const failures = [];
     const modePromises = modesArr.map(function(mode) {
-      const model = GPT4O_MODES.has(mode) ? 'gpt-4o' : 'gpt-4o-mini';
+      // Everything on mini here, deliberately. gpt-4o emits roughly 60 tokens a
+      // second, so even a modest answer blows the 20s budget — quiz and tutor
+      // timed out every time on this path. The background path still uses
+      // gpt-4o for those modes, where there's 15 minutes to work with.
+      const model = 'gpt-4o-mini';
       return buildSingleModeCall(mode, model)
         .then(function(result) { return (result && result.results) ? result.results : {}; })
         .catch(function(err) {
