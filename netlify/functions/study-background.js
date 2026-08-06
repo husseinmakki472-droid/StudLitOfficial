@@ -5,6 +5,17 @@ const { getStore } = require('@netlify/blobs');
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Only pass siteID/token when BOTH are actually set — passing them as undefined
+// puts @netlify/blobs into manual mode with no credentials instead of letting it
+// auto-configure from the Netlify Functions runtime.
+function studyStore() {
+  const siteID = process.env.SITE_ID;
+  const token = process.env.NETLIFY_TOKEN;
+  const opts = { name: 'study-results' };
+  if (siteID && token) { opts.siteID = siteID; opts.token = token; }
+  return getStore(opts);
+}
+
 function repairJson(str) {
   str = str.replace(/```json|```/g, '').trim();
   str = str.replace(/,\s*([}\]])/g, '$1');
@@ -149,19 +160,32 @@ async function callClaude(anthropicKey, systemPrompt, userPrompt, maxTokens) {
   }
 }
 
-const SYS_NOTES = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate COMPREHENSIVE textbook-quality notes. Expand every concept fully with examples, mechanisms, cause-effect, and key takeaways. Never summarise.';
-const SYS_BATCH = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate EXACTLY the number of items specified. Every item must be fully complete. Do not stop early.';
-const SYS_OTHER = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Generate rich comprehensive content with detailed explanations.';
-const SYS_REVIEW = 'You are StudLit AI. Return ONLY valid JSON — no markdown, no backticks. Only generate flashcards for concepts that are genuinely missing from the existing set. It is correct and expected to return zero cards if everything important is already covered. Every item you do generate must be fully complete.';
+// Shared StudLit AI identity + pedagogy layer. These calls run in JSON mode, so
+// the markdown output rules from the chat prompt do not apply here.
+const STUDLIT_CORE = [
+  'You are StudLit AI, the tutor and content engine inside StudLit — an AI study platform focused on making studying feel like a game, not a chore.',
+  '- Default to depth over brevity — comprehensive output, never a short summary.',
+  '- Every explanation covers: plain-language definition, why it matters, a concrete example, and a common misconception students have about it.',
+  '- Extract MORE distinct concepts than the minimum asked for — cover the material exhaustively rather than hitting a round number.',
+  '- Escalate questions through Bloom\'s Taxonomy (remember → understand → apply → analyze → evaluate → create) rather than staying flat.',
+  '- Tag every question/flashcard with a difficulty level and a topic/subtopic label so the app can track progress per-concept.',
+  '- Never pad with filler. If the material is thin or ambiguous, say so in the content rather than inventing facts.',
+  'Return ONLY valid JSON — no markdown, no backticks, no prose outside the JSON.'
+].join('\n');
+
+const SYS_NOTES = STUDLIT_CORE + '\nGenerate COMPREHENSIVE textbook-quality notes. Expand every concept fully with examples, mechanisms, cause-effect, and key takeaways. Never summarise.';
+const SYS_BATCH = STUDLIT_CORE + '\nGenerate EXACTLY the number of items specified. Every item must be fully complete. Do not stop early.';
+const SYS_OTHER = STUDLIT_CORE + '\nGenerate rich comprehensive content with detailed explanations.';
+const SYS_REVIEW = STUDLIT_CORE + '\nOnly generate flashcards for concepts that are genuinely missing from the existing set. It is correct and expected to return zero cards if everything important is already covered. Every item you do generate must be fully complete.';
 
 const MODE_MAP = {
-  flashcards: '"flashcards":{"cards":[{"front":"question or term","back":"thorough answer or definition with context","difficulty":"easy|medium|hard"}]}',
-  quiz: '"quiz":{"questions":[{"question":"full question","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct and why others are wrong","difficulty":"Easy|Medium|Hard"}]}',
+  flashcards: '"flashcards":{"cards":[{"front":"question or term","back":"thorough answer or definition with context","difficulty":"easy|medium|hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this card belongs to — reuse the SAME label across every card on that topic","subtopic":"specific sub-concept within that topic"}]}',
+  quiz: '"quiz":{"questions":[{"question":"full question","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct and why others are wrong","difficulty":"Easy|Medium|Hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this question belongs to — reuse the SAME label across every question on that topic","subtopic":"specific sub-concept within that topic"}]}',
   fitb: '"fitb":{"sentences":[{"text":"The ___ does ___ which results in ___.","blanks":["term1","term2","term3"]}]}',
   summary: '"summary":{"overview":"4-6 sentence overview","keyPoints":["point 1","point 2","point 3","point 4","point 5","point 6","point 7","point 8","point 9","point 10"],"mustRemember":"most critical concept"}',
   notes: '"notes":{"sections":[{"heading":"Title","overview":"2-3 sentence intro.","content":"Paragraph 1.\\n\\nParagraph 2.\\n\\nParagraph 3.","bullets":["Bullet 1","Bullet 2","Bullet 3","Bullet 4","Bullet 5","Bullet 6"],"keyTerms":[{"term":"term","definition":"def"}],"examples":["Ex 1","Ex 2","Ex 3"],"applications":["App 1","App 2"],"causeEffect":"Analysis.","keyTakeaway":"Key insight."}]}',
   tutor: '"tutor":{"title":"Lesson title","sections":[{"number":1,"heading":"Heading","paragraphs":["Para 1.","Para 2.","Para 3."],"keyTakeaway":"Insight.","thinkAboutIt":"Question?"}]}',
-  practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"q","sampleAnswer":"answer"}]},{"type":"multipleChoice","questions":[{"question":"q","options":["A) opt","B) opt","C) opt","D) opt"],"correct":0,"explanation":"why"}]},{"type":"essayPrompt","questions":[{"question":"prompt","sampleAnswer":"outline"}]}]}',
+  practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"q","sampleAnswer":"answer"}]},{"type":"multipleChoice","questions":[{"question":"q","options":["A) opt","B) opt","C) opt","D) opt"],"correct":0,"explanation":"why","sampleAnswer":"the correct option restated in full, followed by why it is right and why the others are wrong"}]},{"type":"essayPrompt","questions":[{"question":"prompt","sampleAnswer":"outline"}]}]}',
   keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"2-3 sentence definition","importance":"why it matters"}]}',
   studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Title","tasks":["task 1","task 2","task 3","task 4","task 5"],"duration":"45 min","focus":"focus area"}]}',
   solve: '"solve":{"quickAnswer":"answer","stepByStep":[{"step":1,"title":"step","content":"explanation"}],"keyInsight":"insight","examples":["ex 1","ex 2","ex 3"],"commonMistakes":["mistake 1","mistake 2"]}'
@@ -184,12 +208,17 @@ const handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch (e) { return; }
 
-  const { requestId, topic, modes, files, urls, difficulty } = body;
+  const { requestId, topic, modes, files, urls, difficulty, language } = body;
   if (!requestId) return;
+
+  const langInstr = (language && language !== 'English')
+    ? '\nLANGUAGE: You MUST write ALL output — every word of every field — in ' + language + '. Do not use English.'
+    : '';
+  const sysWithLang = s => s + langInstr;
 
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const store = getStore({ name: 'study-results', siteID: process.env.SITE_ID, token: process.env.NETLIFY_TOKEN });
+  const store = studyStore();
 
   const modesArr = modes || [];
   const filesArr = files || [];
@@ -245,7 +274,7 @@ const handler = async (event) => {
         await saveProgress('Quiz: set ' + (i + 1) + ' of ' + batches.length + '…');
         const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
-          const r = await callAI(SYS_BATCH, prompt, 4000);
+          const r = await callAI(sysWithLang(SYS_BATCH), prompt, 4000);
           const items = (r && r.results && r.results.quiz && r.results.quiz.questions) || [];
           all.push(...items);
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
@@ -272,8 +301,8 @@ const handler = async (event) => {
           '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.flashcards + '\n  }\n}';
         try {
           const r = anthropicKey
-            ? await callClaude(anthropicKey, SYS_BATCH, prompt, 4000)
-            : await callOpenAI(openaiKey, SYS_BATCH, hasText ? [{ type: 'text', text: prompt }] : [...imageBlocks, { type: 'text', text: prompt }], 4000);
+            ? await callClaude(anthropicKey, sysWithLang(SYS_BATCH), prompt, 4000)
+            : await callOpenAI(openaiKey, sysWithLang(SYS_BATCH), hasText ? [{ type: 'text', text: prompt }] : [...imageBlocks, { type: 'text', text: prompt }], 4000);
           const items = (r && r.results && r.results.flashcards && r.results.flashcards.cards) || [];
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
           successfulChunks++;
@@ -331,8 +360,8 @@ const handler = async (event) => {
           const prompt = 'Topic: ' + topicStr + '\n\n[Chunk ' + (ci + 1) + ' of ' + chunks.length + ']\n' + chunks[ci] + notesQty + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}';
           try {
             const r = anthropicKey
-              ? await callClaude(anthropicKey, SYS_NOTES, prompt, 8000)
-              : await callOpenAI(openaiKey, SYS_NOTES, [...imageBlocks, { type: 'text', text: prompt }], 8000);
+              ? await callClaude(anthropicKey, sysWithLang(SYS_NOTES), prompt, 8000)
+              : await callOpenAI(openaiKey, sysWithLang(SYS_NOTES), [...imageBlocks, { type: 'text', text: prompt }], 8000);
             if (r && r.results && r.results.notes && r.results.notes.sections) {
               allSections.push(...r.results.notes.sections);
               if (r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
@@ -344,7 +373,7 @@ const handler = async (event) => {
         await saveProgress('Generating notes…');
         const prompt = 'Topic: ' + topicStr + notesQty + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.notes + '\n  }\n}';
         try {
-          const r = await callAI(SYS_NOTES, prompt, 8000);
+          const r = await callAI(sysWithLang(SYS_NOTES), prompt, 8000);
           if (r && r.results && r.results.notes) combinedResults.notes = r.results.notes;
           if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
         } catch (e) { /* missing */ }
@@ -360,7 +389,7 @@ const handler = async (event) => {
       const dInstr = ['practicetest', 'fitb'].indexOf(mode) !== -1 ? diffInstr : '';
       const prompt = 'Topic: ' + topicStr + '\n\nGenerate comprehensive ' + mode + ' content.' + dInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + structure + '\n  }\n}';
       try {
-        const r = await callAI(SYS_OTHER, prompt, 6000);
+        const r = await callAI(sysWithLang(SYS_OTHER), prompt, 6000);
         if (r && r.results) Object.assign(combinedResults, r.results);
         if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
       } catch (e) { /* skip */ }

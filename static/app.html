@@ -1933,6 +1933,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-processing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;gap:20px}
 .wz-processing-text{color:rgba(240,239,255,0.4);font-size:14px}
 .wz-processing-art{font-size:80px;line-height:1;filter:drop-shadow(0 8px 24px rgba(124,92,252,0.2));animation:wzFloat 3s ease-in-out infinite}
+/* Live progress line for long AI generations — users need to see the job is
+   moving, not frozen, now that responses run for minutes rather than seconds. */
+.gen-progress-text{margin-top:16px;text-align:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:rgba(240,239,255,0.5);animation:genProgressPulse 1.8s ease-in-out infinite}
+@keyframes genProgressPulse{0%,100%{opacity:.55}50%{opacity:1}}
+[data-theme="light"] .gen-progress-text{color:rgba(15,14,26,0.55)}
 @keyframes wzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .wz-processing-text{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:rgba(240,239,255,0.5)}
 .wz-right-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:30px 20px;text-align:center;gap:12px}
@@ -3782,7 +3787,83 @@ function getInput(){return document.getElementById('studyInput').value.trim()}
 function topicFromInput(raw){if(!raw)return'your topic';const w=raw.split(/\s+/).slice(0,6).join(' ');return w.length<raw.length?w+'…':w}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function resultHeader(mode,topic,meta=[],difficulty='medium'){const names={solve:'Solve',flashcards:'Flashcards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor Mode',practicetest:'Practice Test',fitb:'Fill in the Blanks',keyconcepts:'Key Concepts',studyplan:'Study Plan'};const tags=meta.map(m=>`<span class="meta-tag ${m.accent?'accent':''}">${m.text}</span>`).join('');const diffModes=['quiz','practicetest','fitb'];const diffSel=diffModes.includes(mode)?`<select class="regen-diff-select" id="diffSelect_${mode}" title="Difficulty"><option value="easy"${difficulty==='easy'?' selected':''}>Easy</option><option value="medium"${difficulty==='medium'?' selected':''}>Medium</option><option value="hard"${difficulty==='hard'?' selected':''}>Hard</option></select>`:'';return`<div class="result-header"><div><div class="result-title">${escHtml(topic)}</div><div class="result-meta">${tags}</div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0">${diffSel}<button class="regen-btn" id="regenBtn_${mode}" onclick="regenerateMode('${mode}')"><span class="regen-icon">↺</span> Regenerate</button><div class="result-mode-badge">${names[mode]||mode}</div></div></div>`}
-function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div>`)}
+function showLoading(){showResult(`<div class="shimmer-container"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div><div class="shimmer-block" style="height:80px"></div></div><p class="gen-progress-text" id="genProgress">Starting generation…</p>`)}
+
+/* ── Study generation transport ────────────────────────────────────────────
+   Long generations (25+ quiz questions, 40+ flashcards, chunked notes) run well
+   past the 26s cap on the synchronous /study function, which surfaces to the
+   user as a 504. Route through study-background (15-min limit) and poll
+   study-status for progress, falling back to the synchronous endpoint whenever
+   the background path is unavailable (e.g. not deployed on this plan). */
+const STUDY_POLL_INTERVAL = 3000;
+const STUDY_POLL_TIMEOUT  = 14 * 60 * 1000;
+
+function studyRequestId(){return 'sl_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
+function studySleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function setGenProgress(text){
+  if(!text)return;
+  document.querySelectorAll('#genProgress, .gen-progress-text').forEach(el=>{el.textContent=text;});
+}
+
+async function studySyncFetch(payload){
+  try{
+    const res = await fetch('/.netlify/functions/study',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+    });
+    const data = await res.json().catch(()=>null);
+    if(!data) return {error:'The request took too long. Try selecting fewer modes or a shorter topic, then generate again.'};
+    if(!res.ok && !data.error) return {error:'Server error — the request may have timed out. Try one mode at a time.'};
+    return data;
+  }catch(e){
+    return {error:'Could not reach the server. Check your connection and try again.'};
+  }
+}
+
+/* Returns {topic, results} on success or {error} on failure — same shape the
+   synchronous endpoint returns, so callers need no branching. */
+async function runStudyJob(payload, onProgress){
+  const requestId = studyRequestId();
+  let started = false;
+  try{
+    const kick = await fetch('/.netlify/functions/study-background',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({},payload,{requestId}))
+    });
+    // Background functions answer 202 with an empty body. A 404 means the
+    // function isn't available here, so fall back rather than poll forever.
+    started = kick.status === 202 || kick.ok;
+  }catch(e){ started = false; }
+
+  if(!started) return studySyncFetch(payload);
+
+  const deadline = Date.now() + STUDY_POLL_TIMEOUT;
+  let pollErrors = 0;
+  let lastPartial = null;
+
+  while(Date.now() < deadline){
+    await studySleep(STUDY_POLL_INTERVAL);
+    let st = null;
+    try{
+      const r = await fetch('/.netlify/functions/study-status',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId})
+      });
+      st = await r.json().catch(()=>null);
+      pollErrors = 0;
+    }catch(e){
+      // Transient network blips shouldn't kill a 10-minute job.
+      if(++pollErrors >= 5) return lastPartial || studySyncFetch(payload);
+      continue;
+    }
+    if(!st) continue;
+    if(st.status === 'done')  return st.data || {error:'No data returned.'};
+    if(st.status === 'error') return {error: st.error || 'Generation failed.'};
+    if(st.partial && st.partial.results) lastPartial = st.partial;
+    if(st.progress && onProgress) onProgress(st.progress, st.partial);
+  }
+  // Timed out waiting — hand back whatever finished rather than nothing.
+  return lastPartial || {error:'Generation is taking longer than expected. Try fewer modes or a shorter document.'};
+}
 
 async function regenerateMode(mode) {
   const wzView = document.getElementById('wzResultView');
@@ -3796,7 +3877,7 @@ async function regenerateMode(mode) {
   const input = (document.getElementById('studyInput')?.value || '').trim() || (lastResult && lastResult.topic) || '';
   const filesPayload = uploadedFiles.map(f => ({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const _reLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
-  const shimmer=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Regenerating…</p></div>`;
+  const shimmer=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="gen-progress-text" style="margin-top:20px">Regenerating…</p></div>`;
 
   // Show loading in whichever container is active
   if (isWizard) {
@@ -3807,10 +3888,10 @@ async function regenerateMode(mode) {
   }
 
   try {
-    const data = await fetch('/.netlify/functions/study', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:input||'the uploaded content', modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty, language:_reLang})
-    }).then(r => r.json().catch(() => null));
+    const data = await runStudyJob(
+      {topic:input||'the uploaded content', modes:[mode], files:filesPayload, urls:uploadedUrls||[], difficulty, language:_reLang},
+      setGenProgress
+    );
 
     if (!data || data.error || !data.results || !data.results[mode]) {
       const errHtml = `<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">${escHtml(data?.error||'Could not regenerate. Try again.')}</div></div>`;
@@ -3872,12 +3953,12 @@ async function generate() {
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
   showLoading();
   try {
-    let res;
-    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();try{res=await fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:input,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff,language:genLang})});}
-    catch(fetchErr){showResult('<div class="error-card"><div class="error-card-label">⚠ Network Error</div><div class="error-card-body">Could not reach the server. Check your connection and try again.</div></div>');return;}
-    let data;
-    try{data=await res.json();}catch(e){showResult('<div class="error-card"><div class="error-card-label">⚠ Timeout</div><div class="error-card-body">The request took too long. Try selecting fewer modes or a shorter topic, then generate again.</div></div>');return;}
-    if(!res.ok||data.error){const errMsg=data.error||data.errorMessage||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
+    const genDiff=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').difficulty||'medium';}catch(e){return 'medium';}})();const genLang=(function(){try{return JSON.parse(localStorage.getItem('sl-prefs')||'{}').language||'English';}catch(e){return 'English';}})();
+    const data = await runStudyJob(
+      {topic:input,modes,files:filesPayload,urls:uploadedUrls||[],difficulty:genDiff,language:genLang},
+      setGenProgress
+    );
+    if(!data||data.error){const errMsg=(data&&(data.error||data.errorMessage))||'Server error — the request may have timed out. Try selecting just one mode and generating again.';showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(errMsg)+'</div></div>');return;}
     const topic = data.topic||input||'Study Set';
     const modeLabel = modes.map(m=>({solve:'Solve',flashcards:'Cards',quiz:'Quiz',summary:'Summary',notes:'Notes',tutor:'Tutor',practicetest:'Test',fitb:'Fill',keyconcepts:'Concepts',studyplan:'Plan'}[m]||m)).join('+');
     let combined='';
@@ -3929,7 +4010,7 @@ function renderFlashcardsHTML(topic, d){
   const t=topic||'your topic';
   const cards=(d&&d.cards)||[];
   if(!cards.length)return'<div class="error-card"><div class="error-card-label">⚠ No cards</div><div class="error-card-body">No flashcard data returned.</div></div>';
-  fcAllCards=cards.map(c=>({q:c.front||'',a:c.back||'',diff:(c.difficulty||'').toLowerCase()}));
+  fcAllCards=cards.map(c=>({q:c.front||'',a:c.back||'',diff:(c.difficulty||'').toLowerCase(),topic:c.topic||'',subtopic:c.subtopic||'',bloom:(c.bloom||'').toLowerCase()}));
   fcDiffFilter='all';
   fcCards=[...fcAllCards];
   fcIndex=0;fcFlipped=false;
@@ -3959,7 +4040,7 @@ function renderQuizHTML(topic, d){
   const t=topic||'your topic';
   const questions=(d&&d.questions)||[];
   if(!questions.length)return'<div class="error-card"><div class="error-card-label">⚠ Quiz unavailable</div><div class="error-card-body">No questions were generated. Try selecting only Quiz mode (not combined with other modes) so the AI can focus its full response on questions.</div></div>';
-  quizData=questions.map(q=>{const LETTERS=['A','B','C','D'];let opts,correct;if(Array.isArray(q.options)){opts=q.options;correct=typeof q.correct==='number'?q.correct:0;}else if(q.options&&typeof q.options==='object'){opts=LETTERS.map(l=>q.options[l]?l+') '+q.options[l]:null).filter(Boolean);const ltr=(q.correct_answer||'A').toUpperCase().charAt(0);correct=Math.max(0,LETTERS.indexOf(ltr));}else{opts=[];correct=0;}return{q:q.question||'',opts,correct,difficulty:q.difficulty||'Medium',explanation:q.explanation||''};});
+  quizData=questions.map(q=>{const LETTERS=['A','B','C','D'];let opts,correct;if(Array.isArray(q.options)){opts=q.options;correct=typeof q.correct==='number'?q.correct:0;}else if(q.options&&typeof q.options==='object'){opts=LETTERS.map(l=>q.options[l]?l+') '+q.options[l]:null).filter(Boolean);const ltr=(q.correct_answer||'A').toUpperCase().charAt(0);correct=Math.max(0,LETTERS.indexOf(ltr));}else{opts=[];correct=0;}return{q:q.question||'',opts,correct,difficulty:q.difficulty||'Medium',explanation:q.explanation||'',topic:q.topic||'',subtopic:q.subtopic||'',bloom:(q.bloom||'').toLowerCase()};});
   quizCurrent=0;quizScore=0;quizAnswers=[];quizQStart=Date.now();
   return`${resultHeader('quiz',t,[{text:'📝 '+quizData.length+' Questions',accent:true},{text:'Multiple Choice'}])}<div id="quizBody">${renderQuizQuestion()}</div>`;
 }
@@ -4434,7 +4515,7 @@ async function pasteGenerate(){
   document.getElementById('slResultView').style.display='none';
   const rv=document.getElementById('wzResultView');rv.style.display='flex';
   setResultMode(true);wzBuildSidebar(modes);
-  document.getElementById('wzResultMain').innerHTML=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Processing content…</p></div>`;
+  document.getElementById('wzResultMain').innerHTML=`<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div></div><p class="gen-progress-text" style="margin-top:20px">Processing content…</p></div>`;
   const filesPayload=uploadedFiles.map(f=>({name:f.name,type:f.type,mimeType:f.mimeType||null,textContent:f.textContent?String(f.textContent).replace(/[\uD800-\uDFFF]/g,'?'):null,imageData:f.imageData||null}));
   const topicStr=topic;
   try{
@@ -4444,7 +4525,7 @@ async function pasteGenerate(){
     const _mini2=modes.filter(m=>!_GPT4O2.has(m));
     const _gpt4o2=modes.filter(m=>_GPT4O2.has(m));
     const _batches2=[_mini2.length&&_mini2,_gpt4o2.length&&_gpt4o2].filter(Boolean);
-    const _fb2=bm=>fetch('/.netlify/functions/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:topic,modes:bm,files:filesPayload,urls:[],difficulty:genDiff,language:genLang})}).then(r=>r.json().catch(()=>({error:'Request timed out.'}))).catch(()=>({error:'Network error.'}));
+    const _fb2=bm=>runStudyJob({topic:topic,modes:bm,files:filesPayload,urls:[],difficulty:genDiff,language:genLang},setGenProgress);
     await Promise.all(_batches2.map(bm=>_fb2(bm).then(data=>{
       if(data&&!data.error&&data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
       bm.forEach(mode=>{
@@ -5989,7 +6070,7 @@ async function wzGenerate() {
   if (_wsc) _wsc.style.display = 'flex';
   // Build sidebar with loading placeholders
   wzBuildSidebar(methods);
-  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="wz-processing-text" style="margin-top:20px;font-size:14px">Processing content…</p></div>`;
+  document.getElementById('wzResultMain').innerHTML = `<div class="wz-processing"><div class="shimmer-container" style="width:100%"><div class="shimmer-block" style="height:60px"></div><div class="shimmer-block" style="height:140px"></div><div class="shimmer-block" style="height:100px"></div></div><p class="gen-progress-text" style="margin-top:20px">Processing content…</p></div>`;
   const input = (document.getElementById('studyInput')?.value || '').trim();
   let topicStr = input || 'the uploaded content';
   if (lang !== 'English') topicStr += ' — Respond in ' + lang + '.';
@@ -6007,10 +6088,10 @@ async function wzGenerate() {
     const gpt4oModes = methods.filter(m =>  GPT4O_SET.has(m));
     const batches    = [miniModes.length && miniModes, gpt4oModes.length && gpt4oModes].filter(Boolean);
 
-    const fetchBatch = batchModes => fetch('/.netlify/functions/study', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic:topicArg, modes:batchModes, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff, language:settingsLang})
-    }).then(r => r.json().catch(() => ({error:'Request timed out. Try again.'}))).catch(() => ({error:'Network error. Check your connection.'}));
+    const fetchBatch = batchModes => runStudyJob(
+      {topic:topicArg, modes:batchModes, files:filesPayload, urls:uploadedUrls||[], difficulty:settingsDiff, language:settingsLang},
+      setGenProgress
+    );
 
     let resolvedTopic = input || 'Study Set';
     let firstShown = false;

@@ -41,6 +41,53 @@ const SUBJECT_INSTRUCTIONS = {
   general:    ''
 };
 
+// ── StudLit AI system prompt ────────────────────────────────────────────────
+// Shared identity + pedagogy layer. The generation endpoints run in JSON mode,
+// so the markdown output rules live in chat.js instead of here.
+const STUDLIT_CORE = [
+  'You are StudLit AI, the core tutor and content engine inside StudLit — an AI study platform focused on making studying feel like a game, not a chore.',
+  '',
+  'CORE BEHAVIOR',
+  '- Default to depth over brevity. When asked to explain a concept, generate study material, or answer a question, produce comprehensive, structured output — not a short summary. Students are here to actually learn the material, not get a one-liner they have to ask about again.',
+  '- Every explanation should include: a plain-language definition, why it matters / how it connects to the broader topic, at least one concrete example, and a common mistake or misconception students have about it.',
+  '- When generating flashcards, quizzes, or practice tests from source material, extract MORE distinct concepts than the minimum asked for — aim to cover the material exhaustively, not just hit a round number.',
+  '- Use active recall, spaced repetition principles, and Bloom\'s Taxonomy levels (remember → understand → apply → analyze → evaluate → create) when structuring quiz difficulty, so questions escalate in cognitive demand rather than staying flat.',
+  '- Always tag generated questions/flashcards with a difficulty level and a topic/subtopic label, so the app can track progress per-concept (not just per-set).',
+  '- For homework/photo-solve requests: show full step-by-step reasoning, not just the final answer, and flag the general principle being tested so it transfers to similar problems.',
+  '- Match tone to the student: encouraging and clear, never condescending, never padded with filler ("Great question!") — get straight into substance.',
+  '- If the source material is thin or ambiguous, say so explicitly in the content you generate rather than inventing facts.'
+].join('\n');
+
+// Trimmed variant for gpt-4o-mini calls — same pedagogy, fewer tokens.
+const STUDLIT_CORE_MINI = [
+  'You are StudLit AI, the tutor and content engine inside StudLit.',
+  '- Default to depth over brevity — comprehensive output, never a short summary.',
+  '- Every explanation covers: plain-language definition, why it matters, a concrete example, and a common misconception.',
+  '- Extract MORE distinct concepts than the minimum asked for — cover the material exhaustively.',
+  '- Escalate questions through Bloom\'s Taxonomy (remember → understand → apply → analyze → evaluate → create) rather than staying flat.',
+  '- Tag every question/flashcard with a difficulty level and a topic/subtopic label.',
+  '- Never pad with filler. Never invent facts not supported by the material.'
+].join('\n');
+
+const JSON_OUTPUT_RULES = [
+  '',
+  'OUTPUT FORMAT',
+  '- Return ONLY valid JSON — no markdown, no backticks, no prose outside the JSON.',
+  '- Use the exact schema given in the user message. Fill every field. Never leave arrays empty. Never truncate mid-array.',
+  '- Return generated items in a consistent structured format so the frontend can parse and render them reliably.',
+  '',
+  'COVERAGE AND QUANTITY',
+  '- BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic.',
+  '- Mix difficulty deliberately: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis).',
+  '- MINIMUM quantities: flashcards = 40+ cards; quiz = 25+ questions; notes = 8+ sections with 6-8 bullets each; tutor = 6+ sections with 3 paragraphs each; fitb = 20+ sentences; keyconcepts = 20+ terms; practicetest = 5+ questions per section; studyplan = 7 days with 4-5 tasks each. Treat these as floors, not targets.',
+  '- QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty.'
+].join('\n');
+
+function buildSystemPrompt(model, langInstr) {
+  const core = model === 'gpt-4o' ? STUDLIT_CORE : STUDLIT_CORE_MINI;
+  return core + (langInstr || '') + JSON_OUTPUT_RULES;
+}
+
 async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -80,7 +127,7 @@ const handler = async (event) => {
 
   const { topic, modes, files, urls, difficulty, language } = body;
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
-  const langInstr = (language && language !== 'English') ? ` LANGUAGE: You MUST write ALL output — every word of every field — in ${language}. Do not use English.` : '';
+  const langInstr = (language && language !== 'English') ? `\n\nLANGUAGE: You MUST write ALL output — every word of every field — in ${language}. Do not use English.` : '';
   const modesArr = modes || [];
   const filesArr = files || [];
   const urlsArr = urls || [];
@@ -107,11 +154,9 @@ const handler = async (event) => {
     for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
-  const systemPrompt = 'You are StudLit AI — an expert tutor and curriculum designer. Return ONLY valid JSON — no markdown, no backticks, no extra text.' + langInstr + ' BEFORE generating, identify ALL key topics in the material and ensure even coverage across every topic. CRITICAL THINKING: questions and flashcard fronts must go beyond recall — ask students to apply, analyze, compare, explain why, predict, or solve scenarios. Mix difficulty: ~33% easy (recall/definition), ~34% medium (understanding/application), ~33% hard (analysis/evaluation/synthesis). MINIMUM quantities: flashcards = 40+ cards each with a difficulty field; quiz = 25+ questions each with correct_answer as a letter A/B/C/D; notes = 8+ sections with 6-8 bullets each; tutor = 6+ sections with 3 paragraphs each; fitb = 20+ sentences; keyconcepts = 20+ terms; practicetest = 5+ questions per section; studyplan = 7 days with 4-5 tasks each. QUALITY RULES: avoid generic or trivial questions; every question must test real understanding; use scenario-based and application questions; exam-level difficulty. Fill every field. Never leave arrays empty. Never truncate mid-array.';
-
   const modeMap = {
-    flashcards: '"flashcards":{"cards":[{"front":"Mix of question types — e.g. \'Why does X happen?\', \'How would you apply X to Y?\', \'What is the difference between X and Y?\', \'What would happen if X changed?\', \'Give an example of X in real life\', or \'Define X\' for core terms. NOT just \'What is X?\'","back":"thorough answer — explain the concept, the reasoning, or the real-world connection, not just a one-line definition","difficulty":"easy|medium|hard — easy=definition/recall, medium=application/understanding, hard=analysis/evaluation/synthesis"}]}',
-    quiz: '"quiz":{"questions":[{"question":"Mix question types: scenario-based (\'A student observes X — which concept explains this?\'), cause-and-effect (\'What happens when X occurs?\'), compare/contrast (\'How does X differ from Y?\'), application (\'Which of the following correctly applies X?\'), or analysis (\'Why does X lead to Y?\'). Avoid trivial \'What is the definition of X?\' questions.","options":{"A":"first option text","B":"second option text","C":"third option text","D":"fourth option text"},"correct_answer":"A|B|C|D","explanation":"explain why the correct answer is right AND why each wrong option is wrong","difficulty":"easy|medium|hard"}]}',
+    flashcards: '"flashcards":{"cards":[{"front":"Mix of question types — e.g. \'Why does X happen?\', \'How would you apply X to Y?\', \'What is the difference between X and Y?\', \'What would happen if X changed?\', \'Give an example of X in real life\', or \'Define X\' for core terms. NOT just \'What is X?\'","back":"thorough answer — explain the concept, the reasoning, or the real-world connection, not just a one-line definition","difficulty":"easy|medium|hard — easy=definition/recall, medium=application/understanding, hard=analysis/evaluation/synthesis","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"the major topic this card belongs to — reuse the SAME label across every card on that topic","subtopic":"the specific sub-concept within that topic"}]}',
+    quiz: '"quiz":{"questions":[{"question":"Mix question types: scenario-based (\'A student observes X — which concept explains this?\'), cause-and-effect (\'What happens when X occurs?\'), compare/contrast (\'How does X differ from Y?\'), application (\'Which of the following correctly applies X?\'), or analysis (\'Why does X lead to Y?\'). Avoid trivial \'What is the definition of X?\' questions.","options":{"A":"first option text","B":"second option text","C":"third option text","D":"fourth option text"},"correct_answer":"A|B|C|D","explanation":"explain why the correct answer is right AND why each wrong option is wrong","difficulty":"easy|medium|hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"the major topic this question belongs to — reuse the SAME label across every question on that topic","subtopic":"the specific sub-concept within that topic"}]}',
     fitb: '"fitb":{"sentences":[{"text":"The ___ does ___.","blanks":["term1","term2"]}]}',
     summary: '"summary":{"overview":"comprehensive 6-8 sentence overview covering all main ideas","keyPoints":["detailed key point — include one per major concept from the content"],"mustRemember":"the single most critical concept to remember"}',
     notes: '"notes":{"sections":[{"heading":"Section Title — one section per major topic","content":"Thorough paragraph explaining this topic with full detail and context.","bullets":["Detailed bullet 1 with full explanation","Detailed bullet 2","Detailed bullet 3","Detailed bullet 4","Detailed bullet 5","Detailed bullet 6","Detailed bullet 7","Detailed bullet 8"]}]}',
@@ -144,7 +189,7 @@ const handler = async (event) => {
     const queryText = 'Topic: ' + (topic || 'the uploaded content') + '\n\nGenerate: ' + mode + diffInstr + tutorInstr + subjectInstr + '\n\nReturn:\n{\n  "topic": "topic name",\n  "results": {\n    ' + structure + '\n  }\n}';
     const userContent = [...imageBlocks, ...sharedCtxBlock, { type: 'text', text: queryText }];
     const maxTokens = 16000;
-    return callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens);
+    return callOpenAI(apiKey, model, buildSystemPrompt(model, langInstr), userContent, maxTokens);
   }
 
   try {

@@ -26,11 +26,14 @@ const handler = async (event) => {
   }
 
   try {
-    const store = getStore({
-      name: 'study-results',
-      siteID: process.env.SITE_ID,
-      token: process.env.NETLIFY_TOKEN
-    });
+    // Only pass siteID/token when BOTH are set — passing them as undefined puts
+    // @netlify/blobs into manual mode with no credentials instead of letting it
+    // auto-configure from the Netlify Functions runtime.
+    const siteID = process.env.SITE_ID;
+    const token = process.env.NETLIFY_TOKEN;
+    const storeOpts = { name: 'study-results' };
+    if (siteID && token) { storeOpts.siteID = siteID; storeOpts.token = token; }
+    const store = getStore(storeOpts);
     const result = await store.get(requestId, { type: 'json' });
 
     if (!result) {

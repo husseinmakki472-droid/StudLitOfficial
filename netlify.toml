@@ -36,7 +36,10 @@
 [functions.ai-check]
   timeout = 26
 
-# studygen is a background function (.background.js suffix) — 15-minute limit, no timeout needed
+# study-background.js is a background function (the "-background" filename suffix
+# is what makes it one) — 15-minute limit, so no timeout setting applies.
+# The frontend calls it first and polls study-status; the synchronous `study`
+# function above stays as the fallback path when background isn't available.
 
 [[redirects]]
   from = "/"
