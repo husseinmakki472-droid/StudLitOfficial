@@ -13,11 +13,15 @@ const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
-  if (!org.ok) {
-    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Requests are not allowed from this origin.' }) };
-  }
+  // Method before origin, matching guard(). Reversed, a plain browser GET —
+  // which carries whatever Referer the user clicked from — answered "not
+  // allowed from this origin" and looked like a misconfiguration when it was
+  // only ever a wrong verb.
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+  if (!org.ok) {
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Requests are not allowed from this origin.' }) };
   }
 
   let body;
