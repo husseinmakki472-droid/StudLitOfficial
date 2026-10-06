@@ -39,6 +39,14 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .page-tab:hover{color:rgba(240,239,255,0.85);background:rgba(255,255,255,0.05)}
 .page-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 12px rgba(124,92,252,0.35),inset 0 1px 0 rgba(255,255,255,0.15)}
 .nav-right{display:flex;align-items:center;gap:10px}
+/* Inline icon system. Replaces the emoji that were doing interface work:
+   emoji render differently on every OS, cannot inherit colour, and were the
+   clearest visual tell that this was a side project. */
+.ic{width:1em;height:1em;flex:0 0 auto;vertical-align:-0.125em;stroke:currentColor}
+.page-tab,.sl-nav-item,.pill,.theme-label,.settings-nav-title{display:inline-flex;align-items:center;gap:7px}
+.sl-nav-item{display:flex}
+.sl-nav-item-icon{display:inline-flex;align-items:center;font-size:17px;opacity:.9}
+.pill .ic{opacity:.85}
 /* ── Mobile navbar ────────────────────────────────────────────────────────
    The bar was laid out for desktop only: at 390px the tab row alone measured
    455px and nav-right another 320px, giving the document a 897px width and
@@ -2408,12 +2416,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="page-tabs">
     <button class="page-tab active" id="tab-home" onclick="switchTab('home')">Home</button>
     <button class="page-tab" id="tab-workspace" onclick="switchTab('workspace')">Workspace</button>
-    <button class="page-tab" id="tab-writing" onclick="switchTab('writing')">📋 Paper Grader</button>
-    <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
+    <button class="page-tab" id="tab-writing" onclick="switchTab('writing')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>Paper Grader</button>
+    <button class="page-tab" id="tab-leaderboard" onclick="switchTab('leaderboard')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M12 15v4"/><path d="M8 21h8"/></svg>Leaderboard</button>
   </div>
   <div class="nav-right">
     <div class="theme-toggle-wrap" onclick="document.getElementById('themeToggle').click();event.stopPropagation()">
-    <span id="themeLabel" class="theme-label">🌙 Dark</span>
+    <span id="themeLabel" class="theme-label"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="event.stopPropagation()"></button>
   </div>
     <button class="nav-icon-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Toggle fullscreen">
@@ -2433,25 +2441,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <button class="btn-hero" onclick="showPricingModal()">Get Started Free →</button>
     <button class="btn-hero-ghost" onclick="switchTab('workspace')">Explore Features</button>
   </div>
-  <div class="hero-social-proof">
-    <div class="hero-avatars">
-      <div class="hero-avatar">A</div>
-      <div class="hero-avatar">J</div>
-      <div class="hero-avatar">M</div>
-      <div class="hero-avatar">S</div>
-    </div>
-    <div class="hero-rating">
-      <span class="hero-stars">★★★★★</span>
-      <span>Loved by <strong>10,000+</strong> students worldwide · <strong>4.9/5</strong></span>
-    </div>
-  </div>
   <div class="hero-pills">
-    <span class="pill">🧠 AI Tutor</span><span class="pill">🃏 Flashcards</span><span class="pill">📝 Quizzes</span><span class="pill">📋 Summaries</span><span class="pill">🎯 Practice Tests</span><span class="pill">⚡ Active Recall</span><span class="pill">📊 Study Plans</span><span class="pill">🔑 Key Concepts</span>
+    <span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>AI Tutor</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="13" height="14" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v11"/></svg>Flashcards</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quizzes</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>Summaries</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Practice Tests</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Active Recall</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Study Plans</span><span class="pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.5 12.5 8-8"/><path d="m16 6 3 3"/></svg>Key Concepts</span>
   </div>
   <div class="hero-stats">
     <div class="stat-item"><div class="stat-val">10<span>+</span></div><div class="stat-label">Study Modes</div></div>
-    <div class="stat-item"><div class="stat-val">2<span>d</span></div><div class="stat-label">Free Trial</div></div>
-    <div class="stat-item"><div class="stat-val">$<span>15</span></div><div class="stat-label">Per Month</div></div>
+    <div class="stat-item"><div class="stat-val">40<span>+</span></div><div class="stat-label">Cards Per Set</div></div>
+    <div class="stat-item"><div class="stat-val"><span>PDF</span></div><div class="stat-label">Notes &amp; Photos</div></div>
     <div class="stat-item"><div class="stat-val"><span>∞</span></div><div class="stat-label">Topics</div></div>
   </div>
 </section>
@@ -2472,18 +2468,18 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     </div>
     <nav class="sl-nav">
       <button class="sl-nav-item active" id="wstab-create" onclick="switchWsTab('create')">
-        <span class="sl-nav-item-icon">✏️</span> Create Set
+        <span class="sl-nav-item-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span> Create Set
       </button>
       <button class="sl-nav-item" id="wstab-solve" onclick="switchWsTab('solve')">
-        <span class="sl-nav-item-icon">⚡</span> Solve
+        <span class="sl-nav-item-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span> Solve
       </button>
       <button class="sl-nav-item" id="wstab-sets" onclick="switchWsTab('sets')">
-        <span class="sl-nav-item-icon">📚</span> Study Sets
+        <span class="sl-nav-item-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span> Study Sets
       </button>
     </nav>
     <div class="sl-sidebar-bottom">
       <button class="sl-nav-item" onclick="openSettings()">
-        <span class="sl-nav-item-icon">⚙️</span> Settings
+        <span class="sl-nav-item-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Settings
       </button>
     </div>
   </aside>
@@ -3004,7 +3000,7 @@ let uploadedFiles=[];
 let uploadedUrls=[];
 let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 
-(function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');var lbl=document.getElementById('themeLabel');if(lbl)lbl.textContent=s==='light'?'☀️ Light':'🌙 Dark';}catch(e){}})();
+(function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');var lbl=document.getElementById('themeLabel');if(lbl)lbl.innerHTML=s==='light'?'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg>'+'Light':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'+'Dark';}catch(e){}})();
 // Apply theme after DOM ready so injected style works
 document.addEventListener('DOMContentLoaded',function(){
   try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}
@@ -3633,7 +3629,7 @@ function applyTheme(theme) {
   document.body.setAttribute('data-theme', theme);
   document.body.classList.toggle('light-mode', isLight);
   var lbl = document.getElementById('themeLabel');
-  if (lbl) lbl.textContent = isLight ? '☀️ Light' : '🌙 Dark';
+  if (lbl) lbl.innerHTML = isLight ? '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg>'+'Light' : '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'+'Dark';
   try{localStorage.setItem('sl-theme', theme);}catch(e){}
   // Re-apply accent so theme-toggle and other isLight-conditional rules regenerate
   try{var _ac=localStorage.getItem('sl-accent');var _ac2=localStorage.getItem('sl-accent2');if(_ac)applyAccentColor(_ac,_ac2);}catch(e){}
@@ -7143,7 +7139,7 @@ document.addEventListener('fullscreenchange', function() {
 ```
 <!-- Nav -->
 <div class="settings-nav">
-  <div class="settings-nav-title">⚙️ Settings</div>
+  <div class="settings-nav-title"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
   <button class="settings-nav-item active" onclick="switchSettingsPanel('profile',this)">
     <span class="settings-nav-icon">👤</span> Profile
   </button>
