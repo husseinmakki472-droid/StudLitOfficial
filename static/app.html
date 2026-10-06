@@ -5572,6 +5572,135 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
+/* ── Import ───────────────────────────────────────────────────────────────
+   Export existed with no way back in, which is the worst kind of safety net:
+   a student exports, believes they're backed up, and can never restore.
+   The same entry point also takes Quizlet and Anki exports, which are the
+   only real reason a student with sets elsewhere would move over. */
+
+function importData() {
+  const el = document.getElementById('importFileInput');
+  if (el) { el.value = ''; el.click(); }
+}
+
+// Splits one delimited line, honouring "quoted fields, with commas" and ""
+// as an escaped quote. Hand-rolled because a naive split() mangles
+// definitions containing the delimiter — common in real exports.
+function parseDelimitedLine(line, delim) {
+  const out = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuotes = false;
+      } else cur += ch;
+    } else if (ch === '"') inQuotes = true;
+    else if (ch === delim) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map(s => s.trim());
+}
+
+function parseFlashcardText(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  // Quizlet defaults to tab-separated; CSV is the other common export.
+  // Pick whichever delimiter appears in more lines.
+  const score = d => lines.filter(l => l.indexOf(d) !== -1).length;
+  const delim = score('\t') >= score(',') ? '\t' : ',';
+  const cards = [];
+  for (const line of lines) {
+    const parts = parseDelimitedLine(line, delim);
+    if (parts.length < 2) continue;
+    const front = parts[0];
+    const back = parts.slice(1).join(' ').trim();
+    if (!front || !back) continue;
+    // Drop a header row like "Term,Definition" — but only when BOTH columns
+    // look like headers. Matching the first column alone would silently eat a
+    // genuine card whose front happens to be the word "Term".
+    if (cards.length === 0 &&
+        /^(term|front|question|word|key)$/i.test(front) &&
+        /^(definition|back|answer|meaning|value)$/i.test(back)) continue;
+    cards.push({ front, back, difficulty: 'medium' });
+  }
+  return cards;
+}
+
+function handleImportFile(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onerror = function () { showInfoToast('Could not read that file.'); };
+  reader.onload = function () {
+    const text = String(reader.result || '');
+    const name = (file.name || 'Imported set').replace(/\.[^.]+$/, '');
+    try {
+      if (/^\s*[{[]/.test(text)) importStudLitBackup(text);
+      else importFlashcardFile(text, name);
+    } catch (e) {
+      showInfoToast('Could not import that file — ' + (e.message || 'unrecognised format') + '.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importStudLitBackup(text) {
+  const data = JSON.parse(text);
+  const incoming = Array.isArray(data) ? data : data.studySets;
+  if (!Array.isArray(incoming)) throw new Error('no study sets in that file');
+
+  // Merge rather than replace: restoring a backup should never silently
+  // destroy work done since the export. Ids are regenerated on collision so
+  // an existing set is never overwritten.
+  const existing = new Set(studySets.map(s => s.id));
+  let added = 0;
+  for (const set of incoming) {
+    if (!set || !set.name) continue;
+    const copy = Object.assign({}, set);
+    if (existing.has(copy.id)) copy.id = Date.now().toString() + '-' + added;
+    copy.sessions = Array.isArray(copy.sessions) ? copy.sessions : [];
+    studySets.unshift(copy);
+    existing.add(copy.id);
+    added++;
+  }
+  if (!added) { showInfoToast('Nothing new to import — those sets are already here.'); return; }
+  saveSets();
+  try { renderSets(); } catch (e) {}
+  try { renderSlSets(); } catch (e) {}
+  showInfoToast('Restored ' + added + ' study set' + (added === 1 ? '' : 's') + '.');
+}
+
+function importFlashcardFile(text, name) {
+  const cards = parseFlashcardText(text);
+  if (!cards.length) throw new Error('no term/definition pairs found');
+
+  // Sessions store rendered HTML, so build the deck through the normal
+  // renderer — an imported set then behaves exactly like a generated one.
+  const html = renderFlashcardsHTML(name, { cards });
+  const set = {
+    id: Date.now().toString(),
+    name: name,
+    desc: 'Imported — ' + cards.length + ' cards',
+    sessions: [{
+      id: Date.now().toString(),
+      topic: name,
+      modes: 'flashcards',
+      html: html,
+      tabs: { flashcards: html },
+      sourceContent: '',
+      date: new Date().toLocaleDateString()
+    }]
+  };
+  studySets.unshift(set);
+  saveSets();
+  try { renderSets(); } catch (e) {}
+  try { renderSlSets(); } catch (e) {}
+  showInfoToast('Imported ' + cards.length + ' cards into "' + name + '".');
+}
+
 function clearAllData() {
   if (!confirm('This will permanently delete all your study sets. Are you sure?')) return;
   studySets = []; saveSets(); renderSlSets();
@@ -7173,6 +7302,14 @@ document.addEventListener('fullscreenchange', function() {
           <div class="settings-row-sub">Download all your study sets and sessions as JSON</div>
         </div>
         <button class="btn-settings-change" onclick="exportData()">Export</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">Import</div>
+          <div class="settings-row-sub">Restore a StudLit backup, or bring in a set from Quizlet or Anki (.json, .csv, .tsv, .txt)</div>
+        </div>
+        <button class="btn-settings-change" onclick="importData()">Import</button>
+        <input type="file" id="importFileInput" accept=".json,.csv,.tsv,.txt" style="display:none" onchange="handleImportFile(this)">
       </div>
       <div class="settings-row">
         <div class="settings-row-left">
