@@ -237,7 +237,17 @@ const MODE_MAP = {
   fitb: '"fitb":{"sentences":[{"text":"The ___ does ___ which results in ___.","blanks":["term1","term2","term3"]}]}',
   summary: '"summary":{"overview":"4-6 sentence overview","keyPoints":["point 1","point 2","point 3","point 4","point 5","point 6","point 7","point 8","point 9","point 10"],"mustRemember":"most critical concept"}',
   notes: '"notes":{"sections":[{"heading":"Title","overview":"2-3 sentence intro.","content":"Paragraph 1.\\n\\nParagraph 2.\\n\\nParagraph 3.","bullets":["Bullet 1","Bullet 2","Bullet 3","Bullet 4","Bullet 5","Bullet 6"],"keyTerms":[{"term":"term","definition":"def"}],"examples":["Ex 1","Ex 2","Ex 3"],"applications":["App 1","App 2"],"causeEffect":"Analysis.","keyTakeaway":"Key insight."}]}',
-  tutor: '"tutor":{"title":"Lesson title","sections":[{"number":1,"heading":"Heading","paragraphs":["Para 1.","Para 2.","Para 3."],"keyTakeaway":"Insight.","thinkAboutIt":"Question?"}]}',
+  tutor: '"tutor":{"title":"A specific lesson title naming what is actually taught",'
+    + '"sections":[{"number":1,"heading":"Specific heading naming this concept, never a generic Introduction",'
+    + '"definitions":[{"term":"key term exactly as it appears in the material","definition":"complete definition a beginner could act on"}],'
+    + '"paragraphs":["Explain the concept from nothing: what it is and why it exists.","How it works, step by step, naming the mechanism.","How it connects to the rest of the topic."],'
+    + '"examples":["A worked example with real numbers or a concrete scenario, followed through to its result.","A second example in a different context so the idea generalises."],'
+    + '"misconception":"The specific mistake students actually make here, and why it is wrong.",'
+    + '"keyTakeaway":"The one sentence worth remembering from this section.",'
+    + '"thinkAboutIt":"A question connecting this section to the bigger picture."}],'
+    + '"realWorldApplication":"A concrete named scenario showing where this topic is used in practice, never a vague claim about many fields.",'
+    + '"summary":"A thorough recap of every major point, why each matters, and how they connect.",'
+    + '"quiz":[{"question":"Question testing application, not recall","answer":"Complete answer a student can learn from"}]}',
   practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"q","sampleAnswer":"answer"}]},{"type":"multipleChoice","questions":[{"question":"q","options":["A) opt","B) opt","C) opt","D) opt"],"correct":0,"explanation":"why","sampleAnswer":"the correct option restated in full, followed by why it is right and why the others are wrong"}]},{"type":"essayPrompt","questions":[{"question":"prompt","sampleAnswer":"outline"}]}]}',
   keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"2-3 sentence definition","importance":"why it matters"}]}',
   studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Title","tasks":["task 1","task 2","task 3","task 4","task 5"],"duration":"45 min","focus":"focus area"}]}',
@@ -537,7 +547,60 @@ const handler = async (event) => {
     }
 
     // ── OTHER MODES — independent of each other, so run them concurrently ──
-    const remaining = modesArr.filter(m => m !== 'quiz' && m !== 'flashcards' && m !== 'notes');
+    // ── TUTOR — chunked, so a long upload becomes a full lesson ───────────
+    if (modesArr.indexOf('tutor') !== -1) {
+      const tChunks = fullText.trim().length > 8000
+        ? capChunks(splitIntoChunks(fullText, 8000), 10) : null;
+      const lessonQty = '\n\nFor THIS material produce 2-4 sections. Every section needs: 2+ defined key terms, 3 explanatory paragraphs, 2 worked examples, the misconception students actually hit, a key takeaway and a reflective question. Teach someone who has never seen this before — never skip a step, never summarise.';
+
+      if (tChunks) {
+        const allSections = [];
+        let tDone = 0;
+        await runPool(tChunks.length, 3, async function (ci) {
+          const prompt = 'Topic: ' + topicStr + '\n\n[Part ' + (ci + 1) + ' of ' + tChunks.length + ' of the material]\n' + tChunks[ci] +
+            lessonQty + '\n\nCover ONLY what is in this part. Return JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.tutor + '\n  }\n}';
+          try {
+            const r = useClaudeFor('tutor')
+              ? await callClaude(anthropicKey, sysWithLang(SYS_NOTES), prompt, 10000)
+              : await callOpenAI(openaiKey, sysWithLang(SYS_NOTES), [...imageBlocks, { type: 'text', text: prompt }], 10000, modelFor('tutor'));
+            const sec = (r && r.results && r.results.tutor && r.results.tutor.sections) || [];
+            allSections.push(...sec);
+            if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+          } catch (e) { /* a lost part must not sink the lesson */ }
+          tDone++;
+          await saveProgress('Tutor lesson: ' + tDone + ' of ' + tChunks.length + ' parts…');
+        });
+
+        if (allSections.length) {
+          allSections.forEach((sec, i) => { sec.number = i + 1; });
+          // One closing pass over the whole lesson, which needs to see every
+          // section rather than any single chunk.
+          let closing = {};
+          try {
+            const headings = allSections.map(x => x.heading).filter(Boolean).join('; ');
+            const r2 = await callAI(sysWithLang(SYS_OTHER),
+              'Topic: ' + topicStr + '\n\nA lesson was written covering these sections: ' + headings +
+              '\n\nWrite ONLY the closing material for it. Return JSON:\n{\n  "topic": "name",\n  "results": {\n    "tutor":{"title":"specific lesson title","realWorldApplication":"a concrete named scenario where this is used in practice","summary":"thorough recap of every major point and how they connect","quiz":[{"question":"applies a concept","answer":"complete answer"},{"question":"analyses or compares","answer":"complete answer"},{"question":"predicts from a scenario","answer":"complete answer"}]}\n  }\n}',
+              5000, 'tutor');
+            closing = (r2 && r2.results && r2.results.tutor) || {};
+          } catch (e) { /* sections alone are still a lesson */ }
+          combinedResults.tutor = Object.assign({}, closing, { sections: allSections });
+        }
+        await saveProgress('Tutor lesson done — ' + allSections.length + ' sections');
+      } else {
+        await saveProgress('Writing tutor lesson…');
+        const prompt = 'Topic: ' + topicStr + (MODE_QTY.tutor ? '\n\nREQUIRED OUTPUT: ' + MODE_QTY.tutor : '') +
+          '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.tutor + '\n  }\n}';
+        try {
+          const r = await callAI(sysWithLang(SYS_NOTES), prompt, 14000, 'tutor');
+          if (r && r.results && r.results.tutor) combinedResults.tutor = r.results.tutor;
+          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+        } catch (e) { /* skip */ }
+        await saveProgress('Tutor lesson done');
+      }
+    }
+
+    const remaining = modesArr.filter(m => m !== 'quiz' && m !== 'flashcards' && m !== 'notes' && m !== 'tutor');
     let rDone = 0;
     await runPool(remaining.length, 3, async function (i) {
       const mode = remaining[i];

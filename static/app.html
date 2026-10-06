@@ -229,6 +229,16 @@ body{letter-spacing:-.006em;font-weight:500}
 /* Mastery row — the reference's signature readout, in StudLit's palette.
    Each pill carries its own level colour via --lv so the row reads at a glance
    without adding a second accent to compete with the violet. */
+/* Lesson: misconception callout and section numbering. The callout is amber
+   rather than the violet accent — it is a warning, and reusing the brand colour
+   for everything flattens meaning. */
+.lesson-miss{margin:16px 0;padding:13px 16px;border-radius:12px;border:1px solid rgba(245,158,11,0.28);background:rgba(245,158,11,0.07);border-left:3px solid #f59e0b}
+.lesson-miss-label{font-family:var(--font-display);font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#f59e0b;margin-bottom:5px}
+.lesson-miss-body{margin:0;font-size:14.5px;line-height:1.65;color:var(--text-2)}
+.lesson-section-num{display:inline-grid;place-items:center;width:28px;height:28px;margin-right:11px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-family:var(--font-display);font-size:13px;font-weight:800;vertical-align:middle;flex:0 0 auto}
+.lesson-section-heading{display:flex;align-items:center;flex-wrap:wrap}
+[data-theme="light"] .lesson-miss{background:rgba(245,158,11,0.1)}
+[data-theme="light"] .lesson-miss-body{color:rgba(15,14,26,0.72)}
 .fc-kbd{display:inline-block;padding:2px 7px;margin:0 2px;border-radius:5px;font-family:var(--font-body);font-size:10.5px;font-weight:700;color:var(--text-2);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);box-shadow:0 1px 0 rgba(255,255,255,0.05) inset}
 .fc-keyhints{text-align:center;margin-top:8px;font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.01em}
 [data-theme="light"] .fc-kbd{background:rgba(0,0,0,0.05);border-color:rgba(0,0,0,0.12)}
@@ -4306,9 +4316,10 @@ function renderTutorHTML(topic, d){
     const parasHtml=paras.map(p=>`<p class="lesson-content">${sanitizeLessonHtml(p)}</p>`).join('');
     const defsHtml=(s.definitions&&s.definitions.length)?`<div class="lesson-defs"><div class="lesson-defs-label">📚 Key Terms</div>${s.definitions.map(d=>`<div class="lesson-def-row"><span class="lesson-def-term">${escHtml(d.term||'')}</span><span class="lesson-def-sep">—</span><span class="lesson-def-body">${escHtml(d.definition||'')}</span></div>`).join('')}</div>`:'';
     const examplesHtml=(s.examples&&s.examples.length)?`<div class="lesson-examples"><div class="lesson-examples-label">💡 Examples</div>${s.examples.map((ex,ei)=>`<div class="lesson-example"><span class="lesson-example-num">Example ${ei+1}</span><p>${escHtml(ex)}</p></div>`).join('')}</div>`:'';
+    const missHtml=s.misconception?`<div class="lesson-miss"><div class="lesson-miss-label">Common mistake</div><p class="lesson-miss-body">${escHtml(s.misconception)}</p></div>`:'';
     const quoteHtml=s.keyTakeaway?`<blockquote class="lesson-quote">"${escHtml(s.keyTakeaway)}"</blockquote>`:'';
     const thinkHtml=s.thinkAboutIt?`<div class="lesson-think"><span class="lesson-think-label">Think About It</span><p class="lesson-think-q">${escHtml(s.thinkAboutIt)}</p></div>`:'';
-    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading">${escHtml(s.heading||'')}</h2>${defsHtml}${parasHtml}${examplesHtml}${quoteHtml}${thinkHtml}</div>`;
+    return`<div class="lesson-section" style="animation-delay:${i*.07}s"><h2 class="lesson-section-heading"><span class="lesson-section-num">${i+1}</span>${escHtml(s.heading||'')}</h2>${defsHtml}${parasHtml}${examplesHtml}${missHtml}${quoteHtml}${thinkHtml}</div>`;
   }).join('');
   const rwHtml=d.realWorldApplication?`<div class="lesson-rw"><div class="lesson-rw-label">🌍 Real-World Application</div><p class="lesson-rw-body">${escHtml(d.realWorldApplication)}</p></div>`:'';
   const summaryHtml=d.summary?`<div class="lesson-summary"><div class="lesson-summary-label">📋 Summary</div><p class="lesson-summary-body">${escHtml(d.summary)}</p></div>`:'';
