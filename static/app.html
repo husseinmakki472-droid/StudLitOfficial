@@ -181,6 +181,10 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .fc-hard{background:rgba(248,113,113,0.1);color:#f87171;border-color:rgba(248,113,113,0.25)}
 .fc-hard:hover{background:rgba(248,113,113,0.2);transform:translateY(-1px)}
 .fc-filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.fc-filter-due{border-color:rgba(124,92,252,0.35)!important;color:#b494ff!important}
+.fc-filter-due.active{color:#fff!important}
+.fc-filter-btn:disabled{cursor:default}
+.fc-next-due{text-align:center;min-height:16px;margin-top:10px;font-size:12px;font-weight:700;opacity:0;transition:opacity .25s;letter-spacing:.02em}
 .fc-filter-btn{padding:4px 13px;border-radius:999px;font-size:11px;font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:none;color:rgba(240,239,255,0.45);cursor:pointer;transition:all .15s;font-family:var(--font-body);letter-spacing:.02em}
 .fc-filter-btn:hover{border-color:rgba(255,255,255,0.28);color:rgba(240,239,255,0.8)}
 .fc-filter-btn.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);border-color:transparent;color:#fff}
@@ -4134,8 +4138,10 @@ function renderFlashcardsHTML(topic, d){
   function fcDiffStyle(d){return d==='easy'?'color:#4ade80;border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.08)':d==='hard'?'color:#f87171;border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.08)':'color:#f59e0b;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)';}
   const dc={easy:0,medium:0,hard:0};fcAllCards.forEach(c=>{if(dc[c.diff]!==undefined)dc[c.diff]++;});
   const fd0=fcCards[0].diff;
+  const dueNow=srsDueCount(fcAllCards);
   const filterBar=`<div class="fc-filter-bar">
     <button class="fc-filter-btn active" data-diff="all" onclick="fcSetFilter('all')">All (${fcAllCards.length})</button>
+    <button class="fc-filter-btn fc-filter-due" data-diff="due" onclick="fcSetFilter('due')"${dueNow?'':' disabled style="opacity:.45"'}>⏰ Due (${dueNow})</button>
     ${dc.easy?`<button class="fc-filter-btn" data-diff="easy" onclick="fcSetFilter('easy')">Easy (${dc.easy})</button>`:''}
     ${dc.medium?`<button class="fc-filter-btn" data-diff="medium" onclick="fcSetFilter('medium')">Medium (${dc.medium})</button>`:''}
     ${dc.hard?`<button class="fc-filter-btn" data-diff="hard" onclick="fcSetFilter('hard')">Hard (${dc.hard})</button>`:''}
@@ -4150,7 +4156,7 @@ function renderFlashcardsHTML(topic, d){
       <button class="fc-add-cancel-btn" onclick="fcToggleAddForm()">Cancel</button>
     </div>
   </div>`;
-  return`${resultHeader('flashcards',t,[{text:'🃏 '+fcAllCards.length+' Cards',accent:true},{text:'Active Recall'}])}<div id="fcContainer">${filterBar}<div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div><div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><button onclick="fcSkip()" style="background:none;border:none;cursor:pointer;font-size:11px;color:rgba(240,239,255,0.3);padding:4px 8px;border-radius:6px;transition:color .15s" onmouseover="this.style.color='rgba(248,113,113,0.7)'" onmouseout="this.style.color='rgba(240,239,255,0.3)'" title="Remove this card">✕ skip</button><div class="fc-arrow" onclick="fcNext()">→</div></div></div><div class="flashcard" id="flashcard" onclick="fcFlip()"><div class="fc-face fc-front"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="fc-indicator" style="margin-bottom:0">Question</div>${fd0?`<span id="fcDiffBadge" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:999px;border:1px solid;${fcDiffStyle(fd0)}">${fd0}</span>`:'<span id="fcDiffBadge"></span>'}</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal answer</div></div><div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div></div><div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div>${addForm}</div>`;
+  return`${resultHeader('flashcards',t,[{text:'🃏 '+fcAllCards.length+' Cards',accent:true},{text:'Active Recall'}])}<div id="fcContainer">${filterBar}<div class="fc-progress-bar-wrap"><div class="fc-progress-bar" id="fcBar" style="width:${100/fcCards.length}%"></div></div><div class="fc-nav"><div class="fc-count" id="fcCount">Card 1 of ${fcCards.length}</div><div class="fc-arrows"><div class="fc-arrow" onclick="fcPrev()">←</div><button onclick="fcSkip()" style="background:none;border:none;cursor:pointer;font-size:11px;color:rgba(240,239,255,0.3);padding:4px 8px;border-radius:6px;transition:color .15s" onmouseover="this.style.color='rgba(248,113,113,0.7)'" onmouseout="this.style.color='rgba(240,239,255,0.3)'" title="Remove this card">✕ skip</button><div class="fc-arrow" onclick="fcNext()">→</div></div></div><div class="flashcard" id="flashcard" onclick="fcFlip()"><div class="fc-face fc-front"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="fc-indicator" style="margin-bottom:0">Question</div>${fd0?`<span id="fcDiffBadge" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:999px;border:1px solid;${fcDiffStyle(fd0)}">${fd0}</span>`:'<span id="fcDiffBadge"></span>'}</div><div class="fc-text" id="fcFrontText">${escHtml(fcCards[0].q)}</div><div class="fc-hint">Tap to reveal answer</div></div><div class="fc-face fc-back"><div class="fc-indicator">Answer</div><div class="fc-text" id="fcBackText" style="font-size:15px;font-weight:500;font-family:var(--font-body)">${escHtml(fcCards[0].a)}</div></div></div><div class="fc-conf"><button class="fc-conf-btn fc-hard" onclick="fcConfidence('hard')">😰 Hard</button><button class="fc-conf-btn fc-review" onclick="fcConfidence('review')">🤔 Review</button><button class="fc-conf-btn fc-easy" onclick="fcConfidence('easy')">✅ Easy</button></div><div class="fc-next-due" id="fcNextDue"></div>${addForm}</div>`;
 }
 
 function renderQuizHTML(topic, d){
@@ -4337,7 +4343,41 @@ function fcFlip(){fcFlipped=!fcFlipped;document.getElementById('flashcard').clas
 function fcUpdateCard(){const c=fcCards[fcIndex];document.getElementById('fcFrontText').textContent=c.q;document.getElementById('fcBackText').textContent=c.a;document.getElementById('fcCount').textContent=`Card ${fcIndex+1} of ${fcCards.length}`;document.getElementById('fcBar').style.width=`${(fcIndex+1)/fcCards.length*100}%`;fcFlipped=false;document.getElementById('flashcard').classList.remove('flipped');const badge=document.getElementById('fcDiffBadge');if(badge){const d=c.diff||'';const s=d==='easy'?'color:#4ade80;border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.08)':d==='hard'?'color:#f87171;border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.08)':d?'color:#f59e0b;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08)':'';badge.textContent=d;badge.style.cssText=d?`font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:999px;border:1px solid;${s}`:'';}}
 function fcNext(){fcIndex=(fcIndex+1)%fcCards.length;fcUpdateCard()}
 function fcPrev(){fcIndex=(fcIndex-1+fcCards.length)%fcCards.length;fcUpdateCard()}
-function fcConfidence(level){const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};const card=document.getElementById('flashcard');card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;window._fcRated=(window._fcRated||0)+1;if(window._fcRated>=fcCards.length){window._fcRated=0;try{var _cd=lbGetDailyCount('flashcard_complete');if(_cd<2){scoreEventServer('flashcard_complete',{completedToday:_cd}).then(function(g){if(g.xp>0){lbIncrDailyCount('flashcard_complete');addXP(g.xp,'flashcards',{});}});}}catch(e){}}setTimeout(()=>{card.style.boxShadow='';fcNext()},400)}
+function fcConfidence(level){
+  const map={easy:'#4ade80',review:'#fbbf24',hard:'#f87171'};
+  const card=document.getElementById('flashcard');
+  card.style.boxShadow=`0 0 0 2px ${map[level]},0 8px 30px ${map[level]}44`;
+
+  // Record the rating and tell the student when the card returns. Showing the
+  // interval is what makes scheduling feel like progress rather than a black
+  // box — "in 15 days" is visible evidence the card is sticking.
+  try{
+    const st=srsRecord(fcCards[fcIndex],level);
+    const el=document.getElementById('fcNextDue');
+    if(el&&st){
+      el.textContent='Next review '+srsDescribeInterval(st.interval);
+      el.style.color=map[level];
+      el.style.opacity='1';
+      clearTimeout(window._fcDueTimer);
+      window._fcDueTimer=setTimeout(()=>{el.style.opacity='0';},1800);
+    }
+    fcUpdateDueBadge();
+  }catch(e){ /* scheduling must never block studying */ }
+
+  window._fcRated=(window._fcRated||0)+1;
+  if(window._fcRated>=fcCards.length){window._fcRated=0;try{var _cd=lbGetDailyCount('flashcard_complete');if(_cd<2){scoreEventServer('flashcard_complete',{completedToday:_cd}).then(function(g){if(g.xp>0){lbIncrDailyCount('flashcard_complete');addXP(g.xp,'flashcards',{});}});}}catch(e){}}
+  setTimeout(()=>{card.style.boxShadow='';fcNext()},400);
+}
+
+// Keeps the "Due (n)" filter honest as cards are rated during a session.
+function fcUpdateDueBadge(){
+  const btn=document.querySelector('.fc-filter-btn[data-diff="due"]');
+  if(!btn)return;
+  const n=srsDueCount(fcAllCards);
+  btn.textContent='⏰ Due ('+n+')';
+  btn.disabled=n===0&&fcDiffFilter!=='due';
+  btn.style.opacity=(n===0&&fcDiffFilter!=='due')?'.45':'';
+}
 function fcSkip(){
   if(fcCards.length<=1)return;
   const card=fcCards[fcIndex];
@@ -4347,9 +4387,115 @@ function fcSkip(){
   fcUpdateCard();
   fcRefreshFilterBar();
 }
+/* ── Spaced repetition (SM-2) ─────────────────────────────────────────────
+   The Hard / Review / Easy buttons were already collecting the one signal a
+   scheduler needs and throwing it away. This stores it and works out when
+   each card should come back.
+
+   SM-2 is the SuperMemo formula Anki used for years: every card carries an
+   ease factor, and a successful review multiplies its interval by that ease,
+   so cards you know drift out to months while cards you miss snap back to
+   tomorrow. FSRS is measurably better — ~20-30% fewer reviews for the same
+   retention — but it needs a trained model, and a working SM-2 today beats a
+   perfect FSRS next week.
+
+   State is keyed by card content, not by position, so a set can be
+   regenerated or re-imported without losing its history. */
+
+const SRS_KEY = 'sl-srs';
+const SRS_DEFAULT_EASE = 2.5;
+const SRS_MIN_EASE = 1.3;
+const DAY_MS = 86400000;
+
+function srsLoad() {
+  try { return JSON.parse(localStorage.getItem(SRS_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function srsSave(all) {
+  try { localStorage.setItem(SRS_KEY, JSON.stringify(all)); }
+  catch (e) { /* quota — scheduling is best-effort, never block studying */ }
+}
+
+// Content-addressed so the same card keeps its history across regenerations.
+function srsKey(card) {
+  const norm = s => String(s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  const raw = norm(card.q) + '|' + norm(card.a);
+  let h = 5381;
+  for (let i = 0; i < raw.length; i++) h = ((h << 5) + h + raw.charCodeAt(i)) | 0;
+  return 'c' + (h >>> 0).toString(36);
+}
+
+// Three buttons mapped onto SM-2's 0-5 quality scale. "hard" is a lapse, not
+// a slow pass — a student pressing it did not recall the card.
+const SRS_GRADE = { hard: 2, review: 4, easy: 5 };
+
+function srsSchedule(prev, grade) {
+  const s = {
+    ease: (prev && prev.ease) || SRS_DEFAULT_EASE,
+    interval: (prev && prev.interval) || 0,
+    reps: (prev && prev.reps) || 0,
+    lapses: (prev && prev.lapses) || 0
+  };
+  const q = SRS_GRADE[grade] !== undefined ? SRS_GRADE[grade] : 4;
+
+  if (q < 3) {
+    // Failed: back to tomorrow, and the card is permanently a little harder.
+    s.reps = 0;
+    s.lapses += 1;
+    s.interval = 1;
+  } else {
+    if (s.reps === 0) s.interval = 1;
+    else if (s.reps === 1) s.interval = 6;
+    else s.interval = Math.round(s.interval * s.ease);
+    s.reps += 1;
+  }
+
+  // Standard SM-2 ease adjustment, floored so a hard card can't spiral to
+  // being shown forever.
+  s.ease = Math.max(SRS_MIN_EASE, s.ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+  s.ease = Math.round(s.ease * 1000) / 1000;
+  s.interval = Math.max(1, s.interval);
+  s.due = Date.now() + s.interval * DAY_MS;
+  s.last = Date.now();
+  return s;
+}
+
+function srsRecord(card, grade) {
+  if (!card) return null;
+  const all = srsLoad();
+  const key = srsKey(card);
+  const next = srsSchedule(all[key], grade);
+  // Keep enough to build a due list and, later, weak-spot reporting.
+  next.topic = card.topic || '';
+  next.subtopic = card.subtopic || '';
+  all[key] = next;
+  srsSave(all);
+  return next;
+}
+
+function srsIsDue(card, all) {
+  const st = (all || srsLoad())[srsKey(card)];
+  return !st || !st.due || st.due <= Date.now();
+}
+
+function srsDueCount(cards) {
+  const all = srsLoad();
+  return cards.filter(c => srsIsDue(c, all)).length;
+}
+
+// "in 3 days" / "in 2 months" — the feedback that makes scheduling visible.
+function srsDescribeInterval(days) {
+  if (days <= 1) return 'tomorrow';
+  if (days < 30) return 'in ' + days + ' days';
+  const months = Math.round(days / 30);
+  return 'in ' + months + ' month' + (months === 1 ? '' : 's');
+}
+
 function fcSetFilter(diff){
   fcDiffFilter=diff;
-  fcCards=diff==='all'?[...fcAllCards]:fcAllCards.filter(c=>c.diff===diff);
+  if(diff==='all')      fcCards=[...fcAllCards];
+  else if(diff==='due'){const all=srsLoad();fcCards=fcAllCards.filter(c=>srsIsDue(c,all));}
+  else                  fcCards=fcAllCards.filter(c=>c.diff===diff);
   fcIndex=0;
   document.querySelectorAll('.fc-filter-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===diff));
   if(!fcCards.length){
