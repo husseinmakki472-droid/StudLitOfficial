@@ -204,6 +204,8 @@ const STUDLIT_CORE = [
   '- Default to depth over brevity — comprehensive output, never a short summary.',
   '- Every explanation covers: plain-language definition, why it matters, a concrete example, and a common misconception students have about it.',
   '- Extract MORE distinct concepts than the minimum asked for — cover the material exhaustively rather than hitting a round number.',
+  '- ONE FACT PER CARD. A flashcard tests exactly one thing. A card that bundles three facts into one prompt cannot be graded honestly — the student half-remembers, rates it wrong, and the scheduling breaks. Split instead.',
+  '- Never write a front a student could pass without really knowing it. "What is photosynthesis?" is vague; "Which molecule donates electrons in photosystem II?" is answerable or it is not.',
   '- Escalate questions through Bloom\'s Taxonomy (remember → understand → apply → analyze → evaluate → create) rather than staying flat.',
   '- Tag every question/flashcard with a difficulty level and a topic/subtopic label so the app can track progress per-concept.',
   '- Never pad with filler. If the material is thin or ambiguous, say so in the content rather than inventing facts.',
@@ -230,7 +232,7 @@ const MODE_QTY = {
 };
 
 const MODE_MAP = {
-  flashcards: '"flashcards":{"cards":[{"front":"question or term","back":"thorough answer or definition with context","difficulty":"easy|medium|hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this card belongs to — reuse the SAME label across every card on that topic","subtopic":"specific sub-concept within that topic"}]}',
+  flashcards: '"flashcards":{"cards":[{"front":"ONE specific question with exactly one correct answer. It must be precise enough that a vague answer fails — ask \'Which enzyme fixes CO2 in the Calvin cycle?\' NOT \'Tell me about the Calvin cycle\'. Vary the form across cards: definition, why, how, compare, predict, apply.","back":"The single fact that answers the front, in one or two sentences. NEVER bundle in a second fact. If a concept needs three facts, make three separate cards — a card testing more than one thing cannot be graded honestly by the student.","difficulty":"easy|medium|hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this card belongs to — reuse the SAME label across every card on that topic","subtopic":"specific sub-concept within that topic"}]}',
   quiz: '"quiz":{"questions":[{"question":"full question","options":["A) option","B) option","C) option","D) option"],"correct":0,"explanation":"why correct and why others are wrong","difficulty":"Easy|Medium|Hard","bloom":"remember|understand|apply|analyze|evaluate|create","topic":"major topic this question belongs to — reuse the SAME label across every question on that topic","subtopic":"specific sub-concept within that topic"}]}',
   fitb: '"fitb":{"sentences":[{"text":"The ___ does ___ which results in ___.","blanks":["term1","term2","term3"]}]}',
   summary: '"summary":{"overview":"4-6 sentence overview","keyPoints":["point 1","point 2","point 3","point 4","point 5","point 6","point 7","point 8","point 9","point 10"],"mustRemember":"most critical concept"}',
