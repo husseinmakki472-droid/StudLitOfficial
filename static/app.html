@@ -39,6 +39,39 @@ body{font-family:'DM Sans',sans-serif;background:#07070f;color:#f0efff;transitio
 .page-tab:hover{color:rgba(240,239,255,0.85);background:rgba(255,255,255,0.05)}
 .page-tab.active{background:linear-gradient(135deg,#7c5cfc,#b06ef3);color:#fff;box-shadow:0 2px 12px rgba(124,92,252,0.35),inset 0 1px 0 rgba(255,255,255,0.15)}
 .nav-right{display:flex;align-items:center;gap:10px}
+/* ── Mobile navbar ────────────────────────────────────────────────────────
+   The bar was laid out for desktop only: at 390px the tab row alone measured
+   455px and nav-right another 320px, giving the document a 897px width and
+   scrolling every page sideways. Phones are most of a study app's traffic.
+   The tab row now scrolls inside itself rather than stretching the page, and
+   the optional controls drop away before the essential ones. */
+@media(max-width:900px){
+  .navbar{padding:0 14px;gap:10px}
+  .nav-wordmark{display:none}            /* logo mark alone still identifies it */
+  .page-tabs{
+    flex:1 1 auto;min-width:0;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    justify-content:flex-start;
+  }
+  .page-tabs::-webkit-scrollbar{display:none}
+  .page-tab{flex:0 0 auto;white-space:nowrap}
+  .nav-right{gap:6px;flex:0 0 auto}
+  .theme-label{display:none}
+  #fullscreenBtn{display:none}
+}
+@media(max-width:640px){
+  .navbar{padding:0 10px}
+  /* The hero has its own call to action, so the nav one is redundant here and
+     was squeezing the tab strip down to about 60px. Navigation wins. */
+  .navbar .btn-cta{display:none}
+  .page-tab{padding:6px 11px;font-size:12px}
+  .theme-toggle-wrap{padding:3px 6px}
+}
+/* Nothing should be able to scroll the page sideways on a phone. */
+@media(max-width:900px){
+  html,body{max-width:100%;overflow-x:hidden}
+}
 .nav-icon-btn{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);color:rgba(240,239,255,0.65);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;flex-shrink:0;padding:0}
 .nav-icon-btn:hover{background:rgba(124,92,252,0.15);border-color:rgba(124,92,252,0.35);color:#f0efff;transform:translateY(-1px)}
 [data-theme="light"] .nav-icon-btn{background:rgba(0,0,0,0.06)!important;border-color:rgba(0,0,0,0.14)!important;color:rgba(19,18,30,0.6)!important}
