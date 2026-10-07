@@ -254,12 +254,32 @@ const MODE_MAP = {
   solve: '"solve":{"quickAnswer":"answer","stepByStep":[{"step":1,"title":"step","content":"explanation"}],"keyInsight":"insight","examples":["ex 1","ex 2","ex 3"],"commonMistakes":["mistake 1","mistake 2"]}'
 };
 
+// A budget of context has to come from somewhere; taking it from the front of
+// the file means everything after the first 20k characters is invisible to
+// every mode that gets one call. Measured on a 114k-character chapter that was
+// 18% coverage. Sampling evenly across the document costs exactly the same
+// tokens and sees the whole thing.
+function excerptAcross(text, budget) {
+  if (text.length <= budget) return text;
+  const pieces = 24;
+  const size = Math.floor(budget / pieces);
+  const step = Math.floor(text.length / pieces);
+  const out = [];
+  for (let i = 0; i < pieces; i++) {
+    const start = i * step;
+    out.push(text.slice(start, start + size));
+  }
+  // Labelled so the model knows it is reading excerpts rather than a gap-free
+  // document, and does not invent transitions between them.
+  return out.map((p, i) => '[excerpt ' + (i + 1) + ' of ' + pieces + ']\n' + p).join('\n\n…\n\n');
+}
+
 function buildFileCtx(filesArr, urlsArr) {
   let ctx = '';
   if (filesArr.length) {
     ctx += '\n\nUploaded materials:\n';
     for (const f of filesArr) {
-      if (typeof f.textContent === 'string' && f.textContent) ctx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 20000) + '\n';
+      if (typeof f.textContent === 'string' && f.textContent) ctx += '\n[File: ' + f.name + ']\n' + excerptAcross(f.textContent, 120000) + '\n';
       else if (!f.imageData) ctx += '\n[File: ' + f.name + ' — no text]\n';
     }
   }
@@ -399,6 +419,14 @@ const handler = async (event) => {
 
     // ── QUIZ — 5 themed batches of 10, run concurrently ──────────────────
     if (modesArr.indexOf('quiz') !== -1) {
+      // Split the document into one contiguous span per batch, so the five
+      // batches together cover every part of it.
+      const quizSpans = (function () {
+        if (fullText.trim().length <= 4000) return null;
+        const n = 5, out = [], step = Math.ceil(fullText.length / n);
+        for (let i = 0; i < n; i++) out.push(excerptAcross(fullText.slice(i * step, (i + 1) * step), 25000));
+        return out;
+      })();
       const batches = [
         'Generate 10 multiple-choice questions testing DEFINITIONS AND KEY TERMS.',
         'Generate 10 multiple-choice questions testing HOW THINGS WORK (processes, mechanisms, sequences).',
@@ -410,7 +438,15 @@ const handler = async (event) => {
       const slots = new Array(batches.length);
       let qDone = 0;
       await runPool(batches.length, 3, async function (i) {
-        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
+        // Each themed batch reads a different span of the document. Five calls
+        // either all read the same truncated head, or between them read the
+        // whole thing — same cost, and the quiz stops ignoring later chapters.
+        let span = '';
+        if (quizSpans) {
+          span = '\n\n[This set covers part ' + (i + 1) + ' of ' + quizSpans.length +
+                 ' of the material — write questions ONLY from it]\n' + quizSpans[i];
+        }
+        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + span + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
           // 6k not 4k: each question now carries options, a full explanation,
           // and the topic/subtopic/bloom tags, and a truncated batch is lost.
@@ -517,7 +553,7 @@ const handler = async (event) => {
       const totalText = filesArr.filter(f => f.textContent).map(f => f.textContent || '').join('\n\n');
       const CHUNK = 8000;
       const notesQty = '\n\nGenerate 6-10 rich sections, each with: overview, 3 content paragraphs, 6+ bullets, key terms, examples, applications, cause-effect, key takeaway.';
-      const chunks = totalText.length > CHUNK ? capChunks(splitIntoChunks(totalText, CHUNK), 12) : null;
+      const chunks = totalText.length > CHUNK ? capChunks(splitIntoChunks(totalText, CHUNK), 20) : null;
       if (chunks) {
         const allSections = [];
         for (let ci = 0; ci < chunks.length; ci++) {
@@ -550,7 +586,7 @@ const handler = async (event) => {
     // ── TUTOR — chunked, so a long upload becomes a full lesson ───────────
     if (modesArr.indexOf('tutor') !== -1) {
       const tChunks = fullText.trim().length > 8000
-        ? capChunks(splitIntoChunks(fullText, 8000), 10) : null;
+        ? capChunks(splitIntoChunks(fullText, 8000), 18) : null;
       const lessonQty = '\n\nFor THIS material produce 2-4 sections. Every section needs: 2+ defined key terms, 3 explanatory paragraphs, 2 worked examples, the misconception students actually hit, a key takeaway and a reflective question. Teach someone who has never seen this before — never skip a step, never summarise.';
 
       if (tChunks) {
@@ -600,7 +636,55 @@ const handler = async (event) => {
       }
     }
 
-    const remaining = modesArr.filter(m => m !== 'quiz' && m !== 'flashcards' && m !== 'notes' && m !== 'tutor');
+    // ── ENUMERATING MODES — chunked, because a list of every key term in a
+    //    document cannot be built from a sample of it ──────────────────────
+    const ENUMERATED = ['keyconcepts', 'fitb'];
+    for (const mode of ENUMERATED) {
+      if (modesArr.indexOf(mode) === -1) continue;
+      const eChunks = fullText.trim().length > 8000
+        ? capChunks(splitIntoChunks(fullText, 8000), 16) : null;
+      if (!eChunks) continue;          // short docs are handled by the loop below
+
+      const key = mode === 'keyconcepts' ? 'concepts' : 'sentences';
+      const perChunk = mode === 'keyconcepts'
+        ? 'List every key term that appears in THIS part, with a complete definition and why it matters. 4-6 of them.'
+        : 'Write 4-6 fill-in-the-blank sentences drawn ONLY from THIS part. Each needs 2-3 blanks.';
+      const collected = [];
+      let eDone = 0;
+      await runPool(eChunks.length, 3, async function (ci) {
+        const prompt = 'Topic: ' + topicStr + '\n\n[Part ' + (ci + 1) + ' of ' + eChunks.length + ']\n' + eChunks[ci] +
+          '\n\n' + perChunk + (mode === 'fitb' ? diffInstr : '') +
+          '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP[mode] + '\n  }\n}';
+        try {
+          const r = useClaudeFor(mode)
+            ? await callClaude(anthropicKey, sysWithLang(SYS_BATCH), prompt, 5000)
+            : await callOpenAI(openaiKey, sysWithLang(SYS_BATCH), [...imageBlocks, { type: 'text', text: prompt }], 5000, modelFor(mode));
+          const items = (r && r.results && r.results[mode] && r.results[mode][key]) || [];
+          collected.push(...items);
+          if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
+        } catch (e) { /* one lost part must not sink the list */ }
+        eDone++;
+        await saveProgress(mode + ': ' + eDone + ' of ' + eChunks.length + ' parts…');
+      });
+
+      if (collected.length) {
+        // Terms repeat across a document; keep the fullest version of each.
+        const seen = new Map();
+        for (const it of collected) {
+          const id = String(it.term || it.text || '').toLowerCase().trim().replace(/\s+/g, ' ');
+          if (!id) continue;
+          const prev = seen.get(id);
+          if (!prev || JSON.stringify(it).length > JSON.stringify(prev).length) seen.set(id, it);
+        }
+        combinedResults[mode] = {};
+        combinedResults[mode][key] = Array.from(seen.values());
+      }
+      await saveProgress(mode + ' done — ' + ((combinedResults[mode] && combinedResults[mode][key]) || []).length + ' items');
+    }
+
+    const remaining = modesArr.filter(m =>
+      m !== 'quiz' && m !== 'flashcards' && m !== 'notes' && m !== 'tutor' &&
+      !(ENUMERATED.indexOf(m) !== -1 && combinedResults[m]));
     let rDone = 0;
     await runPool(remaining.length, 3, async function (i) {
       const mode = remaining[i];
@@ -612,7 +696,11 @@ const handler = async (event) => {
         // 10k rather than 6k — these floors ask for materially more than the
         // old budget could hold, and a truncated array loses the whole mode.
         const r = await callAI(sysWithLang(SYS_OTHER), prompt, 10000, mode);
-        if (r && r.results) Object.assign(combinedResults, r.results);
+        // Take only the mode that was asked for. Assigning the whole results
+        // object lets a stray key in one response overwrite another mode's
+        // work — a chunked tutor lesson merged from fifteen calls could be
+        // replaced by a single throwaway section returned alongside a summary.
+        if (r && r.results && r.results[mode]) combinedResults[mode] = r.results[mode];
         if (r && r.topic && r.topic !== 'the uploaded content') resolvedTopic = r.topic;
       } catch (e) { /* skip */ }
       rDone++;
