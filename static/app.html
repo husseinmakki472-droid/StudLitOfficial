@@ -10,6 +10,17 @@
 <meta property="og:description" content="Turn any content into smart study tools instantly. Flashcards, quizzes, summaries, and 10 AI study modes.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#7c5cfc">
+<meta property="og:image" content="/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="StudLit">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="StudLit — AI Study Platform">
+<meta name="twitter:description" content="Turn any content into smart study tools instantly. Flashcards, quizzes, summaries, and 10 AI study modes.">
+<meta name="twitter:image" content="/icons/og-image.png">
+<link rel="icon" href="/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3883,8 +3894,7 @@ function closePricingModal(e){if(e.target===document.getElementById('pricingModa
    the annual plan is the cheapest paid option in the category even though
    the monthly one is the dearest. It also moves students past the June
    cancel-after-exams cliff.
-   STRIPE_PRICE_ID still needs a matching price object per plan before
-   checkout can use this; right now the choice is recorded, not charged. */
+   create-checkout charges STRIPE_PRICE_MONTHLY (or STRIPE_PRICE_ID) / STRIPE_PRICE_ANNUAL. */
 const STUDLIT_PLANS = {
   monthly: { amount: 15, period: '/mo', note: '$15/mo', effective: '' },
   annual:  { amount: 99, period: '/yr', note: '$99/yr', effective: "That's $8.25/month — billed once a year" }
@@ -3916,6 +3926,7 @@ function setPlan(plan) {
   try { localStorage.setItem('sl-plan', plan); } catch (e) {}
 }
 
+/* Replaced by studlit-auth.js with Stripe checkout once it loads. */
 function startTrial(){hidePricingModal();switchTab('workspace')}
 
 function updateCharCount(){var el=document.getElementById('charCount');var inp=document.getElementById('studyInput');if(el&&inp)el.textContent=inp.value.length+' / 2000';}
@@ -4027,7 +4038,10 @@ async function runStudyJob(payload, onProgress, onPartial){
     }
     if(!st) continue;
     if(st.status === 'done')  return st.data || {error:'No data returned.'};
-    if(st.status === 'error') return {error: st.error || 'Generation failed.'};
+    if(st.status === 'error'){
+      if(st.code && window.slHandleAccessCode) window.slHandleAccessCode(st.code);
+      return {error: st.error || 'Generation failed.'};
+    }
 
     if(st.status === 'processing') everStarted = true;
 
@@ -7847,5 +7861,7 @@ document.addEventListener('fullscreenchange', function() {
   </div>
 </div>
 
+<script src="/vendor/supabase.js"></script>
+<script src="/studlit-auth.js"></script>
 </body>
 </html>

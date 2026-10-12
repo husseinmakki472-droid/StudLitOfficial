@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 
-const SECRET = process.env.SCORE_SECRET || 'studlit-dev-secret-change-in-prod';
+// No fallback: a default secret in public source lets anyone forge XP.
+// The handler refuses to run until SCORE_SECRET is set.
+const SECRET = process.env.SCORE_SECRET || '';
 
 // XP per correct answer by difficulty
 const DIFF_XP = { Easy: 5, Medium: 12, Hard: 20 };
@@ -155,6 +157,10 @@ const handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+  if (!SECRET) {
+    console.error(JSON.stringify({ event: 'score_unconfigured', hint: 'Set SCORE_SECRET in the Netlify environment.' }));
+    return { statusCode: 503, body: JSON.stringify({ error: 'Scoring is not configured' }) };
   }
 
   let body;

@@ -1,51 +1,57 @@
 [build]
-  command = "npm run build"
-  publish = "dist"
+  # No build step: the app is static/app.html. Netlify still installs
+  # package.json dependencies for the functions below.
+  publish = "static"
   functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
-
-[functions.extract]
+  # pdf-parse breaks when bundled; load it from node_modules instead.
+  # extract parses uploads, study and study-background parse PDFs behind pasted links.
   external_node_modules = ["pdf-parse", "mammoth"]
 
+# Synchronous functions default to 10 seconds. Anything that waits on a model
+# gets the 26-second maximum. study-background is a background function (the
+# "-background" suffix) with a 15-minute limit, so it needs no setting here.
 [functions.study]
   timeout = 26
 
-[functions.study-status]
-  timeout = 10
-
-[[redirects]]
-  from = "/"
-  to = "/app.html"
-  status = 301
-  force = true
-
-[functions.create-checkout]
-  timeout = 10
-
-[functions.stripe-webhook]
-  timeout = 10
-
-[functions.set-trial]
-  timeout = 10
+[functions.chat]
+  timeout = 26
 
 [functions.grade]
+  timeout = 26
+
+[functions.podcast]
+  timeout = 26
+
+[functions.humanize]
   timeout = 26
 
 [functions.ai-check]
   timeout = 26
 
-# study-background.js is a background function (the "-background" filename suffix
-# is what makes it one) — 15-minute limit, so no timeout setting applies.
-# The frontend calls it first and polls study-status; the synchronous `study`
-# function above stays as the fallback path when background isn't available.
+[functions.extract]
+  timeout = 26
 
+[functions.study-status]
+  timeout = 10
+
+[functions.create-checkout]
+  timeout = 10
+
+[functions.create-portal]
+  timeout = 10
+
+[functions.stripe-webhook]
+  timeout = 10
+
+# The app is the front door. A rewrite (200), not a redirect, so the address
+# bar stays at the bare domain.
 [[redirects]]
   from = "/"
   to = "/app.html"
-  status = 301
-  force = true
+  status = 200
 
 # CORS is set per-function by netlify/functions/lib/guard.js, which echoes back
 # only allowed origins. A wildcard header here would override that and hand the
@@ -54,3 +60,10 @@
 # Set ALLOWED_ORIGINS (comma-separated) in the Netlify environment to your real
 # domain. Netlify's own URL and DEPLOY_PRIME_URL are trusted automatically, so
 # production and deploy previews work without extra configuration.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"

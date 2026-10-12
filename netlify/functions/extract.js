@@ -1,9 +1,9 @@
-const { guard } = require('./lib/guard');
+const { guardPro } = require('./lib/auth');
 
 const handler = async (event) => {
   // No model calls here, but PDF/DOCX parsing is CPU-bound and takes a raw
   // file — worth bounding. Uploads arrive one file per request.
-  const g = guard(event, { name: 'extract', limit: 60, maxBytes: 6 * 1024 * 1024 });
+  const g = await guardPro(event, { name: 'extract', limit: 120, maxBytes: 6 * 1024 * 1024 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
 

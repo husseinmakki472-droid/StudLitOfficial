@@ -1,11 +1,11 @@
-const { guard } = require('./lib/guard');
+const { guardPro } = require('./lib/auth');
 
 function escHtml(s) {
 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 const handler = async (event) => {
-const g = guard(event, { name: 'ai-check', limit: 25, maxBytes: 512 * 1024 });
+const g = await guardPro(event, { name: 'ai-check', limit: 40, maxBytes: 512 * 1024 });
 if (g.response) return g.response;
 const { headers: cors, body } = g;
 const { text } = body;

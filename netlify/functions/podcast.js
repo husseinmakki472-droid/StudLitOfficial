@@ -1,7 +1,7 @@
-const { guard } = require('./lib/guard');
+const { guardPro } = require('./lib/auth');
 
 const handler = async (event) => {
-const g = guard(event, { name: 'podcast', limit: 15, maxBytes: 512 * 1024 });
+const g = await guardPro(event, { name: 'podcast', limit: 30, maxBytes: 512 * 1024 });
 if (g.response) return g.response;
 const { headers: cors, body } = g;
 const { topic, context } = body;

@@ -92,10 +92,12 @@ function corsHeaders(origin) {
 }
 
 // Returns { limited, retryAfter } — callers decide how to report it.
-function rateLimit(event, name, limit, windowMs) {
+// `who` overrides the IP — signed-in endpoints pass the user id, so a classroom
+// sharing one school IP doesn't share one allowance.
+function rateLimit(event, name, limit, windowMs, who) {
   const now = Date.now();
   sweep(now);
-  const key = name + ':' + clientIp(event);
+  const key = name + ':' + (who || clientIp(event));
   let b = buckets.get(key);
   if (!b || now - b.windowStart > windowMs) {
     b = { count: 0, windowStart: now, windowMs };
@@ -149,7 +151,8 @@ function guard(event, opts) {
     };
   }
 
-  const rl = rateLimit(event, name, limit, windowMs);
+  // perUser: the caller rate-limits by account after verifying the token.
+  const rl = o.perUser ? { limited: false } : rateLimit(event, name, limit, windowMs);
   if (rl.limited) {
     const mins = Math.max(1, Math.ceil(rl.retryAfter / 60));
     return {
@@ -179,4 +182,4 @@ function guard(event, opts) {
   return { ok: true, origin: org.ok ? org.origin : '*', headers, body };
 }
 
-module.exports = { guard, rateLimit, clientIp, corsHeaders, originAllowed, HOUR };
+module.exports = { guard, rateLimit, clientIp, corsHeaders, originAllowed, allowedOrigins, HOUR };

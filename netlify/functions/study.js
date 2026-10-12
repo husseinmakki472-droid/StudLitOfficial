@@ -1,4 +1,5 @@
-const { guard } = require('./lib/guard');
+const { guardPro } = require('./lib/auth');
+const { readLinks, splitLinkFiles, failureMessage } = require('./lib/fetch-url');
 
 function repairJson(str) {
   str = str.replace(/,\s*([}\]])/g, '$1');
@@ -137,8 +138,8 @@ async function callOpenAI(apiKey, model, systemPrompt, userContent, maxTokens) {
 }
 
 const handler = async (event) => {
-  // Generation is the most expensive thing this site does — 5 per IP per hour.
-  const g = guard(event, { name: 'study', limit: 5 });
+  // Generation is the most expensive thing this site does — 20 per account per hour.
+  const g = await guardPro(event, { name: 'study', limit: 20 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
 
@@ -146,8 +147,19 @@ const handler = async (event) => {
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
   const langInstr = (language && language !== 'English') ? `\n\nLANGUAGE: You MUST write ALL output — every word of every field — in ${language}. Do not use English.` : '';
   const modesArr = modes || [];
-  const filesArr = files || [];
-  const urlsArr = urls || [];
+  const split = splitLinkFiles(files, urls);
+  const filesArr = split.files;
+
+  // Pasted links are read here and join the uploads as plain text. A link that
+  // can't be read stops the job — otherwise the model would write about a page
+  // it never saw.
+  if (split.urls.length) {
+    const links = await readLinks(split.urls);
+    if (links.failures.length) {
+      return { statusCode: 422, headers: cors, body: JSON.stringify({ error: failureMessage(links.failures), code: 'link_unreadable' }) };
+    }
+    filesArr.push.apply(filesArr, links.files);
+  }
 
   if (!topic && !filesArr.length) {
     return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'topic or files required' }) };
@@ -165,10 +177,6 @@ const handler = async (event) => {
       if (typeof f.textContent === 'string' && f.textContent) fileCtx += '\n[File: ' + f.name + ']\n' + f.textContent.slice(0, 30000) + '\n';
       else if (!f.imageData) fileCtx += '\n[File: ' + f.name + ' (' + f.type + ') — no text extracted]\n';
     }
-  }
-  if (urlsArr.length) {
-    fileCtx += '\n\nURLs:\n';
-    for (let i = 0; i < urlsArr.length; i++) { fileCtx += '- ' + urlsArr[i] + '\n'; }
   }
 
   const modeMap = {
