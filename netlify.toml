@@ -1,6 +1,10 @@
 [build]
-  # No build step: the app is static/app.html. Netlify still installs
-  # package.json dependencies for the functions below.
+  # No real build step: the app is static/app.html. The command is set
+  # explicitly anyway, because when this file names none Netlify falls back to
+  # whatever the site's dashboard says — and older StudLit sites still say
+  # "npm run build". Netlify installs package.json dependencies for the
+  # functions either way.
+  command = "npm run build"
   publish = "static"
   functions = "netlify/functions"
 

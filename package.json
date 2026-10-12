@@ -2,7 +2,10 @@
   "name": "studlit",
   "version": "1.0.0",
   "private": true,
-  "description": "StudLit — the app is static/app.html; server code is in netlify/functions.",
+  "description": "StudLit \u2014 the app is static/app.html; server code is in netlify/functions.",
+  "scripts": {
+    "build": "node -e \"console.log('No build step: static/ is published as-is.')\""
+  },
   "engines": {
     "node": ">=18"
   },
