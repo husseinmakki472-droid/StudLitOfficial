@@ -133,6 +133,7 @@
 
   async function signInWithGoogle() {
     if (!sb) { authMsg('Sign-in is not available right now. Please try again shortly.', true); return; }
+    track('Sign-in requested', { method: 'google' });
     var res = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectBack() } });
     if (res.error) authMsg(res.error.message, true);
   }
@@ -144,6 +145,7 @@
     var btn = $('authEmailBtn');
     btn.disabled = true;
     authMsg('Sending…');
+    track('Sign-in requested', { method: 'email' });
     var res = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectBack() } });
     btn.disabled = false;
     if (res.error) { authMsg(res.error.message, true); return; }
@@ -279,7 +281,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: plan })
       });
       var data = await res.json().catch(function () { return {}; });
-      if (res.ok && data.url) { location.href = data.url; return; }
+      if (res.ok && data.url) { track('Checkout started', { plan: plan }); location.href = data.url; return; }
       if (res.status !== 401) toast(data.error || 'Could not start checkout. Please try again.', 6000);
     } catch (e) {
       toast('Could not reach the server. Check your connection and try again.', 6000);
@@ -324,8 +326,16 @@
   // Check before spending the user's time filling a form the server will refuse.
   function gate() {
     if (!sb) return true;                // auth not configured: let the server decide
-    if (!user()) { showAuth('Sign in to start your free trial and use StudLit.'); return false; }
-    if (!isPro()) { if (window.showPricingModal) window.showPricingModal(); return false; }
+    if (!user()) {
+      track('Paywall shown', { step: 'sign-in' });
+      showAuth('Sign in to start your free trial and use StudLit.');
+      return false;
+    }
+    if (!isPro()) {
+      track('Paywall shown', { step: 'pricing' });
+      if (window.showPricingModal) window.showPricingModal();
+      return false;
+    }
     return true;
   }
   window.slGate = gate;
@@ -340,6 +350,20 @@
     window.regenerateMode = function () { if (!gate()) return; return origRegen.apply(this, arguments); };
   }
 
+  // ── Analytics (Plausible: cookie-free, no consent banner needed) ─────────
+  // Loaded only when PLAUSIBLE_DOMAIN is set in Netlify. Events are no-ops otherwise.
+  function loadAnalytics(domain) {
+    window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments); };
+    var s = document.createElement('script');
+    s.defer = true;
+    s.setAttribute('data-domain', domain);
+    s.src = 'https://plausible.io/js/script.js';
+    document.head.appendChild(s);
+  }
+  function track(name, props) {
+    try { if (typeof window.plausible === 'function') window.plausible(name, props ? { props: props } : undefined); } catch (e) {}
+  }
+
   // ── Boot ─────────────────────────────────────────────────────────────────
   async function init() {
     renderAccount();
@@ -348,6 +372,7 @@
       var r = await nativeFetch('/.netlify/functions/config');
       cfg = await r.json();
     } catch (e) { cfg = null; }
+    if (cfg && cfg.plausibleDomain) loadAnalytics(cfg.plausibleDomain);
     if (!cfg || !cfg.supabaseUrl || !cfg.supabaseAnonKey || !window.supabase) {
       console.warn('StudLit: sign-in is not configured (SUPABASE_URL / SUPABASE_ANON_KEY).');
       return;
@@ -382,7 +407,7 @@
       params.delete('payment');
       var q = params.toString();
       history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
-      if (payment === 'success') afterPayment();
+      if (payment === 'success') { track('Trial started'); afterPayment(); }
       else if (payment === 'cancelled') toast('Checkout cancelled — you haven’t been charged.');
     }
     // Returning from a sign-in link with a pending checkout.

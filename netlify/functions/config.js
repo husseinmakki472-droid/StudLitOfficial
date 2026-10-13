@@ -11,6 +11,8 @@ const handler = async (event) => {
     body: JSON.stringify({
       supabaseUrl: process.env.SUPABASE_URL || '',
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+      // Plausible site domain (e.g. studlit.app). Empty = no analytics loaded.
+      plausibleDomain: process.env.PLAUSIBLE_DOMAIN || '',
       billing: {
         monthly: !!(process.env.STRIPE_PRICE_MONTHLY || process.env.STRIPE_PRICE_ID),
         annual: !!process.env.STRIPE_PRICE_ANNUAL,

@@ -29,12 +29,6 @@
 [functions.podcast]
   timeout = 26
 
-[functions.humanize]
-  timeout = 26
-
-[functions.ai-check]
-  timeout = 26
-
 [functions.extract]
   timeout = 26
 
