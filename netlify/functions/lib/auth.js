@@ -26,11 +26,11 @@ const { getStore } = require('@netlify/blobs');
 // abuse ever outpaces conversion.
 const FREE_GENERATIONS = num(process.env.FREE_GENERATION_LIMIT, 4);
 const PRO_MONTHLY_UNITS = num(process.env.PRO_MONTHLY_LIMIT, 1200);
-// Seven, not two. A two-day trial expires before a student finishes the
-// assignment they signed up for: they generate on Sunday night, get busy, and
-// the trial is gone before the habit had a chance to form. Seven days covers a
-// full study cycle — one assignment, one quiz, one weekend.
-const TRIAL_DAYS = num(process.env.TRIAL_DAYS, 7);
+// Three days. Short enough to keep urgency, long enough to span a weekend,
+// which is when most studying actually happens. Raise it with the TRIAL_DAYS
+// env var — no deploy needed — if signups start trialling and lapsing without
+// ever generating a second time.
+const TRIAL_DAYS = num(process.env.TRIAL_DAYS, 3);
 
 function num(v, dflt) {
   const n = parseInt(v, 10);

@@ -2485,7 +2485,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 <div class="page-view active" id="view-home">
 <section class="hero">
-  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 7-Day Free Trial</div>
+  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 3-Day Free Trial</div>
   <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
   <p class="hero-sub">Turn your notes, questions, and topics into flashcards, quizzes, summaries, and personalized study plans — instantly.</p>
   <div class="hero-actions">
@@ -2924,12 +2924,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </section>
 <section class="pricing-section">
   <div class="pricing-heading">Simple pricing.</div>
-  <div class="pricing-sub">Start free — no card needed. Then 7 days of Pro, free.</div>
+  <div class="pricing-sub">Start free — no card needed. Then 3 days of Pro, free.</div>
   <div class="pricing-card">
-    <div class="pricing-badge">✦ 7-Day Free Trial Included</div>
+    <div class="pricing-badge">✦ 3-Day Free Trial Included</div>
     <div class="pricing-name">StudLit Pro</div>
     <div class="price-row"><span class="price-currency">$</span><span class="price-amount">14.99</span><span class="price-period">CAD/mo</span></div>
-    <div class="pricing-trial-note">⚡ Your first 7 days of Pro are completely free</div>
+    <div class="pricing-trial-note">⚡ Your first 3 days of Pro are completely free</div>
     <hr class="pricing-divider">
     <ul class="pricing-features">
       <li>All 10 AI study modes unlocked</li>
@@ -3038,7 +3038,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="modal-box">
     <button class="modal-close" onclick="hidePricingModal()">✕</button>
     <div style="text-align:center;margin-bottom:20px">
-      <div class="pricing-badge" style="display:inline-flex;margin-bottom:14px">✦ 7-Day Free Trial</div>
+      <div class="pricing-badge" style="display:inline-flex;margin-bottom:14px">✦ 3-Day Free Trial</div>
       <div class="pricing-name">StudLit Pro</div>
 
       <div class="billing-toggle" role="group" aria-label="Billing period">
@@ -3054,7 +3054,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
         <span class="price-period" id="pricePeriod">/yr</span>
       </div>
       <div class="price-effective" id="priceEffective">That's $8.33 CAD/month — billed once a year</div>
-      <div class="pricing-trial-note">⚡ First 7 days free — no charge today</div>
+      <div class="pricing-trial-note">⚡ First 3 days free — no charge today</div>
     </div>
     <hr class="pricing-divider" style="margin:16px 0">
     <ul class="pricing-features" style="margin-bottom:20px">
@@ -3065,7 +3065,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <li>Cancel anytime</li>
     </ul>
     <button class="btn-primary" id="pricingCta" onclick="startTrial()" style="margin-bottom:10px">Start My Free Trial</button>
-    <div class="pricing-cancel-note" id="pricingCancelNote">You won't be charged for 7 days. $99.99 CAD/yr after. Cancel anytime.</div>
+    <div class="pricing-cancel-note" id="pricingCancelNote">You won't be charged for 3 days. $99.99 CAD/yr after. Cancel anytime.</div>
   </div>
 </div>
 
@@ -4377,7 +4377,7 @@ function setPlan(plan) {
   if (amt) amt.textContent = p.amount;
   if (per) per.textContent = p.period;
   if (eff) { eff.textContent = p.effective; eff.style.display = p.effective ? '' : 'none'; }
-  if (note) note.textContent = "You won't be charged for 7 days. " + p.note + ' after. Cancel anytime.';
+  if (note) note.textContent = "You won't be charged for 3 days. " + p.note + ' after. Cancel anytime.';
 
   [['monthly', 'billMonthly'], ['annual', 'billAnnual']].forEach(function (pair) {
     const el = document.getElementById(pair[1]);
