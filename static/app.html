@@ -438,6 +438,16 @@ body{letter-spacing:-.006em;font-weight:500}
 .pricing-features li{display:flex;align-items:center;gap:10px;font-size:14px;color:rgba(240,239,255,0.6)}
 .pricing-features li::before{content:'✓';display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:rgba(124,92,252,0.15);color:#7c5cfc;font-size:11px;font-weight:800;flex-shrink:0}
 .pricing-cancel-note{font-size:12px;color:rgba(240,239,255,0.35);margin-top:14px}
+/* ── Sign in / sign up ── reuses .new-set-input so the form themes with the
+   rest of the app instead of needing its own light-mode pass. */
+.sl-auth-sub{font-size:13.5px;line-height:1.55;color:rgba(240,239,255,0.5);font-weight:500;max-width:30ch;margin:0 auto}
+.sl-auth-form{display:block;text-align:left}
+.sl-auth-label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:rgba(240,239,255,0.45);margin-bottom:6px}
+.sl-auth-input{margin-bottom:14px}
+.sl-auth-msg{display:none;font-size:12.5px;font-weight:600;line-height:1.5;margin:-4px 0 12px}
+.sl-auth-alt{text-align:center;font-size:12.5px;color:rgba(240,239,255,0.45);margin-top:12px}
+.sl-link-btn{background:none;border:0;padding:0;font:inherit;font-weight:700;color:#7c5cfc;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.sl-link-btn:hover{color:#9b82ff}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s cubic-bezier(0.22,1,0.36,1)}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal-box{background:#0d0d1f;border:1px solid rgba(255,255,255,0.15);border-radius:28px;padding:36px 32px;max-width:440px;width:100%;position:relative;transform:translateY(24px) scale(.97);transition:transform .3s var(--ease-back);box-shadow:0 0 80px rgba(0,0,0,.5),0 0 40px rgba(124,92,252,0.2)}
@@ -2995,6 +3005,35 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   </div>
 </div>
 
+<div class="modal-overlay" id="authModal" onclick="slAuthOutside(event)">
+  <div class="modal-box" style="max-width:400px">
+    <button class="modal-close" onclick="slCloseAuth()">✕</button>
+    <div style="text-align:center;margin-bottom:22px">
+      <div class="pricing-name" id="authTitle" style="font-size:24px">Welcome back</div>
+      <div class="sl-auth-sub" id="authSub">Sign in to pick up where you left off.</div>
+    </div>
+    <form class="sl-auth-form" onsubmit="slSubmitAuth(event)">
+      <label class="sl-auth-label" for="authEmail">Email</label>
+      <input class="new-set-input sl-auth-input" id="authEmail" type="email"
+             autocomplete="email" placeholder="you@school.edu" required>
+
+      <label class="sl-auth-label" for="authPassword">Password</label>
+      <input class="new-set-input sl-auth-input" id="authPassword" type="password"
+             autocomplete="current-password" placeholder="At least 8 characters" required>
+
+      <div class="sl-auth-msg" id="authMsg" role="alert"></div>
+
+      <button class="btn-primary" id="authSubmit" type="submit" style="width:100%;margin-top:4px">Sign in</button>
+    </form>
+    <div class="sl-auth-alt">
+      <button type="button" class="sl-link-btn" onclick="slForgotPassword()">Forgot your password?</button>
+    </div>
+    <div class="sl-auth-alt" id="authToggleText">
+      New to StudLit? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Create an account</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="pricingModal" onclick="closePricingModal(event)">
   <div class="modal-box">
     <button class="modal-close" onclick="hidePricingModal()">✕</button>
@@ -3025,12 +3064,428 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <li>Import your Quizlet sets</li>
       <li>Cancel anytime</li>
     </ul>
-    <button class="btn-primary" onclick="startTrial()" style="margin-bottom:10px">Start My Free Trial</button>
+    <button class="btn-primary" id="pricingCta" onclick="startTrial()" style="margin-bottom:10px">Start My Free Trial</button>
     <div class="pricing-cancel-note" id="pricingCancelNote">You won't be charged for 2 days. $99/yr after. Cancel anytime.</div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
 <script>
+/* ══ ACCOUNTS AND BILLING ═══════════════════════════════════════════════════
+   Everything here decides what the page *shows*. Nothing here decides what a
+   user can *do* — each paid endpoint re-checks the same facts against Supabase
+   before it spends a token, because every line below this one runs on a
+   machine the user controls and can edit in a console.
+
+   The config comes from /.netlify/functions/config rather than being baked in,
+   so the Supabase project URL and anon key can change without a code edit.
+   Both are public values; the service role key never leaves the server.      */
+
+const slAuth = {
+  client: null,
+  session: null,
+  me: null,              // last response from /me
+  cfg: { authEnabled: false, billingEnabled: false },
+  ready: null,
+
+  signedIn() { return Boolean(this.session && this.session.user); },
+
+  /* Read through the Supabase client rather than off the cached session, so a
+     token that expired while a long generation was running gets refreshed
+     instead of sending a 401 the user has to guess at. */
+  async token() {
+    if (!this.client) return null;
+    try {
+      const { data } = await this.client.auth.getSession();
+      this.session = data ? data.session : null;
+      return this.session ? this.session.access_token : null;
+    } catch (e) { return null; }
+  }
+};
+
+/* Every backend call needs the bearer token, and there are a dozen call sites
+   written in four different styles. Patching fetch once is the only version of
+   this that cannot be defeated by someone adding a thirteenth call site later
+   and forgetting the header. Only our own function URLs are touched. */
+(function () {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.indexOf('/.netlify/functions/') === -1) return nativeFetch(input, init);
+
+    const token = await slAuth.token();
+    if (!token) return nativeFetch(input, init);
+
+    const opts = Object.assign({}, init || {});
+    const h = new Headers(
+      (init && init.headers) ||
+      (typeof input !== 'string' && input && input.headers) ||
+      {}
+    );
+    if (!h.has('Authorization')) h.set('Authorization', 'Bearer ' + token);
+    opts.headers = h;
+    return nativeFetch(input, opts);
+  };
+})();
+
+async function slAuthInit() {
+  try {
+    const r = await fetch('/.netlify/functions/config');
+    slAuth.cfg = await r.json();
+  } catch (e) {
+    slAuth.cfg = { authEnabled: false, billingEnabled: false };
+  }
+
+  /* The CDN can be blocked on school networks. Without the library the app
+     still loads and still works for anyone already signed in on this device;
+     it just cannot start a new session, so say so rather than failing with a
+     console error nobody sees. */
+  const lib = window.supabase;
+  if (!slAuth.cfg.authEnabled || !lib || !lib.createClient) {
+    slRenderAuth();
+    return;
+  }
+
+  slAuth.client = lib.createClient(slAuth.cfg.supabaseUrl, slAuth.cfg.supabaseAnonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  });
+
+  try {
+    const { data } = await slAuth.client.auth.getSession();
+    slAuth.session = data ? data.session : null;
+  } catch (e) { slAuth.session = null; }
+
+  slAuth.client.auth.onAuthStateChange(function (_evt, session) {
+    slAuth.session = session;
+    slRefreshMe();
+  });
+
+  await slRefreshMe();
+  slHandleCheckoutReturn();
+}
+
+/* The server's view of this account: plan, status, remaining allowance. */
+async function slRefreshMe() {
+  if (!slAuth.cfg.authEnabled) { slRenderAuth(); return null; }
+  try {
+    const r = await fetch('/.netlify/functions/me', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+    });
+    slAuth.me = await r.json();
+  } catch (e) {
+    slAuth.me = null;
+  }
+  slRenderAuth();
+  return slAuth.me;
+}
+
+/* ── UI state ─────────────────────────────────────────────────────────────*/
+function slPlanLabel() {
+  const me = slAuth.me;
+  if (!me || !me.signedIn) return 'Not signed in';
+  if (!me.isPro) return 'Free Plan';
+  if (me.status === 'trialing') return 'Pro — free trial';
+  if (me.status === 'past_due') return 'Pro — payment issue';
+  if (me.cancelAtPeriodEnd) return 'Pro — ending soon';
+  return me.interval === 'year' ? 'Pro — annual' : 'Pro — monthly';
+}
+
+function slPlanDetail() {
+  const me = slAuth.me;
+  if (!me || !me.signedIn) return 'Sign in to save your work and start your free trial.';
+  if (!me.isPro) {
+    const u = me.usage || {};
+    const left = typeof u.remaining === 'number' ? u.remaining : me.freeLimit;
+    return Math.max(0, Math.round(left)) + ' of ' + me.freeLimit +
+           ' free generations left · Upgrade for unlimited access';
+  }
+  if (me.status === 'past_due') return 'Your last payment failed. Update your card to keep Pro.';
+  if (me.cancelAtPeriodEnd && me.currentPeriodEnd) {
+    return 'Access continues until ' + new Date(me.currentPeriodEnd).toLocaleDateString();
+  }
+  if (me.status === 'trialing' && me.currentPeriodEnd) {
+    return 'Trial ends ' + new Date(me.currentPeriodEnd).toLocaleDateString();
+  }
+  return 'Unlimited decks, quizzes, tutor lessons and plans.';
+}
+
+function slRenderAuth() {
+  const me = slAuth.me;
+  const signedIn = Boolean(me && me.signedIn);
+
+  const name = document.getElementById('sidebarUserName');
+  const avatar = document.getElementById('sidebarUserAvatar');
+  const planEl = document.querySelector('.sl-sidebar-profile .sl-user-plan');
+  if (signedIn) {
+    const handle = (me.email || '').split('@')[0] || 'Student';
+    if (name) name.textContent = handle;
+    if (avatar) avatar.textContent = handle.charAt(0).toUpperCase() || 'S';
+  } else {
+    if (name) name.textContent = 'Student';
+    if (avatar) avatar.textContent = 'S';
+  }
+  if (planEl) planEl.textContent = signedIn ? slPlanLabel() : 'Not signed in';
+
+  const cardName = document.querySelector('.plan-card .plan-card-name');
+  const cardDetail = document.querySelector('.plan-card .plan-card-detail');
+  const cardBtn = document.querySelector('.plan-card .plan-badge');
+  if (cardName) cardName.textContent = slPlanLabel();
+  if (cardDetail) cardDetail.textContent = slPlanDetail();
+  if (cardBtn) {
+    if (!signedIn) {
+      cardBtn.textContent = 'Sign in';
+      cardBtn.onclick = function () { slOpenAuth('signin'); };
+    } else if (me.isPro || me.hasBilling) {
+      cardBtn.textContent = 'Manage billing';
+      cardBtn.onclick = slOpenPortal;
+    } else {
+      cardBtn.textContent = 'Upgrade to Pro →';
+      cardBtn.onclick = function () { showPricingModal(); };
+    }
+  }
+
+  const authBtn = document.getElementById('slAuthBtn');
+  if (authBtn) {
+    authBtn.textContent = signedIn ? 'Sign out' : 'Sign in';
+    authBtn.onclick = signedIn ? slSignOut : function () { slOpenAuth('signin'); };
+  }
+  const emailRow = document.getElementById('slAccountEmail');
+  if (emailRow) emailRow.textContent = signedIn ? me.email : '—';
+}
+
+/* ── Sign in / sign up ────────────────────────────────────────────────────*/
+let slAuthMode = 'signin';
+
+function slOpenAuth(mode) {
+  slAuthMode = mode === 'signup' ? 'signup' : 'signin';
+  const m = document.getElementById('authModal');
+  if (!m) return;
+  slAuthMsg('');
+  slSyncAuthMode();
+  m.classList.add('open');
+  setTimeout(function () { const e = document.getElementById('authEmail'); if (e) e.focus(); }, 120);
+}
+
+function slCloseAuth() {
+  const m = document.getElementById('authModal');
+  if (m) m.classList.remove('open');
+}
+
+function slAuthOutside(e) {
+  if (e.target === document.getElementById('authModal')) slCloseAuth();
+}
+
+function slToggleAuthMode() {
+  slAuthMode = slAuthMode === 'signin' ? 'signup' : 'signin';
+  slAuthMsg('');
+  slSyncAuthMode();
+}
+
+function slSyncAuthMode() {
+  const isUp = slAuthMode === 'signup';
+  const t = document.getElementById('authTitle');
+  const s = document.getElementById('authSub');
+  const b = document.getElementById('authSubmit');
+  const alt = document.getElementById('authToggleText');
+  if (t) t.textContent = isUp ? 'Create your account' : 'Welcome back';
+  if (s) s.textContent = isUp
+    ? 'Your study sets stay with your account, on every device.'
+    : 'Sign in to pick up where you left off.';
+  if (b) b.textContent = isUp ? 'Create account' : 'Sign in';
+  if (alt) alt.innerHTML = isUp
+    ? 'Already have an account? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Sign in</button>'
+    : 'New to StudLit? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Create an account</button>';
+}
+
+function slAuthMsg(text, kind) {
+  const el = document.getElementById('authMsg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.display = text ? 'block' : 'none';
+  el.style.color = kind === 'ok' ? '#4ade80' : '#fca5a5';
+}
+
+async function slSubmitAuth(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!slAuth.client) { slAuthMsg('Accounts are not available right now.'); return; }
+
+  const email = (document.getElementById('authEmail') || {}).value || '';
+  const password = (document.getElementById('authPassword') || {}).value || '';
+  if (!email.trim() || !password) { slAuthMsg('Enter your email and a password.'); return; }
+  if (slAuthMode === 'signup' && password.length < 8) {
+    slAuthMsg('Use at least 8 characters for your password.'); return;
+  }
+
+  const btn = document.getElementById('authSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Working…'; }
+  slAuthMsg('');
+
+  try {
+    if (slAuthMode === 'signup') {
+      const { data, error } = await slAuth.client.auth.signUp({
+        email: email.trim(), password: password,
+      });
+      if (error) throw error;
+      /* With email confirmation switched on, Supabase returns a user but no
+         session. That is not a failure — it just means the next step happens
+         in their inbox. */
+      if (data && !data.session) {
+        slAuthMsg('Check your email to confirm your account, then sign in.', 'ok');
+        slAuthMode = 'signin';
+        slSyncAuthMode();
+        return;
+      }
+    } else {
+      const { error } = await slAuth.client.auth.signInWithPassword({
+        email: email.trim(), password: password,
+      });
+      if (error) throw error;
+    }
+
+    await slRefreshMe();
+    slCloseAuth();
+    if (typeof showInfoToast === 'function') showInfoToast('Signed in as ' + email.trim());
+  } catch (err) {
+    slAuthMsg((err && err.message) || 'That did not work. Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; slSyncAuthMode(); }
+  }
+}
+
+async function slForgotPassword() {
+  if (!slAuth.client) return;
+  const email = ((document.getElementById('authEmail') || {}).value || '').trim();
+  if (!email) { slAuthMsg('Enter your email first, then tap reset.'); return; }
+  try {
+    await slAuth.client.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/app.html',
+    });
+    slAuthMsg('Password reset link sent — check your email.', 'ok');
+  } catch (err) {
+    slAuthMsg((err && err.message) || 'Could not send the reset email.');
+  }
+}
+
+/* Password change from the account panel. Goes through the same email flow as
+   "forgot password" — there is no current-password form here, so a hijacked
+   open tab cannot silently change the password and lock the owner out. */
+async function slSendPasswordReset() {
+  if (!slAuth.signedIn() || !slAuth.client) { slOpenAuth('signin'); return; }
+  const email = slAuth.me && slAuth.me.email;
+  if (!email) return;
+  try {
+    await slAuth.client.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/app.html',
+    });
+    if (typeof showInfoToast === 'function') showInfoToast('Password reset link sent to ' + email);
+  } catch (err) {
+    if (typeof showInfoToast === 'function') showInfoToast('Could not send the reset email.');
+  }
+}
+
+async function slSignOut() {
+  if (slAuth.client) { try { await slAuth.client.auth.signOut(); } catch (e) {} }
+  slAuth.session = null;
+  slAuth.me = null;
+  await slRefreshMe();
+  if (typeof showInfoToast === 'function') showInfoToast('Signed out.');
+}
+
+/* Opens the sign-in modal and reports whether the caller may proceed. Used by
+   the actions that cost money, so the prompt arrives before the work does. */
+function slRequireAuth() {
+  if (!slAuth.cfg.authEnabled) return true;      // unconfigured: local dev
+  if (slAuth.signedIn()) return true;
+  slOpenAuth('signin');
+  return false;
+}
+
+/* ── Checkout ─────────────────────────────────────────────────────────────*/
+async function slStartCheckout(plan) {
+  if (!slRequireAuth()) return;
+  if (!slAuth.cfg.billingEnabled) {
+    if (typeof showInfoToast === 'function') showInfoToast('Billing is not switched on yet.');
+    return;
+  }
+  const btn = document.getElementById('pricingCta');
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening checkout…'; }
+  try {
+    const r = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: plan }),
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; return; }
+    if (typeof showInfoToast === 'function') showInfoToast(d.error || 'Could not start checkout.');
+  } catch (e) {
+    if (typeof showInfoToast === 'function') showInfoToast('Could not reach checkout. Try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Start My Free Trial'; }
+  }
+}
+
+async function slOpenPortal() {
+  try {
+    const r = await fetch('/.netlify/functions/create-portal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; return; }
+    if (typeof showInfoToast === 'function') showInfoToast(d.error || 'Could not open billing.');
+  } catch (e) {
+    if (typeof showInfoToast === 'function') showInfoToast('Could not open billing. Try again.');
+  }
+}
+
+/* Stripe sends the user back here. The plan is read from the server rather
+   than assumed from the URL, because the webhook is what actually grants
+   access and it can land a moment after the redirect. */
+function slHandleCheckoutReturn() {
+  let params;
+  try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+  const outcome = params.get('payment');
+  if (!outcome) return;
+
+  history.replaceState({}, '', window.location.pathname);
+
+  if (outcome === 'cancelled') {
+    if (typeof showInfoToast === 'function') showInfoToast('Checkout cancelled — no charge was made.');
+    return;
+  }
+  if (outcome !== 'success') return;
+
+  if (typeof showInfoToast === 'function') showInfoToast('Welcome to Pro! Setting up your account…');
+  /* Poll briefly: the webhook usually lands within a second or two, but the
+     redirect can beat it. Five tries over ten seconds, then give up quietly —
+     the next page load will show the right plan either way. */
+  let tries = 0;
+  (function check() {
+    tries++;
+    slRefreshMe().then(function (me) {
+      if (me && me.isPro) {
+        if (typeof showInfoToast === 'function') showInfoToast('You are all set. Enjoy StudLit Pro.');
+        return;
+      }
+      if (tries < 5) setTimeout(check, 2000);
+    });
+  })();
+}
+
+/* Turns a gate rejection from any endpoint into the right prompt. */
+function slHandleGateError(data, status) {
+  const code = data && data.code;
+  if (code === 'signin_required' || status === 401) {
+    slOpenAuth('signin');
+    return true;
+  }
+  if (code === 'upgrade_required' || status === 402) {
+    slRefreshMe();
+    showPricingModal();
+    return true;
+  }
+  return false;
+}
+
 let selectedModes=new Set(['solve']);
 let fcAllCards=[],fcCards=[],fcIndex=0,fcFlipped=false,fcDiffFilter='all';
 let quizData=[],quizCurrent=0,quizScore=0,quizAnswers=[],quizQStart=0;
@@ -3044,6 +3499,9 @@ let podcastScript='',podcastPlaying=false,podcastSpeed=1,podcastUtterance=null;
 (function(){try{const s=localStorage.getItem('sl-theme')||'dark';document.documentElement.setAttribute('data-theme',s);document.body.setAttribute('data-theme',s);document.body.classList.toggle('light-mode',s==='light');var lbl=document.getElementById('themeLabel');if(lbl)lbl.innerHTML=s==='light'?'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></svg>'+'Light':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'+'Dark';}catch(e){}})();
 // Apply theme after DOM ready so injected style works
 document.addEventListener('DOMContentLoaded',function(){
+  // Kicked off without awaiting: the page should paint and stay usable while
+  // the session and plan are being resolved.
+  slAuth.ready = slAuthInit();
   try{const s=localStorage.getItem('sl-theme')||'dark';if(s==='light')applyTheme('light');}catch(e){}
   // Restore accent color
   try{var ac=localStorage.getItem('sl-accent');var ac2=localStorage.getItem('sl-accent2');if(ac)applyAccentColor(ac,ac2);}catch(e){}
@@ -3177,6 +3635,9 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .modal-box { background: #fff !important; border: 1.5px solid #d4c9fb !important; }
       .new-set-modal { background: #fff !important; }
       .new-set-input { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #0f0e1a !important; }
+      .sl-auth-sub { color: #3b3763 !important; }
+      .sl-auth-label { color: #5b5580 !important; }
+      .sl-auth-alt { color: #3b3763 !important; }
 
       /* ── Sets / sessions ── */
       .sl-sets-heading { color: #0f0e1a !important; font-weight: 800 !important; }
@@ -3916,7 +4377,17 @@ function setPlan(plan) {
   try { localStorage.setItem('sl-plan', plan); } catch (e) {}
 }
 
-function startTrial(){hidePricingModal();switchTab('workspace')}
+/* Until now this closed the modal and switched tabs — the prices were shown
+   but nobody was ever charged. It now sends the selected plan to Stripe, after
+   signing the user in, because a subscription has to belong to an account. */
+function startTrial() {
+  if (!slAuth.signedIn() && slAuth.cfg.authEnabled) {
+    hidePricingModal();
+    slOpenAuth('signup');
+    return;
+  }
+  slStartCheckout(selectedPlan);
+}
 
 function updateCharCount(){var el=document.getElementById('charCount');var inp=document.getElementById('studyInput');if(el&&inp)el.textContent=inp.value.length+' / 2000';}
 function useChip(el){document.getElementById('studyInput').value=el.textContent.trim();updateCharCount()}
@@ -3969,6 +4440,8 @@ async function studySyncFetch(payload){
     });
     const data = await res.json().catch(()=>null);
     if(!data) return {error:'The request took too long. Try selecting fewer modes or a shorter topic, then generate again.'};
+    // A sign-in or upgrade prompt is a better answer than an error card.
+    if(!res.ok && slHandleGateError(data, res.status)) return {error:data.error, handled:true};
     if(!res.ok && !data.error) return {error:'Server error — the request may have timed out. Try one mode at a time.'};
     return data;
   }catch(e){
@@ -3981,6 +4454,10 @@ async function studySyncFetch(payload){
    onPartial(results, topic) fires as individual modes finish, so the page can
    show the first one in seconds instead of waiting for the whole job. */
 async function runStudyJob(payload, onProgress, onPartial){
+  // Ask for a sign-in before the upload goes over the wire, not after the
+  // server has rejected it — a 10MB PDF should not make the round trip twice.
+  if(!slRequireAuth()) return {error:'Please sign in to generate study material.', handled:true};
+
   const requestId = studyRequestId();
   let started = false;
   try{
@@ -3991,6 +4468,13 @@ async function runStudyJob(payload, onProgress, onPartial){
     // Background functions answer 202 with an empty body. A 404 means the
     // function isn't available here, so fall back rather than poll forever.
     started = kick.status === 202 || kick.ok;
+    // A rejection that arrives synchronously (rate limit, bad origin) is
+    // final — falling back to the sync endpoint would only collect it again.
+    if(kick.status === 401 || kick.status === 402 || kick.status === 429){
+      const d = await kick.json().catch(()=>({}));
+      if(slHandleGateError(d, kick.status)) return {error:d.error, handled:true};
+      return {error: d.error || 'Request was not allowed.'};
+    }
   }catch(e){ started = false; }
 
   if(!started) return studySyncFetch(payload);
@@ -4027,7 +4511,12 @@ async function runStudyJob(payload, onProgress, onPartial){
     }
     if(!st) continue;
     if(st.status === 'done')  return st.data || {error:'No data returned.'};
-    if(st.status === 'error') return {error: st.error || 'Generation failed.'};
+    if(st.status === 'error'){
+      // The background function cannot return an HTTP status, so a plan
+      // rejection arrives here carrying the code the gate assigned it.
+      if(st.code && slHandleGateError(st, 0)) return {error: st.error, handled:true};
+      return {error: st.error || 'Generation failed.'};
+    }
 
     if(st.status === 'processing') everStarted = true;
 
@@ -4826,7 +5315,11 @@ async function slReadFileContent(file,fileObj){
       }
       const res=await fetch('/.netlify/functions/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:file.name,mimeType:file.type,data:b64})});
       const result=await res.json();
-      if(res.ok&&result.text){fileObj.textContent=result.text;}else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
+      // A signed-out upload fails here with a 401 that would otherwise read as
+      // "Extraction failed" — a confusing way to be told to sign in.
+      if(res.status===401){slOpenAuth('signin');fileObj.readError='Sign in to upload files';}
+      else if(res.ok&&result.text){fileObj.textContent=result.text;}
+      else{fileObj.readError=result.error||(result.text===''?'No text found — may be a scanned image PDF':'Extraction failed');}
     }else if(isPdf){fileObj.textContent=await extractPdfClientSide(file);if(!fileObj.textContent)fileObj.readError='No text found — may be a scanned image PDF';}
     else{
       try{const m=await loadMammothBrowser();const ab=await file.arrayBuffer();const hr=await m.convertToHtml({arrayBuffer:ab});fileObj.htmlContent=hr.value||'';}catch(_){}
@@ -4988,6 +5481,7 @@ async function generatePodcast() {
       body:JSON.stringify({topic:input||uploadedFiles[0]?.name||'lesson',context:fileCtx})
     });
     const data=await res.json();
+    if(!res.ok&&slHandleGateError(data,res.status)){showEmpty();return;}
     if(!res.ok||data.error){showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">'+escHtml(data.error||'Failed')+'</div></div>');return;}
     podcastScript=data.script||'';
     const topic=input||'Your Lesson';
@@ -5038,6 +5532,7 @@ async function runGrader() {
       body: JSON.stringify({ paper: paper, prompt: prompt.trim(), rubric: rubric.trim() })
     });
     var data = await resp.json();
+    if (!resp.ok && slHandleGateError(data, resp.status)) { document.getElementById('graderResults').innerHTML = ''; return; }
     if (!resp.ok || data.error) throw new Error(data.error || 'Grading failed');
     renderGradeResult(data);
   } catch(e) {
@@ -5160,6 +5655,7 @@ async function generatePodcastFromPanel() {
       body: JSON.stringify({ topic, style, context: '' })
     });
     const data = await res.json();
+    if (!res.ok && slHandleGateError(data, res.status)) { showEmpty(); return; }
     if (!res.ok || data.error) { showResult('<div class="error-card"><div class="error-card-label">⚠ Error</div><div class="error-card-body">' + escHtml(data.error || 'Failed') + '</div></div>'); return; }
     podcastScript = data.script || '';
     const minEst = Math.ceil(podcastScript.split(/\s+/).length / 130);
@@ -6087,6 +6583,7 @@ async function sendChat(){
   try{
     var res=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:chatHistory.slice(-10),context:''})});
     var data=await res.json();
+    if(!res.ok) slHandleGateError(data,res.status);
     var t=document.getElementById('ctyping');if(t)t.remove();
     var reply=data.reply||(data.error?'Error: '+data.error:'Sorry, something went wrong. Make sure OPENAI_API_KEY is set in Netlify.');
     chatHistory.push({role:'assistant',content:reply});
@@ -6986,7 +7483,8 @@ async function wzSendChat() {
   try {
     const res = await fetch('/.netlify/functions/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:wzChatHistory.slice(-10),context:wzChatContext})});
     const data = await res.json();
-    const reply = data.reply || 'Sorry, I could not respond right now.';
+    if(!res.ok) slHandleGateError(data,res.status);
+    const reply = data.reply || data.error || 'Sorry, I could not respond right now.';
     wzChatHistory.push({role:'assistant',content:reply});
     const el = document.getElementById(loadId);
     if (el) { el.textContent = reply; el.style.opacity = '1'; }
@@ -7022,7 +7520,8 @@ async function wzSendChat2() {
   try {
     const res = await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:wzChatHistory2.slice(-10),context:wzChatContext2})});
     const data = await res.json();
-    const reply = data.reply || 'Sorry, I could not respond right now.';
+    if(!res.ok) slHandleGateError(data,res.status);
+    const reply = data.reply || data.error || 'Sorry, I could not respond right now.';
     wzChatHistory2.push({role:'assistant',content:reply});
     const el = document.getElementById(loadId);
     if (el) { el.textContent = reply; el.style.opacity = '1'; }
@@ -7621,13 +8120,24 @@ document.addEventListener('fullscreenchange', function() {
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-label">Signed in</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-title">Email</div>
+          <div class="settings-row-sub" id="slAccountEmail">—</div>
+        </div>
+        <button class="btn-settings-change" id="slAuthBtn" onclick="slOpenAuth('signin')">Sign in</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-label">Security</div>
       <div class="settings-row">
         <div class="settings-row-left">
           <div class="settings-row-title">Password</div>
-          <div class="settings-row-sub">Change your login password</div>
+          <div class="settings-row-sub">We email you a secure link to set a new one</div>
         </div>
-        <button class="btn-settings-change" onclick="showInfoToast('Password changes coming soon.')">Change Password</button>
+        <button class="btn-settings-change" onclick="slSendPasswordReset()">Change Password</button>
       </div>
       <div class="settings-row">
         <div class="settings-row-left">

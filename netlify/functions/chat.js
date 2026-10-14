@@ -1,4 +1,5 @@
 const { guard } = require('./lib/guard');
+const { requirePlan, CHAT_UNITS } = require('./lib/auth');
 
 // StudLit AI chat/tutor endpoint. Free-form markdown output — the structured
 // JSON generation modes live in study.js / study-background.js.
@@ -27,6 +28,8 @@ const handler = async (event) => {
   const g = guard(event, { name: 'chat', limit: 40, maxBytes: 512 * 1024 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
+  const gate = await requirePlan(event, cors, { units: CHAT_UNITS });
+  if (gate.response) return gate.response;
 
   const { message, history = [], context = '' } = body;
   if (!message || !message.trim()) {

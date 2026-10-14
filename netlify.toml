@@ -24,10 +24,13 @@
 [functions.create-checkout]
   timeout = 10
 
+[functions.create-portal]
+  timeout = 10
+
 [functions.stripe-webhook]
   timeout = 10
 
-[functions.set-trial]
+[functions.me]
   timeout = 10
 
 [functions.grade]

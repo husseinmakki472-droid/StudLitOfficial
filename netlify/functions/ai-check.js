@@ -1,4 +1,5 @@
 const { guard } = require('./lib/guard');
+const { requirePlan } = require('./lib/auth');
 
 function escHtml(s) {
 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -8,6 +9,8 @@ const handler = async (event) => {
 const g = guard(event, { name: 'ai-check', limit: 25, maxBytes: 512 * 1024 });
 if (g.response) return g.response;
 const { headers: cors, body } = g;
+const gate = await requirePlan(event, cors, { units: 1 });
+if (gate.response) return gate.response;
 const { text } = body;
 if (!text || !text.trim()) {
 return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'text is required' }) };

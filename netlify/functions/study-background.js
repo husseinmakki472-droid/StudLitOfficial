@@ -3,6 +3,7 @@
 
 const { getStore } = require('@netlify/blobs');
 const { originAllowed, rateLimit } = require('./lib/guard');
+const { requirePlan } = require('./lib/auth');
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -344,6 +345,31 @@ const handler = async (event) => {
   const filesIn = Array.isArray(files) ? files : [];
   if (filesIn.length > 10) {
     await reject('Too many files at once. Upload up to 10.');
+    return;
+  }
+
+  // The money gate, before a single token is spent. requirePlan speaks in HTTP
+  // responses because every other endpoint can return one; here the verdict has
+  // to be unpacked and written to the store instead, carrying its `code` so the
+  // page can tell "sign in" apart from "you are out of free generations" and
+  // show the right thing.
+  const gate = await requirePlan(event, { 'Content-Type': 'application/json' }, {
+    modes: Array.isArray(modes) ? modes : [],
+    idemKey: requestId,
+  });
+  if (gate.response) {
+    let info = {};
+    try { info = JSON.parse(gate.response.body || '{}'); } catch (e) {}
+    try {
+      await store.setJSON(requestId, {
+        status: 'error',
+        error: info.error || 'Not allowed.',
+        code: info.code || 'forbidden',
+      }, { ttl: 7200 });
+    } catch (e) {
+      console.error(JSON.stringify({ event: 'blob_write_failed', requestId, error: e.message }));
+    }
+    console.log(JSON.stringify({ event: 'study_bg_denied', requestId, code: info.code || 'forbidden' }));
     return;
   }
 

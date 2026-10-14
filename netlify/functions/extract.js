@@ -1,4 +1,5 @@
 const { guard } = require('./lib/guard');
+const { requirePlan } = require('./lib/auth');
 
 const handler = async (event) => {
   // No model calls here, but PDF/DOCX parsing is CPU-bound and takes a raw
@@ -6,6 +7,11 @@ const handler = async (event) => {
   const g = guard(event, { name: 'extract', limit: 60, maxBytes: 6 * 1024 * 1024 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
+  // Signed-in only, but free of charge: parsing costs CPU, not model tokens,
+  // and billing someone for an upload they have not generated from yet would
+  // make the quota feel arbitrary.
+  const gate = await requirePlan(event, cors, { charge: false });
+  if (gate.response) return gate.response;
 
   const { name, mimeType, data } = body;
   if (!data) return { statusCode: 400, headers: cors, body: JSON.stringify({ error: 'No file data provided' }) };

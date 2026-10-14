@@ -1,10 +1,13 @@
 const { guard } = require('./lib/guard');
+const { requirePlan } = require('./lib/auth');
 
 const handler = async (event) => {
   // Every call is a full gpt-4o pass over a whole paper — 10 per IP per hour.
   const g = guard(event, { name: 'grade', limit: 10, maxBytes: 1024 * 1024 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
+  const gate = await requirePlan(event, cors, { units: 2 });
+  if (gate.response) return gate.response;
 
   const { paper, prompt, rubric } = body;
   if (!paper || !paper.trim()) {

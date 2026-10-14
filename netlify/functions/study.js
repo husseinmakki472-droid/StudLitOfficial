@@ -1,4 +1,5 @@
 const { guard } = require('./lib/guard');
+const { requirePlan } = require('./lib/auth');
 
 function repairJson(str) {
   str = str.replace(/,\s*([}\]])/g, '$1');
@@ -141,6 +142,13 @@ const handler = async (event) => {
   const g = guard(event, { name: 'study', limit: 5 });
   if (g.response) return g.response;
   const { headers: cors, body } = g;
+
+  // Shares the request id with the background attempt this is standing in
+  // for, so a fallback is not billed as a second generation.
+  const gate = await requirePlan(event, cors, {
+    modes: body.modes, idemKey: body.requestId,
+  });
+  if (gate.response) return gate.response;
 
   const { topic, modes, files, urls, difficulty, language } = body;
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
