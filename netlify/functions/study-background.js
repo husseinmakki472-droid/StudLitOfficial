@@ -3,6 +3,8 @@
 
 const { getStore } = require('@netlify/blobs');
 const { originAllowed, rateLimit } = require('./lib/guard');
+const { checkAccount } = require('./lib/auth');
+const { readLinks, splitLinkFiles, failureMessage } = require('./lib/fetch-url');
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -316,8 +318,8 @@ const handler = async (event) => {
     return;
   }
 
-  async function reject(message) {
-    try { await store.setJSON(requestId, { status: 'error', error: message }, { ttl: 7200 }); }
+  async function reject(message, code) {
+    try { await store.setJSON(requestId, { status: 'error', error: message, code: code || undefined }, { ttl: 7200 }); }
     catch (e) { console.error(JSON.stringify({ event: 'blob_write_failed', requestId, error: e.message })); }
   }
 
@@ -334,8 +336,15 @@ const handler = async (event) => {
     await reject('Requests are not allowed from this origin.');
     return;
   }
-  // Matches the synchronous endpoint's budget: 5 generations per IP per hour.
-  const rl = rateLimit(event, 'study', 5, 60 * 60 * 1000);
+  // Same account check as every other paid endpoint. The background event
+  // carries the request headers, so the browser's bearer token is here too.
+  const acct = await checkAccount(event);
+  if (!acct.user) {
+    await reject(acct.error, acct.code);
+    return;
+  }
+  // Matches the synchronous endpoint's budget: 20 generations per account per hour.
+  const rl = rateLimit(event, 'study', 20, 60 * 60 * 1000, 'u:' + acct.user.id);
   if (rl.limited) {
     const mins = Math.max(1, Math.ceil(rl.retryAfter / 60));
     await reject('You have hit the usage limit. Try again in about ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.');
@@ -356,8 +365,23 @@ const handler = async (event) => {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
   const modesArr = modes || [];
-  const filesArr = files || [];
-  const urlsArr = urls || [];
+  const split = splitLinkFiles(files, urls);
+  const filesArr = split.files;
+
+  // Pasted links are read here and join the uploads as plain text, so chunking,
+  // excerpting and every mode treat a web page exactly like an uploaded file.
+  // A link that can't be read stops the job with a message naming it — otherwise
+  // the model would write about a page it never saw.
+  if (split.urls.length) {
+    try { await store.setJSON(requestId, { status: 'processing', progress: 'Reading your links…' }, { ttl: 7200 }); } catch (e) {}
+    const links = await readLinks(split.urls);
+    if (links.failures.length) {
+      await reject(failureMessage(links.failures), 'link_unreadable');
+      return;
+    }
+    filesArr.push.apply(filesArr, links.files);
+  }
+  const urlsArr = [];
   const difficultyLevel = (difficulty || 'medium').toLowerCase();
   const topicStr = topic || 'the uploaded content';
   const fileCtx = buildFileCtx(filesArr, urlsArr);

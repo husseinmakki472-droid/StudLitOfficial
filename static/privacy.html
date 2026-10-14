@@ -6,6 +6,8 @@
 <meta name="robots" content="index, follow">
 <title>Privacy Policy — StudLit</title>
 <link rel="stylesheet" href="/legal.css">
+<link rel="icon" href="/icons/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 </head>
 <body>
 <div class="wrap">
@@ -14,7 +16,7 @@
 
 <div class="brand">Stud<span>Lit</span></div>
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: 6 October 2026</p>
+<p class="updated">Last updated: 13 October 2026</p>
 
 <p>This policy explains what StudLit ("we", "us") collects when you use the StudLit web app, why we collect it, and who else sees it. We've tried to write it in plain language rather than boilerplate.</p>
 
@@ -23,31 +25,44 @@
 
 <h2>What we collect</h2>
 
+<h3>Your account</h3>
+<p>To use StudLit you create an account, either with Google or with an emailed sign-in link. We store your email address and, if you sign in with Google, the name and profile picture Google shares with us. We also store your subscription status (for example "trial" or "active") and the Stripe customer reference that links your account to your subscription. Your account is held by our sign-in provider, Supabase.</p>
+
 <h3>Content you give us</h3>
-<p>When you generate study material, we receive whatever you submit: the topic you type, the text of documents you upload (PDF or Word), images you upload, and any URLs you paste. We also receive essays you submit to the Paper Grader and messages you send to the AI tutor.</p>
+<p>When you generate study material, we receive whatever you submit: the topic you type, the text of documents you upload (PDF or Word), images you upload, and any links you paste. When you paste a link, our server fetches that page (or, for a YouTube video, its captions) and uses the text the same way as an uploaded document. We also receive essays you submit to the Paper Grader and messages you send to the AI tutor.</p>
 
 <h3>Information stored on your own device</h3>
 <p>Your saved study sets, XP, streaks, badges, theme, and preferences are stored in your browser's local storage — on your device, not on our servers. We cannot see them, and we cannot recover them for you. <strong>Clearing your browser data deletes them permanently.</strong></p>
 
 <h3>Technical information</h3>
-<p>Our hosting provider records standard server logs, including your IP address, for security and abuse prevention. We use your IP address in memory to enforce rate limits so that one person cannot exhaust the service for everyone. We do not build advertising profiles and we do not sell data.</p>
+<p>Our hosting provider records standard server logs, including your IP address, for security and abuse prevention. We use your IP address and account ID in memory to enforce usage limits so that one person cannot exhaust the service for everyone. We do not build advertising profiles and we do not sell data.</p>
 
 <h2>Who else sees your content</h2>
 
 <h3>OpenAI</h3>
 <p><strong>Everything you submit for AI processing is sent to OpenAI</strong>, which generates the response. This includes uploaded documents, images, essays, and chat messages. Their handling of that data is governed by OpenAI's own policies. If your material is confidential, or belongs to someone else, do not upload it.</p>
 
+<h3>Supabase</h3>
+<p>Supabase provides sign-in and stores your account record (email, name if you used Google, and subscription status). It does not receive your study content.</p>
+
+<h3>Google</h3>
+<p>If you choose "Continue with Google", Google confirms your identity to us and shares your name, email and profile picture. We do not get access to your Google files or anything else in your Google account.</p>
+
+<h3>Plausible Analytics</h3>
+<p>We use Plausible to count visits and a few actions (such as starting checkout) so we know what is working. Plausible sets no cookies, does not track you across websites, and does not collect personal information; it counts visits using a daily-rotating anonymous identifier.</p>
+
 <h3>Netlify</h3>
 <p>Netlify hosts the site and runs our server functions. Generated results are held in Netlify's storage for <strong>two hours</strong> so that long generations can finish in the background and be delivered to your browser, then they expire automatically.</p>
 
 <h3>Stripe</h3>
-<p>If and when paid plans are enabled, card payments are processed by Stripe. We never see or store your card number.</p>
+<p>Subscriptions and card payments are processed by Stripe. Stripe receives your email address and payment details; we never see or store your card number. We receive your subscription status and billing history (plan, dates, amounts) so we can give you access.</p>
 
 <h2>How long we keep things</h2>
 <ul>
   <li><strong>Generation results:</strong> two hours in temporary storage, then deleted automatically.</li>
   <li><strong>Uploaded files:</strong> held only for the duration of the request. We do not keep a copy after processing.</li>
   <li><strong>Your study sets and stats:</strong> on your device, for as long as you keep them.</li>
+  <li><strong>Your account:</strong> until you ask us to delete it. Billing records are kept by Stripe for as long as the law requires, even after your account is deleted.</li>
   <li><strong>Server logs:</strong> retained by our hosting provider under their standard retention period.</li>
 </ul>
 
@@ -55,11 +70,11 @@
 <p>StudLit is intended for users aged 13 and over. If you are in the European Economic Area or the United Kingdom, the minimum age is 16. We do not knowingly collect information from children below these ages. If you believe a child has used StudLit, contact us and we will delete what we hold.</p>
 
 <h2>Your choices</h2>
-<p>Because most of your data lives on your own device, you have direct control over it: clearing your browser storage removes your study sets, stats, and preferences immediately. For anything held on our side, or in server logs, email us at <a href="mailto:studlitofficial@gmail.com">studlitofficial@gmail.com</a> and we will delete what we can identify as yours.</p>
+<p>Because most of your data lives on your own device, you have direct control over it: clearing your browser storage removes your study sets, stats, and preferences immediately. To delete your account, or anything else held on our side, email us at <a href="mailto:studlitofficial@gmail.com">studlitofficial@gmail.com</a> and we will delete what we can identify as yours.</p>
 <p>Depending on where you live, you may have additional rights to access, correct, export, or erase your personal data, and to complain to a data protection authority.</p>
 
 <h2>Cookies</h2>
-<p>StudLit does not use advertising or tracking cookies. We use browser local storage to remember your settings and saved work, which is not shared with anyone.</p>
+<p>StudLit does not use advertising or tracking cookies, and our analytics (Plausible) uses no cookies at all. We use browser local storage to remember your settings, your saved work, and your sign-in session. Stripe uses its own cookies on its checkout and billing pages to prevent fraud.</p>
 
 <h2>Security</h2>
 <p>We use HTTPS everywhere and keep API credentials on the server, never in the browser. No service is perfectly secure, so please don't upload material you cannot afford to have exposed.</p>
