@@ -3069,7 +3069,11 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+<!-- Pinned to match the version the functions run server-side. 2.49.8 predates
+     Supabase's `sb_publishable_` / `sb_secret_` key format and does not
+     recognise it, so a project created with the new keys could not sign anyone
+     in. Keep this in step with package.json when either moves. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script>
 /* ══ ACCOUNTS AND BILLING ═══════════════════════════════════════════════════
    Everything here decides what the page *shows*. Nothing here decides what a
