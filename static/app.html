@@ -2485,7 +2485,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 
 <div class="page-view active" id="view-home">
 <section class="hero">
-  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 2-Day Free Trial</div>
+  <div class="hero-badge"><div class="hero-badge-dot"></div>AI-Powered Study Platform — 7-Day Free Trial</div>
   <h1>Study Smarter,<br><span class="grad">Not Harder.</span></h1>
   <p class="hero-sub">Turn your notes, questions, and topics into flashcards, quizzes, summaries, and personalized study plans — instantly.</p>
   <div class="hero-actions">
@@ -2924,12 +2924,12 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 </section>
 <section class="pricing-section">
   <div class="pricing-heading">Simple pricing.</div>
-  <div class="pricing-sub">Try free for 2 days. No card required to start.</div>
+  <div class="pricing-sub">Start free — no card needed. Then 7 days of Pro, free.</div>
   <div class="pricing-card">
-    <div class="pricing-badge">✦ 2-Day Free Trial Included</div>
+    <div class="pricing-badge">✦ 7-Day Free Trial Included</div>
     <div class="pricing-name">StudLit Pro</div>
-    <div class="price-row"><span class="price-currency">$</span><span class="price-amount">15</span><span class="price-period">/mo</span></div>
-    <div class="pricing-trial-note">⚡ Your first 2 days are completely free</div>
+    <div class="price-row"><span class="price-currency">$</span><span class="price-amount">14.99</span><span class="price-period">CAD/mo</span></div>
+    <div class="pricing-trial-note">⚡ Your first 7 days of Pro are completely free</div>
     <hr class="pricing-divider">
     <ul class="pricing-features">
       <li>All 10 AI study modes unlocked</li>
@@ -2939,7 +2939,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <li>Practice tests with scoring</li>
       <li>Works on all your devices</li>
     </ul>
-    <button class="btn-primary" onclick="showPricingModal()">Start Free Trial — $15/mo after</button>
+    <button class="btn-primary" onclick="showPricingModal()">Start Free Trial — $14.99 CAD/mo after</button>
     <div class="pricing-cancel-note">Cancel anytime. No hidden fees.</div>
   </div>
 </section>
@@ -3038,23 +3038,23 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
   <div class="modal-box">
     <button class="modal-close" onclick="hidePricingModal()">✕</button>
     <div style="text-align:center;margin-bottom:20px">
-      <div class="pricing-badge" style="display:inline-flex;margin-bottom:14px">✦ 2-Day Free Trial</div>
+      <div class="pricing-badge" style="display:inline-flex;margin-bottom:14px">✦ 7-Day Free Trial</div>
       <div class="pricing-name">StudLit Pro</div>
 
       <div class="billing-toggle" role="group" aria-label="Billing period">
         <button type="button" class="billing-opt" id="billMonthly" onclick="setPlan('monthly')" aria-pressed="false">Monthly</button>
         <button type="button" class="billing-opt active" id="billAnnual" onclick="setPlan('annual')" aria-pressed="true">
-          Annual <span class="billing-save">Save 45%</span>
+          Annual <span class="billing-save">Save 44%</span>
         </button>
       </div>
 
       <div class="price-row" style="justify-content:center">
         <span class="price-currency">$</span>
-        <span class="price-amount" id="priceAmount">99</span>
+        <span class="price-amount" id="priceAmount">99.99</span>
         <span class="price-period" id="pricePeriod">/yr</span>
       </div>
-      <div class="price-effective" id="priceEffective">That's $8.25/month — billed once a year</div>
-      <div class="pricing-trial-note">⚡ First 2 days free — no charge today</div>
+      <div class="price-effective" id="priceEffective">That's $8.33 CAD/month — billed once a year</div>
+      <div class="pricing-trial-note">⚡ First 7 days free — no charge today</div>
     </div>
     <hr class="pricing-divider" style="margin:16px 0">
     <ul class="pricing-features" style="margin-bottom:20px">
@@ -3065,7 +3065,7 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <li>Cancel anytime</li>
     </ul>
     <button class="btn-primary" id="pricingCta" onclick="startTrial()" style="margin-bottom:10px">Start My Free Trial</button>
-    <div class="pricing-cancel-note" id="pricingCancelNote">You won't be charged for 2 days. $99/yr after. Cancel anytime.</div>
+    <div class="pricing-cancel-note" id="pricingCancelNote">You won't be charged for 7 days. $99.99 CAD/yr after. Cancel anytime.</div>
   </div>
 </div>
 
@@ -4343,16 +4343,25 @@ function showPricingModal(){document.getElementById('pricingModal').classList.ad
 function hidePricingModal(){document.getElementById('pricingModal').classList.remove('open')}
 function closePricingModal(e){if(e.target===document.getElementById('pricingModal'))hidePricingModal()}
 /* ── Billing plans ────────────────────────────────────────────────────────
-   Annual is $99 rather than 12 × $15 = $180. It clears the $100 threshold,
-   works out at $8.25/month, and undercuts Studley's $154.56/yr by 36% — so
-   the annual plan is the cheapest paid option in the category even though
-   the monthly one is the dearest. It also moves students past the June
-   cancel-after-exams cliff.
-   STRIPE_PRICE_ID still needs a matching price object per plan before
-   checkout can use this; right now the choice is recorded, not charged. */
+   Priced in Canadian dollars, matching the Stripe account. The currency is
+   stated everywhere a number appears: a Canadian student seeing a bare "$"
+   assumes CAD and a US one assumes USD, and exactly one of them is then
+   surprised at checkout.
+
+   Annual is $99.99 rather than 12 × $14.99 = $179.88 — a 44% discount that
+   works out at $8.33/month. That undercuts the category's cheapest monthly
+   option while the monthly plan sits above it, which is the point: the annual
+   plan is the one worth selling. It also collects one Stripe fee instead of
+   twelve, and moves students past the June cancel-after-exams cliff. */
 const STUDLIT_PLANS = {
-  monthly: { amount: 15, period: '/mo', note: '$15/mo', effective: '' },
-  annual:  { amount: 99, period: '/yr', note: '$99/yr', effective: "That's $8.25/month — billed once a year" }
+  monthly: {
+    amount: '14.99', period: '/mo', note: '$14.99 CAD/mo',
+    effective: 'Billed monthly in Canadian dollars'
+  },
+  annual: {
+    amount: '99.99', period: '/yr', note: '$99.99 CAD/yr',
+    effective: "That's $8.33 CAD/month — billed once a year"
+  }
 };
 let selectedPlan = 'annual';
 
@@ -4368,7 +4377,7 @@ function setPlan(plan) {
   if (amt) amt.textContent = p.amount;
   if (per) per.textContent = p.period;
   if (eff) { eff.textContent = p.effective; eff.style.display = p.effective ? '' : 'none'; }
-  if (note) note.textContent = "You won't be charged for 2 days. " + p.note + ' after. Cancel anytime.';
+  if (note) note.textContent = "You won't be charged for 7 days. " + p.note + ' after. Cancel anytime.';
 
   [['monthly', 'billMonthly'], ['annual', 'billAnnual']].forEach(function (pair) {
     const el = document.getElementById(pair[1]);
