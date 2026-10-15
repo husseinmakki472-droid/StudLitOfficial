@@ -410,6 +410,7 @@ body{letter-spacing:-.006em;font-weight:500}
 .solve-mistakes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
 .solve-mistakes li{font-size:13.5px;line-height:1.6;color:rgba(240,239,255,0.62);padding-left:2px}
 .solve-mistakes li::marker{color:#fbbf24}
+.step-tag-focus{background:rgba(124,92,252,0.14)!important;border-color:rgba(124,92,252,0.28)!important;color:#b494ff!important}
 @media (max-width:560px){.notes-terms{grid-template-columns:1fr;gap:2px}.notes-terms dd{margin-bottom:7px}}
 .pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
 .pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
@@ -4208,6 +4209,7 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .concept-why-tag { color: rgba(15,14,26,0.45) !important; background: rgba(0,0,0,0.05) !important; }
       .solve-mistakes li { color: #3b3763 !important; }
       .solve-mistakes li::marker { color: #b45309 !important; }
+      .step-tag-focus { background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.3) !important; color: #5b3fd4 !important; }
       .quiz-tool-btn { background: rgba(202,138,4,0.1) !important; border: 1.5px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
       .quiz-tool-btn:hover { background: rgba(202,138,4,0.18) !important; color: #854d0e !important; }
       .quiz-star-btn { border: 1px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
@@ -5257,7 +5259,17 @@ function renderStudyPlanHTML(topic, d){
   const roadmap=steps.map((s,i)=>{
     const tasks=(s.tasks||[]);
     const taskHtml=tasks.length?`<ul style="margin-top:6px;padding-left:18px">${tasks.map(task=>`<li style="font-size:12px;color:var(--text-2);margin-bottom:3px">${escHtml(task)}</li>`).join('')}</ul>`:'';
-    return`<div class="roadmap-step" style="animation-delay:${i*.07}s"><div class="step-num">${s.day||i+1}</div><div class="step-content"><div class="step-title">${escHtml(s.title||'')}</div><div class="step-desc">${taskHtml}</div><div class="step-meta">${s.duration?`<span class="step-tag">⏱ ${escHtml(s.duration)}</span>`:''}</div></div></div>`;
+    /* `focus` named what the day is actually for and was never drawn, so every
+       day looked like an unlabelled list of chores. It sits beside the
+       duration, which is the other thing you scan a plan for. */
+    /* Trimmed, not merely truthy: "   " is a truthy string, so a blank value
+       from the model drew a pill containing nothing but its icon. The same
+       was already true of duration sitting beside it. */
+    const focusTxt=String(s.focus==null?'':s.focus).trim();
+    const durTxt=String(s.duration==null?'':s.duration).trim();
+    const focusTag=focusTxt?`<span class="step-tag step-tag-focus">🎯 ${escHtml(focusTxt)}</span>`:'';
+    const durTag=durTxt?`<span class="step-tag">⏱ ${escHtml(durTxt)}</span>`:'';
+    return`<div class="roadmap-step" style="animation-delay:${i*.07}s"><div class="step-num">${s.day||i+1}</div><div class="step-content"><div class="step-title">${escHtml(s.title||'')}</div><div class="step-desc">${taskHtml}</div><div class="step-meta">${durTag}${focusTag}</div></div></div>`;
   }).join('');
   const planLabel=d.totalDays?d.totalDays+'-Day Plan':steps.length+' Steps';
   return`${resultHeader('studyplan',t,[{text:'📊 Study Plan',accent:true},{text:planLabel}])}<div class="content-card" style="padding-bottom:8px"><div class="card-label">Your Roadmap for ${escHtml(t)}</div>${roadmap}</div><div class="content-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.1),rgba(176,110,243,0.07));border-color:rgba(124,92,252,0.2)"><div class="card-label">⭐ Pro Tip</div><div class="card-body">Don't do all steps in one sitting. Spread them over multiple days. Spacing makes the difference.</div></div>`;
