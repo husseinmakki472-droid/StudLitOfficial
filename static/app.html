@@ -1763,7 +1763,11 @@ TIMER
 .timer-fab{position:fixed;bottom:96px;right:28px;z-index:399;width:46px;height:46px;border-radius:50%;background:#111128;border:1.5px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:all .2s}
 .timer-fab:hover{transform:scale(1.1);border-color:#7c5cfc}
 body.light-mode .timer-fab,[data-theme=“light”] .timer-fab{background:#fff;border:1.5px solid rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
-.timer-widget{position:fixed;bottom:154px;right:28px;z-index:400;background:#0d0d1f;border:1.5px solid rgba(255,255,255,0.12);border-radius:22px;padding:18px 20px;width:240px;box-shadow:0 12px 48px rgba(0,0,0,0.5);cursor:move;user-select:none;display:none}
+.timer-widget{position:fixed;bottom:154px;right:28px;z-index:400;background:#0d0d1f;border:1.5px solid rgba(255,255,255,0.12);border-radius:22px;padding:18px 20px;width:240px;box-shadow:0 12px 48px rgba(0,0,0,0.5);cursor:grab;user-select:none;display:none;touch-action:none}
+.timer-widget.dragging{cursor:grabbing;box-shadow:0 20px 60px rgba(0,0,0,0.62);border-color:rgba(124,92,252,0.45)}
+.timer-w-grip{display:flex;gap:2.5px;align-items:center;padding:2px 4px;margin-right:2px;opacity:.3;transition:opacity .15s}
+.timer-widget:hover .timer-w-grip{opacity:.65}
+.timer-w-grip i{width:3px;height:3px;border-radius:50%;background:currentColor;display:block}
 .timer-widget.open{display:block;animation:fadeUp .3s ease both}
 body.light-mode .timer-widget,[data-theme=”light”] .timer-widget{background:#fff;border:1.5px solid rgba(0,0,0,0.12)}
 .timer-w-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -7031,33 +7035,115 @@ function renderLb() {
 // TIMER
 // ============================================================
 
-// Draggable timer (mouse + touch)
-(function() {
-  var w = document.getElementById('timerWidget');
-  if (!w) return;
-  var drag=false, sx, sy, ox, oy;
-  w.addEventListener('mousedown', function(e) {
-    if (e.target.tagName==='BUTTON'||e.target.tagName==='INPUT'||e.target.classList.contains('timer-w-preset')) return;
-    drag=true; sx=e.clientX; sy=e.clientY;
-    var r=w.getBoundingClientRect(); ox=r.left; oy=r.top;
-    w.style.right='auto'; w.style.bottom='auto'; w.style.left=ox+'px'; w.style.top=oy+'px';
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!drag) return;
-    w.style.left=(ox+e.clientX-sx)+'px'; w.style.top=(oy+e.clientY-sy)+'px';
-  });
-  document.addEventListener('mouseup', function() { drag=false; });
-  w.addEventListener('touchstart', function(e) {
-    if (e.target.tagName==='BUTTON'||e.target.tagName==='INPUT'||e.target.classList.contains('timer-w-preset')) return;
-    var t=e.touches[0]; drag=true; sx=t.clientX; sy=t.clientY;
-    var r=w.getBoundingClientRect(); ox=r.left; oy=r.top;
-    w.style.right='auto'; w.style.bottom='auto'; w.style.left=ox+'px'; w.style.top=oy+'px';
-  },{passive:true});
-  document.addEventListener('touchmove', function(e) {
-    if (!drag) return;
-    var t=e.touches[0]; w.style.left=(ox+t.clientX-sx)+'px'; w.style.top=(oy+t.clientY-sy)+'px';
-  },{passive:true});
-  document.addEventListener('touchend', function() { drag=false; });
+/* ── Dragging the timer ───────────────────────────────────────────────────
+   The previous version worked but lost the widget: nothing clamped it to the
+   window, so a careless drag put it past the edge with no way back, and the
+   position was forgotten on reload so it returned to the corner every visit.
+   Its touch handlers were also passive, which meant the page scrolled under
+   your finger while you dragged on a phone.                                 */
+(function () {
+  const POS_KEY = 'sl-timer-pos';
+  // Deferred: this script block sits thousands of lines above the widget's
+  // markup, so at parse time getElementById returns null. The previous
+  // version looked the element up immediately and bailed — which is why the
+  // timer was never actually draggable despite advertising cursor:move.
+  let w = null;
+
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0, moved = false;
+
+  // Always leave a grabbable strip on screen, whatever the window does.
+  function clamp(left, top) {
+    if (!w) return [left, top];
+    const r = w.getBoundingClientRect();
+    const maxL = Math.max(0, window.innerWidth - r.width);
+    const maxT = Math.max(0, window.innerHeight - r.height);
+    return [Math.min(maxL, Math.max(0, left)), Math.min(maxT, Math.max(0, top))];
+  }
+
+  function place(left, top, persist) {
+    if (!w) return;
+    const [l, t] = clamp(left, top);
+    w.style.right = 'auto'; w.style.bottom = 'auto';
+    w.style.left = l + 'px'; w.style.top = t + 'px';
+    if (persist) { try { localStorage.setItem(POS_KEY, JSON.stringify({ left: l, top: t })); } catch (e) {} }
+  }
+
+  window.sltResetTimerPos = function () {
+    try { localStorage.removeItem(POS_KEY); } catch (e) {}
+    if (!w) return;
+    w.style.left = ''; w.style.top = ''; w.style.right = ''; w.style.bottom = '';
+  };
+
+  // Restore only once the widget has a measurable size, otherwise clamping
+  // against a zero-width box pins it to the top-left corner.
+  function restore() {
+    if (!w) return;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null'); } catch (e) {}
+    if (!saved || !Number.isFinite(saved.left) || !Number.isFinite(saved.top)) return;
+    const wasHidden = !w.classList.contains('open');
+    if (wasHidden) { w.style.visibility = 'hidden'; w.style.display = 'block'; }
+    place(saved.left, saved.top, false);
+    if (wasHidden) { w.style.display = ''; w.style.visibility = ''; }
+  }
+
+  function startDrag(clientX, clientY, target) {
+    if (!w) return false;
+    // Never begin a drag on something you were trying to press.
+    if (target && target.closest && target.closest('button,input,select,textarea,a')) return false;
+    const r = w.getBoundingClientRect();
+    dragging = true; moved = false;
+    sx = clientX; sy = clientY; ox = r.left; oy = r.top;
+    w.classList.add('dragging');
+    return true;
+  }
+  function moveDrag(clientX, clientY) {
+    if (!dragging) return;
+    if (Math.abs(clientX - sx) > 2 || Math.abs(clientY - sy) > 2) moved = true;
+    place(ox + clientX - sx, oy + clientY - sy, false);
+  }
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    w.classList.remove('dragging');
+    // Only write a position if it actually moved, so a stray click does not
+    // convert the default corner placement into a pinned one.
+    if (moved) place(parseFloat(w.style.left) || 0, parseFloat(w.style.top) || 0, true);
+  }
+
+  function init() {
+    w = document.getElementById('timerWidget');
+    if (!w) return;
+
+    w.addEventListener('mousedown', e => { if (startDrag(e.clientX, e.clientY, e.target)) e.preventDefault(); });
+    document.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+    document.addEventListener('mouseup', endDrag);
+
+    // Not passive: without preventDefault the page scrolls under the finger
+    // and the widget appears to stick.
+    w.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      if (startDrag(t.clientX, t.clientY, e.target)) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+    }, { passive: false });
+    document.addEventListener('touchend', endDrag);
+    document.addEventListener('touchcancel', endDrag);
+
+    // A window that shrinks below the saved position would otherwise strand it.
+    window.addEventListener('resize', () => {
+      if (w.style.left) place(parseFloat(w.style.left) || 0, parseFloat(w.style.top) || 0, false);
+    });
+
+    restore();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 
 // ====== WIZARD ======
@@ -8751,7 +8837,10 @@ document.addEventListener('fullscreenchange', function() {
 
 <div class="timer-widget" id="timerWidget">
   <div class="timer-w-header">
-    <div class="timer-w-label">⏱ Focus</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="timer-w-grip" title="Drag to move"><i></i><i></i><i></i></span>
+      <div class="timer-w-label" ondblclick="sltResetTimerPos()" title="Drag to move · double-click to snap back">⏱ Focus</div>
+    </div>
     <button class="timer-w-close" onclick="toggleTimer()">✕</button>
   </div>
   <div data-slt-mount="widget"></div>
