@@ -406,6 +406,10 @@ body{letter-spacing:-.006em;font-weight:500}
 /* Key concepts — the reason a term matters, previously generated and unused. */
 .concept-why{margin-top:7px;font-size:12.5px;line-height:1.6;color:rgba(240,239,255,0.45)}
 .concept-why-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.32);background:rgba(255,255,255,0.05);border-radius:999px;padding:2px 8px;margin-right:7px;vertical-align:1px}
+/* Solve — the traps, marked so they read as a warning not another example. */
+.solve-mistakes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.solve-mistakes li{font-size:13.5px;line-height:1.6;color:rgba(240,239,255,0.62);padding-left:2px}
+.solve-mistakes li::marker{color:#fbbf24}
 @media (max-width:560px){.notes-terms{grid-template-columns:1fr;gap:2px}.notes-terms dd{margin-bottom:7px}}
 .pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
 .pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
@@ -4202,6 +4206,8 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .notes-takeaway-tag { color: #5b3fd4 !important; background: rgba(124,92,252,0.16) !important; }
       .concept-why { color: rgba(15,14,26,0.6) !important; }
       .concept-why-tag { color: rgba(15,14,26,0.45) !important; background: rgba(0,0,0,0.05) !important; }
+      .solve-mistakes li { color: #3b3763 !important; }
+      .solve-mistakes li::marker { color: #b45309 !important; }
       .quiz-tool-btn { background: rgba(202,138,4,0.1) !important; border: 1.5px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
       .quiz-tool-btn:hover { background: rgba(202,138,4,0.18) !important; color: #854d0e !important; }
       .quiz-star-btn { border: 1px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
@@ -4852,7 +4858,12 @@ function renderSolveHTML(topic, d){
   const breakdownHtml=breakdown?`<div class="content-card" style="animation-delay:.05s"><div class="card-label">Breakdown</div><div class="card-body">${breakdown}</div></div>`:'';
   const examplesHtml=(d.examples&&d.examples.length)?`<div class="content-card" style="animation-delay:.1s"><div class="card-label">Examples</div><div class="card-body"><ul>${d.examples.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div></div>`:'';
   const insight=d.keyInsight?`<div class="content-card" style="animation-delay:.15s"><div class="card-label">Key Insight</div><div class="card-body"><div class="highlight-block">📌 ${escHtml(d.keyInsight)}</div></div></div>`:'';
-  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true}])}${qa}${breakdownHtml}${examplesHtml}${insight}`;
+  /* commonMistakes was generated on every solve and never drawn. For a worked
+     solution it is the most useful thing on the page — knowing the trap is
+     worth more than another correct example. */
+  const mistakes=(Array.isArray(d.commonMistakes)?d.commonMistakes:[]).filter(m=>m!=null&&String(m).trim());
+  const mistakesHtml=mistakes.length?`<div class="content-card" style="animation-delay:.2s"><div class="card-label">⚠ Common Mistakes</div><div class="card-body"><ul class="solve-mistakes">${mistakes.map(m=>`<li>${escHtml(m)}</li>`).join('')}</ul></div></div>`:'';
+  return`${resultHeader('solve',t,[{text:'📚 Explanation',accent:true}])}${qa}${breakdownHtml}${examplesHtml}${insight}${mistakesHtml}`;
 }
 
 function renderFlashcardsHTML(topic, d){
