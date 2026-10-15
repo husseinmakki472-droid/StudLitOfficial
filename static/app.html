@@ -5348,6 +5348,18 @@ function slQuizMergeIncoming(questions) {
   if (quizMode !== 'starred') quizData = quizData.concat(extra);
   const count = document.querySelector('.result-meta .meta-tag.accent');
   if (count) count.textContent = '📝 ' + quizData.length + ' Questions';
+
+  /* The counter above the question is the number people actually read, and it
+     was rendered when the set was ten long. Updating only the header badge
+     left "Question 1 of 10" sitting under a header claiming sixty — which
+     reads as the extra fifty never arriving. Patched in place rather than by
+     re-rendering, because a re-render would throw away a selected answer and
+     the explanation underneath it. */
+  const num = document.querySelector('.quiz-progress-num');
+  if (num) num.textContent = 'Question ' + Math.min(quizCurrent + 1, quizData.length) + ' of ' + quizData.length;
+  const bar = document.querySelector('.fc-progress-bar');
+  if (bar) bar.style.width = (quizCurrent / quizData.length * 100) + '%';
+
   // Someone who already reached the end gets the new ones rather than being
   // left staring at a score card that is no longer the whole story.
   const body = document.getElementById('quizBody');
