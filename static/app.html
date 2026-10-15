@@ -7284,10 +7284,33 @@ function wzRenderMode(mode, topic, d) {
   }
 }
 
+/* The waiting state for a mode that has been asked for but hasn't come back.
+   Mirrors the shimmer used during the initial generation so switching to a
+   pending tab looks like the same operation, not a different kind of empty. */
+function wzPendingHTML(mode) {
+  const name = (typeof WZ_MODE_NAMES !== 'undefined' && WZ_MODE_NAMES[mode]) || mode;
+  return '<div class="wz-processing">' +
+    '<div class="shimmer-container" style="width:100%">' +
+      '<div class="shimmer-block" style="height:60px"></div>' +
+      '<div class="shimmer-block" style="height:140px"></div>' +
+      '<div class="shimmer-block" style="height:100px"></div>' +
+    '</div>' +
+    '<p class="gen-progress-text" style="margin-top:20px">' +
+      escHtml(name) + ' is still generating…</p>' +
+  '</div>';
+}
+
 function wzMarkTabLoaded(mode) {
   document.querySelectorAll('#wzResultSidebar .wz-sidebar-item').forEach(el => {
     if (el.dataset.mode === mode || el.dataset.mode === '__content__') el.classList.add('loaded');
   });
+  /* If the user is sitting on this tab watching the shimmer, swap in the real
+     content now. Without this they would wait on a spinner that never resolves
+     until they clicked away and back. */
+  const active = document.querySelector('#wzResultSidebar .wz-sidebar-item.active');
+  if (active && active.dataset.mode === mode && wzResultTabs[mode] !== undefined) {
+    wzShowTab(mode);
+  }
 }
 
 function wzBuildTabbedResult(topic, methods, results) {
@@ -7330,7 +7353,16 @@ function wzShowTab(mode) {
     return;
   }
   const html = wzResultTabs[mode];
-  if (html === undefined) return;
+  if (html === undefined) {
+    /* Still generating. This used to return early, which left the PREVIOUS
+       mode's content on screen while the sidebar already showed this one as
+       selected — so tapping a pending tab looked like a dead button, or worse,
+       like the wrong content had loaded. Show this mode's own waiting state
+       instead; wzMarkTabLoaded refreshes it the moment the content lands. */
+    const main = document.getElementById('wzResultMain');
+    if (main) main.innerHTML = wzPendingHTML(mode);
+    return;
+  }
   document.getElementById('wzResultMain').innerHTML = html;
   if (mode === 'notes') {
     const body = document.getElementById('notesEditorBody');
