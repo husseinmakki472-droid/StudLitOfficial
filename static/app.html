@@ -2129,6 +2129,15 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .content-img-name{font-size:11px;color:rgba(240,239,255,0.3);margin-top:6px}
 .content-preview-paste-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:7px}
 .content-slides-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:4px}
+/* ── PDF pages ── every page drawn, scrolled as one document ── */
+.pdf-pages{display:flex;flex-direction:column;gap:14px;padding:4px}
+.pdf-meta{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:rgba(240,239,255,0.4);padding:2px 2px 6px}
+.pdf-loading{padding:48px 20px;text-align:center;font-size:13.5px;font-weight:600;color:rgba(240,239,255,0.45)}
+.pdf-page{position:relative;border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.05);box-shadow:0 2px 14px rgba(0,0,0,.28)}
+.pdf-page.drawn{background:#fff}
+.pdf-page canvas{display:block;width:100%;height:auto}
+.pdf-page-label{position:absolute;top:8px;right:10px;z-index:2;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(10,10,20,.62);color:rgba(240,239,255,.82);backdrop-filter:blur(4px);pointer-events:none}
+.content-truncated-note{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:600;line-height:1.5;color:rgba(240,239,255,0.5);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)}
 .content-slide-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:16px 18px;min-height:70px}
 .content-slide-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(240,239,255,0.32);margin-bottom:8px}
 .content-slide-text{font-size:13px;line-height:1.6;color:rgba(240,239,255,0.75);white-space:pre-wrap;word-break:break-word}
@@ -4050,6 +4059,11 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .content-docx-preview h1, .content-docx-preview h2, .content-docx-preview h3 { color: #0f0e1a !important; }
       .content-docx-preview td, .content-docx-preview th { border-color: rgba(0,0,0,0.12) !important; }
       .content-text-preview { background: rgba(0,0,0,0.04) !important; color: rgba(15,14,26,0.7) !important; }
+      .pdf-meta { color: rgba(15,14,26,0.5) !important; }
+      .pdf-loading { color: rgba(15,14,26,0.5) !important; }
+      .pdf-page { background: #f1eefe !important; box-shadow: 0 2px 14px rgba(124,92,252,.14) !important; }
+      .pdf-page.drawn { background: #fff !important; }
+      .content-truncated-note { color: rgba(15,14,26,0.6) !important; background: rgba(0,0,0,0.04) !important; border: 1px solid rgba(0,0,0,0.1) !important; }
 
       /* ── Set folders and sessions (workspace Sets panel) ── */
       .set-folder { background: #fff !important; border-color: rgba(0,0,0,0.1) !important; box-shadow: 0 2px 10px rgba(124,92,252,0.06) !important; }
@@ -7350,6 +7364,7 @@ function wzShowTab(mode) {
     const previewHtml = viewable.length ? _renderFilePreview(viewable[window._wzContentIdx]) : '';
     const html = `<div class="wz-content-viewer"><div class="wz-content-tabs">${tabsHtml}</div><div class="wz-content-viewer-body">${previewHtml}</div></div>`;
     main.innerHTML = html;
+    _mountPendingPreviews();
     return;
   }
   const html = wzResultTabs[mode];
@@ -7441,14 +7456,132 @@ function renderContentPanel() {
       `<button class="content-file-tab${i===idx?' active':''}" onclick="_contentSelectedIdx=${i};renderContentPanel()">${f.icon||'📄'} ${escHtml(f.name.length>18?f.name.slice(0,16)+'…':f.name)}</button>`
     ).join('');
   }
-  if (viewer) viewer.innerHTML = _renderFilePreview(viewable[idx]);
+  if (viewer) { viewer.innerHTML = _renderFilePreview(viewable[idx]); _mountPendingPreviews(); }
 }
+/* ── PDF page rendering ───────────────────────────────────────────────────
+   Draws every page of a PDF into the content panel. Pages are rendered as
+   they come near the viewport rather than all at once: a 200-page textbook
+   rendered up front is tens of thousands of canvas pixels and will stall or
+   crash a tablet. Each placeholder is sized from page 1's aspect ratio so the
+   scrollbar is honest before anything has been drawn. */
+let _pdfMountSeq = 0;
+const _pdfObservers = new Map();
+
+function _pdfFallbackIframe(el) {
+  el.innerHTML = '<iframe src="' + escHtml(el.dataset.pdfSrc) +
+    '" style="width:100%;height:100%;min-height:520px;border:none;border-radius:8px" title="' +
+    escHtml(el.dataset.pdfName || 'PDF') + '"></iframe>';
+}
+
+async function _mountPdfPages(el) {
+  const src = el.dataset.pdfSrc;
+  if (!src || el.dataset.pdfMounted === '1') return;
+  el.dataset.pdfMounted = '1';
+
+  let pdf;
+  try {
+    const lib = await loadPdfJs();
+    pdf = await lib.getDocument(src).promise;
+  } catch (e) {
+    // pdf.js blocked or the file is unreadable — the browser may still manage.
+    _pdfFallbackIframe(el);
+    return;
+  }
+
+  // A hard ceiling so a pathological upload cannot lock up the tab.
+  const MAX_PAGES = 300;
+  const total = pdf.numPages;
+  const shown = Math.min(total, MAX_PAGES);
+
+  let ratio = 1.4142;                       // A4 fallback, before page 1 is read
+  try {
+    const first = await pdf.getPage(1);
+    const vp = first.getViewport({ scale: 1 });
+    if (vp.width > 0) ratio = vp.height / vp.width;
+  } catch (e) { /* keep the fallback */ }
+
+  const width = Math.max(260, el.clientWidth || 700);
+  el.innerHTML =
+    '<div class="pdf-meta">' + escHtml(el.dataset.pdfName || 'PDF') + ' · ' + total +
+      (total === 1 ? ' page' : ' pages') +
+      (shown < total ? ' · showing the first ' + shown : '') + '</div>' +
+    Array.from({ length: shown }, (_, i) =>
+      '<div class="pdf-page" data-page="' + (i + 1) + '" style="height:' +
+        Math.round(width * ratio) + 'px">' +
+        '<div class="pdf-page-label">' + (i + 1) + ' / ' + total + '</div>' +
+      '</div>'
+    ).join('');
+
+  async function draw(holder) {
+    if (holder.dataset.drawn === '1') return;
+    holder.dataset.drawn = '1';
+    try {
+      const page = await pdf.getPage(parseInt(holder.dataset.page, 10));
+      const base = page.getViewport({ scale: 1 });
+      const cssW = el.clientWidth || width;
+      const scale = cssW / base.width;
+      // Capped so a retina tablet doesn't allocate four times the pixels it
+      // can usefully show.
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const vp = page.getViewport({ scale: scale * dpr });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(vp.width);
+      canvas.height = Math.floor(vp.height);
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+      holder.style.height = '';            // let the real canvas set the height
+      holder.insertBefore(canvas, holder.firstChild);
+      holder.classList.add('drawn');
+    } catch (e) {
+      holder.dataset.drawn = '';           // allow a retry on the next pass
+    }
+  }
+
+  // Drop any observer whose container has since left the page.
+  for (const [key, obs] of _pdfObservers) {
+    if (!document.getElementById(key)) { obs.disconnect(); _pdfObservers.delete(key); }
+  }
+
+  const holders = Array.from(el.querySelectorAll('.pdf-page'));
+  if (typeof IntersectionObserver === 'function') {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) draw(entry.target); });
+    }, { root: null, rootMargin: '800px 0px' });   // start a screen early
+    holders.forEach(h => obs.observe(h));
+    _pdfObservers.set(el.id, obs);
+  } else {
+    for (const h of holders) await draw(h);        // old browser: just draw them
+  }
+
+  // Always paint the first couple so the panel is never blank.
+  for (const h of holders.slice(0, 2)) await draw(h);
+}
+
+/* Call after any innerHTML that may contain a PDF container. */
+function _mountPendingPreviews() {
+  document.querySelectorAll('.pdf-pages[data-pdf-src]').forEach(el => {
+    if (el.dataset.pdfMounted !== '1') _mountPdfPages(el);
+  });
+}
+
 function _renderFilePreview(f) {
   if (f.imageData && f.mimeType) {
     return `<img src="data:${escHtml(f.mimeType)};base64,${f.imageData}" style="max-width:100%;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.3)">`;
   }
   if (f.blobUrl) {
-    return `<iframe src="${escHtml(f.blobUrl)}" style="width:100%;height:100%;min-height:520px;border:none;border-radius:8px" title="${escHtml(f.name)}"></iframe>`;
+    /* An <iframe> hands the PDF to the browser's own viewer, and on iOS Safari
+       that renders the first page and nothing else — no scrolling to page two.
+       pdf.js is already bundled locally for text extraction, so draw every page
+       ourselves instead and get identical behaviour on every device. The iframe
+       stays as the fallback if pdf.js fails to load. */
+    const id = 'pdfdoc_' + (_pdfMountSeq++);
+    return `<div class="pdf-pages" id="${id}" data-pdf-src="${escHtml(f.blobUrl)}" data-pdf-name="${escHtml(f.name || 'document.pdf')}">
+      <div class="pdf-loading">Opening ${escHtml(f.name || 'PDF')}…</div>
+    </div>`;
   }
   if (f.htmlContent) {
     return `<div class="content-docx-preview">${f.htmlContent}</div>`;
@@ -7463,7 +7596,17 @@ function _renderFilePreview(f) {
         ).join('')}</div>`;
       }
     }
-    return `<pre class="content-text-preview">${escHtml(f.textContent.slice(0,60000))}</pre>`;
+    /* Was a silent .slice(0, 60000) — a long chapter simply stopped
+       mid-sentence with nothing to say it had been cut. Show far more, and
+       when there is still more, say so rather than pretending that was the end. */
+    const LIMIT = 400000;
+    const full = f.textContent;
+    if (full.length <= LIMIT) {
+      return `<pre class="content-text-preview">${escHtml(full)}</pre>`;
+    }
+    return `<pre class="content-text-preview">${escHtml(full.slice(0, LIMIT))}</pre>` +
+      `<div class="content-truncated-note">Showing the first ${LIMIT.toLocaleString()} of ` +
+      `${full.length.toLocaleString()} characters. The AI still reads the whole file.</div>`;
   }
   return `<div style="text-align:center;padding:40px 20px;color:var(--text-3)">Cannot preview this file type.</div>`;
 }
