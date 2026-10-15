@@ -378,6 +378,19 @@ body{letter-spacing:-.006em;font-weight:500}
 .pt-answer-input:focus{border-color:rgba(124,92,252,0.5);background:rgba(124,92,252,0.04)}
 .pt-answer-input::placeholder{color:rgba(240,239,255,0.22)}
 .pt-answer-block{margin-top:12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 16px;animation:fadeUp .25s cubic-bezier(0.22,1,0.36,1) both}
+/* Practice-test multiple choice. Mirrors the quiz options so the two read as
+   the same control, but stays unrevealed until the answer sheet is shown. */
+.pt-options{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.pt-option{width:100%;text-align:left;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.09);border-radius:14px;padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:rgba(240,239,255,0.68);transition:background .16s,border-color .16s,color .16s,transform .16s}
+.pt-option:hover{border-color:rgba(124,92,252,0.55);color:#f0efff;transform:translateX(2px)}
+.pt-option.selected{border-color:#7c5cfc;background:rgba(124,92,252,0.12);color:#f0efff}
+.pt-options.revealed .pt-option{cursor:default;transform:none}
+.pt-options.revealed .pt-option:hover{border-color:rgba(255,255,255,0.09);color:rgba(240,239,255,0.68)}
+.pt-option.correct{border-color:#4ade80!important;background:rgba(74,222,128,0.12)!important;color:#4ade80!important}
+.pt-option.wrong{border-color:#f87171!important;background:rgba(248,113,113,0.12)!important;color:#f87171!important}
+.pt-opt-letter{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex-shrink:0}
+.pt-opt-text{flex:1;min-width:0}
+.pt-answer-why{margin-top:8px;padding-top:8px;border-top:1px solid rgba(74,222,128,0.18);font-size:12.5px;line-height:1.6;color:rgba(240,239,255,0.55)}
 .pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
 .pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
 .roadmap-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;animation:cardEntrance .4s cubic-bezier(0.22,1,0.36,1) both}
@@ -4157,6 +4170,13 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .pdf-page.drawn { background: #fff !important; }
       .content-truncated-note { color: rgba(15,14,26,0.6) !important; background: rgba(0,0,0,0.04) !important; border: 1px solid rgba(0,0,0,0.1) !important; }
       .quiz-tools-label { color: rgba(15,14,26,0.5) !important; }
+      .pt-option { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #3b3763 !important; }
+      .pt-option:hover { border-color: #7c5cfc !important; color: #0f0e1a !important; }
+      .pt-option.selected { border-color: #7c5cfc !important; background: rgba(124,92,252,0.1) !important; color: #0f0e1a !important; }
+      .pt-option.correct { border-color: #16a34a !important; background: rgba(22,163,74,0.1) !important; color: #15803d !important; }
+      .pt-option.wrong { border-color: #dc2626 !important; background: rgba(220,38,38,0.08) !important; color: #b91c1c !important; }
+      .pt-opt-letter { background: #f1eefe !important; border: 1px solid rgba(0,0,0,0.1) !important; color: #3b3763 !important; }
+      .pt-answer-why { color: rgba(15,14,26,0.6) !important; border-top-color: rgba(22,163,74,0.2) !important; }
       .quiz-tool-btn { background: rgba(202,138,4,0.1) !important; border: 1.5px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
       .quiz-tool-btn:hover { background: rgba(202,138,4,0.18) !important; color: #854d0e !important; }
       .quiz-star-btn { border: 1px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
@@ -4946,10 +4966,66 @@ function renderTutorHTML(topic, d){
 
 function ptToggleAnswers(show){
   document.querySelectorAll('.pt-answer-block').forEach(el=>el.style.display=show?'block':'none');
+  // Mark the right option, and the chosen one when it was not it.
+  document.querySelectorAll('.pt-options').forEach(wrap=>{
+    const opts=[...wrap.querySelectorAll('.pt-option')];
+    const correct=parseInt(wrap.dataset.correct,10);
+    wrap.classList.toggle('revealed', !!show);
+    opts.forEach((o,i)=>{
+      o.classList.remove('correct','wrong');
+      if(!show) return;
+      if(i===correct) o.classList.add('correct');
+      else if(o.classList.contains('selected')) o.classList.add('wrong');
+    });
+  });
   document.querySelectorAll('.pt-reveal-btn').forEach(btn=>{
     btn.style.display = btn.dataset.role==='show' ? (show?'none':'inline-flex') : (show?'inline-flex':'none');
   });
 }
+/* ── Practice test multiple choice ────────────────────────────────────────
+   Accepts both shapes the model returns: options as an array ["A) x", …] or
+   as an object {A:"x", …}, and the answer as a numeric `correct` index or a
+   letter in `correct_answer`. The quiz renderer already had to cope with both,
+   so this one does too rather than trusting one of them.
+
+   Nothing is revealed on selection — this is a test, so the answer sheet is
+   what reveals it, the same as the written sections. */
+function ptOptionsHTML(q, qNum) {
+  const LETTERS = ['A','B','C','D','E','F'];
+  // The model usually prefixes its own "A) ", and we draw a letter badge, so
+  // leaving it in renders as "A  A) Combustion".
+  const strip = v => String(v == null ? '' : v).replace(/^\s*[A-Fa-f]\s*[).:\-]\s*/, '').trim();
+
+  let opts = [], correct = 0;
+  if (Array.isArray(q.options)) {
+    opts = q.options.map(strip).filter(Boolean);
+    correct = typeof q.correct === 'number'
+      ? q.correct
+      : LETTERS.indexOf(String(q.correct_answer || 'A').toUpperCase().charAt(0));
+  } else if (q.options && typeof q.options === 'object') {
+    LETTERS.forEach(l => { if (q.options[l] != null && String(q.options[l]).trim()) opts.push(strip(q.options[l])); });
+    correct = LETTERS.indexOf(String(q.correct_answer || q.correct || 'A').toUpperCase().charAt(0));
+  }
+  // Fewer than two options is not a choice; fall back to a written answer.
+  if (opts.length < 2) return '';
+  if (!Number.isFinite(correct) || correct < 0 || correct >= opts.length) correct = 0;
+
+  return '<div class="pt-options" data-correct="' + correct + '">' +
+    opts.map((o, i) =>
+      '<button type="button" class="pt-option" onclick="ptPick(this)">' +
+        '<span class="pt-opt-letter">' + LETTERS[i] + '</span>' +
+        '<span class="pt-opt-text">' + escHtml(o) + '</span>' +
+      '</button>').join('') +
+  '</div>';
+}
+
+function ptPick(btn) {
+  const wrap = btn.parentElement;
+  if (!wrap || wrap.classList.contains('revealed')) return;   // locked after reveal
+  wrap.querySelectorAll('.pt-option').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
 function renderPracticeTestHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No practice test data returned.</div></div>';
@@ -4960,14 +5036,25 @@ function renderPracticeTestHTML(topic, d){
   sections.forEach((sec,si)=>{
     const qs=(sec.questions||[]);
     const secType=(sec.type||'Questions').replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
+    const isMC = String(sec.type||'').toLowerCase().replace(/[^a-z]/g,'') === 'multiplechoice';
     const qHtml=qs.map(q=>{
       qNum++;
+      /* Multiple-choice questions used to render the same free-text box as
+         every other type, so the four options the model generated were never
+         shown and the section could not be answered as multiple choice. */
+      const picker = isMC ? ptOptionsHTML(q, qNum) : '';
+      const input = picker
+        ? picker
+        : `<textarea class="pt-answer-input" placeholder="Write your answer here…" rows="3"></textarea>`;
+      const expl = q.explanation
+        ? `<div class="pt-answer-why">${escHtml(q.explanation)}</div>` : '';
       return`<div class="pt-question-block">
         <div class="pt-question-text"><span class="pt-q-num">Q${qNum}</span>${escHtml(q.question||'')}</div>
-        <textarea class="pt-answer-input" placeholder="Write your answer here…" rows="3"></textarea>
+        ${input}
         <div class="pt-answer-block" style="display:none">
           <div class="pt-answer-label">✅ Sample Answer</div>
           <div class="pt-answer-text">${escHtml(q.sampleAnswer||'')}</div>
+          ${expl}
         </div>
       </div>`;
     }).join('');
