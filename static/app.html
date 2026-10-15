@@ -391,6 +391,19 @@ body{letter-spacing:-.006em;font-weight:500}
 .pt-opt-letter{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex-shrink:0}
 .pt-opt-text{flex:1;min-width:0}
 .pt-answer-why{margin-top:8px;padding-top:8px;border-top:1px solid rgba(74,222,128,0.18);font-size:12.5px;line-height:1.6;color:rgba(240,239,255,0.55)}
+/* Notes extras — the model's findings, shown under the editable body. */
+.notes-overview{font-size:13px;line-height:1.65;color:rgba(240,239,255,0.45);font-style:italic;margin:2px 0 10px;padding-left:10px;border-left:2px solid rgba(124,92,252,0.3)}
+.notes-extras{margin-top:14px;padding-top:14px;border-top:1px dashed rgba(255,255,255,0.1);display:flex;flex-direction:column;gap:12px}
+.notes-extra-label{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.3);margin-bottom:5px}
+.notes-extra-body{font-size:13px;line-height:1.65;color:rgba(240,239,255,0.6)}
+.notes-extra-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.notes-extra-list li{font-size:13px;line-height:1.6;color:rgba(240,239,255,0.6)}
+.notes-terms{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:baseline}
+.notes-terms dt{font-size:13px;font-weight:800;color:#b494ff;white-space:nowrap}
+.notes-terms dd{margin:0;font-size:13px;line-height:1.6;color:rgba(240,239,255,0.6)}
+.notes-takeaway{display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;background:rgba(124,92,252,0.1);border:1px solid rgba(124,92,252,0.22);border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.6;color:rgba(240,239,255,0.75)}
+.notes-takeaway-tag{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#b494ff;background:rgba(124,92,252,0.18);border-radius:999px;padding:3px 9px;flex-shrink:0}
+@media (max-width:560px){.notes-terms{grid-template-columns:1fr;gap:2px}.notes-terms dd{margin-bottom:7px}}
 .pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
 .pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
 .roadmap-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;animation:cardEntrance .4s cubic-bezier(0.22,1,0.36,1) both}
@@ -4177,6 +4190,13 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .pt-option.wrong { border-color: #dc2626 !important; background: rgba(220,38,38,0.08) !important; color: #b91c1c !important; }
       .pt-opt-letter { background: #f1eefe !important; border: 1px solid rgba(0,0,0,0.1) !important; color: #3b3763 !important; }
       .pt-answer-why { color: rgba(15,14,26,0.6) !important; border-top-color: rgba(22,163,74,0.2) !important; }
+      .notes-overview { color: rgba(15,14,26,0.55) !important; border-left-color: rgba(124,92,252,0.4) !important; }
+      .notes-extras { border-top-color: rgba(0,0,0,0.12) !important; }
+      .notes-extra-label { color: rgba(15,14,26,0.45) !important; }
+      .notes-extra-body, .notes-extra-list li, .notes-terms dd { color: #3b3763 !important; }
+      .notes-terms dt { color: #6d3fc9 !important; }
+      .notes-takeaway { background: rgba(124,92,252,0.09) !important; border-color: rgba(124,92,252,0.26) !important; color: #3b3763 !important; }
+      .notes-takeaway-tag { color: #5b3fd4 !important; background: rgba(124,92,252,0.16) !important; }
       .quiz-tool-btn { background: rgba(202,138,4,0.1) !important; border: 1.5px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
       .quiz-tool-btn:hover { background: rgba(202,138,4,0.18) !important; color: #854d0e !important; }
       .quiz-star-btn { border: 1px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
@@ -4904,12 +4924,21 @@ function notesAddSection(){
 function notesSaveEdits(){
   const body=document.getElementById('notesEditorBody');if(!body)return;
   const topic=body.dataset.topic||'';
-  const sections=[...body.querySelectorAll('.notes-editor-section')].map(sec=>({
-    heading:sec.querySelector('.notes-editable-heading').innerText.trim(),
-    content:'',
-    bullets:sec.querySelector('.notes-editable-content').innerHTML.trim()
-      .split(/<br\s*\/?>/i).map(l=>l.replace(/<[^>]+>/g,'').trim()).filter(Boolean)
-  }));
+  /* Rebuilt from the DOM, which holds only the heading and the body — so the
+     generated extras are merged back from the stash by the index the section
+     was rendered with. Without this the first keystroke silently deleted the
+     key terms, examples, applications, cause-and-effect and takeaway.
+     A section the student added by hand has no index and simply has none. */
+  const sections=[...body.querySelectorAll('.notes-editor-section')].map(sec=>{
+    const idx=parseInt(sec.dataset.idx,10);
+    const keep=Number.isFinite(idx)&&notesExtras[idx]?notesExtras[idx]:{};
+    return Object.assign({}, keep, {
+      heading:sec.querySelector('.notes-editable-heading').innerText.trim(),
+      content:'',
+      bullets:sec.querySelector('.notes-editable-content').innerHTML.trim()
+        .split(/<br\s*\/?>/i).map(l=>l.replace(/<[^>]+>/g,'').trim()).filter(Boolean)
+    });
+  });
   const newHtml=renderNotesHTML(topic,{sections});
   wzResultTabs['notes']=newHtml;
   if(activeSetContext) autoSaveSetContext();
@@ -4920,21 +4949,99 @@ function notesCopyAll(){
   body.querySelectorAll('.notes-editor-section').forEach(sec=>{
     const h=sec.querySelector('.notes-editable-heading').innerText.trim();
     if(h)lines.push(h+'\n');
+    const ov=sec.querySelector('.notes-overview');
+    if(ov&&ov.innerText.trim())lines.push(ov.innerText.trim()+'\n');
     sec.querySelector('.notes-editable-content').innerText.trim().split('\n').forEach(l=>{if(l.trim())lines.push('• '+l.trim());});
+    // The generated extras are part of the notes; copying without them hands
+    // the student a document missing the key terms and the takeaway.
+    sec.querySelectorAll('.notes-extra').forEach(ex=>{
+      const label=ex.querySelector('.notes-extra-label');
+      if(label)lines.push('\n'+label.innerText.trim()+':');
+      ex.querySelectorAll('dt').forEach(dt=>{
+        const dd=dt.nextElementSibling;
+        lines.push('  - '+dt.innerText.trim()+(dd?' — '+dd.innerText.trim():''));
+      });
+      ex.querySelectorAll('.notes-extra-list li').forEach(li=>lines.push('  - '+li.innerText.trim()));
+      const bodyEl=ex.querySelector('.notes-extra-body');
+      if(bodyEl)lines.push('  '+bodyEl.innerText.trim());
+    });
+    const tk=sec.querySelector('.notes-takeaway');
+    if(tk)lines.push('\nKey takeaway: '+tk.innerText.replace(/^Key takeaway/i,'').trim());
     lines.push('');
   });
   navigator.clipboard.writeText(lines.join('\n')).then(()=>showInfoToast('Notes copied to clipboard!'));
 }
+/* Everything the notes prompt asks for beyond heading and body. Rendered
+   read-only beneath the editable area: these are the model's findings, and
+   folding them into the contenteditable would flatten the term/definition
+   pairs into loose text the moment anyone typed. */
+let notesExtras = [];
+
+function notesOverviewHTML(s) {
+  return s && s.overview
+    ? '<div class="notes-overview">' + escHtml(s.overview) + '</div>' : '';
+}
+
+function notesExtrasHTML(s) {
+  if (!s) return '';
+  const blocks = [];
+
+  const terms = (Array.isArray(s.keyTerms) ? s.keyTerms : [])
+    .filter(k => k && (k.term || k.definition));
+  if (terms.length) {
+    blocks.push('<div class="notes-extra"><div class="notes-extra-label">Key terms</div>' +
+      '<dl class="notes-terms">' + terms.map(k =>
+        '<dt>' + escHtml(k.term || '') + '</dt><dd>' + escHtml(k.definition || k.def || '') + '</dd>'
+      ).join('') + '</dl></div>');
+  }
+
+  const list = (label, arr) => {
+    const items = (Array.isArray(arr) ? arr : []).filter(x => x != null && String(x).trim());
+    return items.length
+      ? '<div class="notes-extra"><div class="notes-extra-label">' + label + '</div><ul class="notes-extra-list">' +
+        items.map(x => '<li>' + escHtml(x) + '</li>').join('') + '</ul></div>'
+      : '';
+  };
+  blocks.push(list('Examples', s.examples));
+  blocks.push(list('Where it is used', s.applications));
+
+  if (s.causeEffect) {
+    blocks.push('<div class="notes-extra"><div class="notes-extra-label">Cause and effect</div>' +
+      '<div class="notes-extra-body">' + escHtml(s.causeEffect) + '</div></div>');
+  }
+  if (s.keyTakeaway) {
+    blocks.push('<div class="notes-takeaway"><span class="notes-takeaway-tag">Key takeaway</span>' +
+      escHtml(s.keyTakeaway) + '</div>');
+  }
+
+  const inner = blocks.filter(Boolean).join('');
+  return inner ? '<div class="notes-extras">' + inner + '</div>' : '';
+}
+
 function renderNotesHTML(topic, d){
   const t=topic||'your topic';
   if(!d)return'<div class="error-card"><div class="error-card-label">⚠ No data</div><div class="error-card-body">No notes data returned.</div></div>';
   const sections=(d.sections||[]);
   if(!sections.length)return'<div class="error-card"><div class="error-card-label">⚠ No sections</div><div class="error-card-body">No notes were generated. Try selecting only Notes mode so the AI can dedicate the full response to detailed notes.</div></div>';
+  /* The generated extras are kept against the section index so an edit can
+     put them back — notesSaveEdits rebuilds each section from the DOM, and
+     the DOM only holds the heading and the body. Before this they were simply
+     lost: the model was asked for key terms, examples, applications, cause
+     and effect and a takeaway on every section, and none of it was drawn. */
+  notesExtras = sections.map(s => ({
+    overview: s.overview || '',
+    keyTerms: Array.isArray(s.keyTerms) ? s.keyTerms : [],
+    examples: Array.isArray(s.examples) ? s.examples : [],
+    applications: Array.isArray(s.applications) ? s.applications : [],
+    causeEffect: s.causeEffect || '',
+    keyTakeaway: s.keyTakeaway || '',
+  }));
+
   const sHtml=sections.map((s,i)=>{
     const bullets=(s.bullets||[]);
     const contentLines=[...(s.content?[s.content]:[]),...bullets].filter(Boolean);
     const innerHtml=contentLines.map((l,li)=>li<contentLines.length-1?escHtml(l)+'<br>':escHtml(l)).join('');
-    return`<div class="notes-editor-section" style="animation-delay:${i*.05}s"><button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…">${escHtml(s.heading||'')}</div><div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…">${innerHtml}</div></div>`;
+    return`<div class="notes-editor-section" data-idx="${i}" style="animation-delay:${i*.05}s"><button class="notes-section-del" onclick="notesDeleteSection(this)" title="Delete section">✕</button><div class="notes-editable-heading" contenteditable="true" spellcheck="true" data-placeholder="Section heading…">${escHtml(s.heading||'')}</div>${notesOverviewHTML(s)}<div class="notes-editable-content" contenteditable="true" spellcheck="true" data-placeholder="Write your notes here…">${innerHtml}</div>${notesExtrasHTML(s)}</div>`;
   }).join('');
   const toolbar=`<div class="notes-toolbar"><button class="notes-toolbar-btn" onclick="notesFormat('bold')" title="Bold"><b>B</b></button><button class="notes-toolbar-btn" onclick="notesFormat('italic')" title="Italic"><i>I</i></button><button class="notes-toolbar-btn" onclick="notesFormat('underline')" title="Underline"><u>U</u></button><button class="notes-toolbar-btn" onclick="notesFormat('strikeThrough')" title="Strikethrough"><s>S</s></button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('insertUnorderedList')" title="Bullet list">• List</button><button class="notes-toolbar-btn" onclick="notesFormat('insertOrderedList')" title="Numbered list">1. List</button><div class="notes-toolbar-sep"></div><button class="notes-toolbar-btn" onclick="notesFormat('removeFormat')" title="Clear formatting">✕ Format</button><div class="notes-toolbar-sep" style="margin-left:auto"></div><button class="notes-toolbar-btn" onclick="notesCopyAll()" title="Copy all notes">⎘ Copy</button></div>`;
   return`${resultHeader('notes',t,[{text:'📓 Study Notes',accent:true},{text:'Editable'}])}<div id="notesEditorBody" data-topic="${escHtml(t)}">${toolbar}${sHtml}<button class="notes-add-section-btn" onclick="notesAddSection()">＋ Add Section</button></div>`;
