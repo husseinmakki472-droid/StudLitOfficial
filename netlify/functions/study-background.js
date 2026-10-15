@@ -283,8 +283,10 @@ function quizKey(text) {
   return String(text || '').toLowerCase().replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
 }
 
-// `exclude` carries the questions the student already has on screen, so a
-// "generate more" run cannot hand back what they have already answered.
+// Two dozen batches asking different angles of the same chapter will land on
+// the same question sooner or later. Compared on the question text with case,
+// punctuation and spacing removed, keeping the first so the easy-to-hard batch
+// ordering survives.
 function dedupeQuestions(list, exclude) {
   const seen = new Set((exclude || []).map(quizKey).filter(Boolean));
   const out = [];
@@ -314,7 +316,7 @@ const handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch (e) { return; }
 
-  const { requestId, topic, modes, files, urls, difficulty, language, quizMore, quizExclude } = body;
+  const { requestId, topic, modes, files, urls, difficulty, language } = body;
   if (!requestId) return;
 
   // Netlify answers a background invocation with 202 before this runs, so a
@@ -375,12 +377,8 @@ const handler = async (event) => {
   // to be unpacked and written to the store instead, carrying its `code` so the
   // page can tell "sign in" apart from "you are out of free generations" and
   // show the right thing.
-  // A quiz top-up runs a couple of batches, not the full fifteen, so it is
-  // charged as one unit rather than as a whole fresh quiz.
-  const topUpBatches = Math.max(0, Math.min(4, parseInt(quizMore, 10) || 0));
   const gate = await requirePlan(event, { 'Content-Type': 'application/json' }, {
     modes: Array.isArray(modes) ? modes : [],
-    units: topUpBatches ? 1 : undefined,
     idemKey: requestId,
   });
   if (gate.response) {
@@ -473,46 +471,28 @@ const handler = async (event) => {
     if (modesArr.indexOf('quiz') !== -1) {
       const quizLen = fullText.trim().length;
 
-      // A top-up run: the student already has a quiz on screen and asked for
-      // more. Only a few batches, and they must avoid what is already there.
-      const topUp = Math.max(0, Math.min(4, parseInt(quizMore, 10) || 0));
-      const already = Array.isArray(quizExclude)
-        ? quizExclude.filter(s => typeof s === 'string' && s.trim()) : [];
-
-      // How many batches depends on how much material there is. This used to
-      // be a hard five, so a 200-page textbook and a two-page handout both
-      // produced the same ceiling of fifty questions — the long upload was
-      // being asked for roughly one question per four pages. One batch per
-      // ~12k characters, floored at the old five and capped at fifteen so a
-      // huge upload cannot run the cost or the clock away. Past that ceiling
-      // the student tops up on demand rather than waiting minutes up front.
-      const QUIZ_BATCHES = topUp || (quizLen > 4000
-        ? Math.max(5, Math.min(15, Math.round(quizLen / 12000)))
-        : 5);
+      // One batch per ~12k characters, so the number of questions follows the
+      // amount of material instead of a fixed ceiling. The cap is 24 rather
+      // than a smaller number for a specific reason: each batch samples at
+      // most 25k characters of its own span, so with n batches the quiz reads
+      // n x 25k of the document. Below len/25000 batches, part of the upload
+      // is never read at all. 24 batches covers up to ~600k characters — a
+      // 200-page textbook — end to end, which is the point of asking for
+      // everything the file can give.
+      const QUIZ_BATCHES = quizLen > 4000
+        ? Math.max(5, Math.min(24, Math.round(quizLen / 12000)))
+        : 5;
 
       // Split the document into one contiguous span per batch, so the batches
-      // together cover every part of it. A top-up shifts the boundaries by
-      // half a span so it reads across the seams the first run split on,
-      // rather than re-reading the same blocks.
+      // together cover every part of it.
       const quizSpans = (function () {
         if (quizLen <= 4000) return null;
         const n = QUIZ_BATCHES, out = [], step = Math.ceil(fullText.length / n);
-        const shift = topUp ? Math.floor(step / 2) : 0;
         for (let i = 0; i < n; i++) {
-          const start = Math.min(fullText.length - 1, i * step + shift);
-          out.push(excerptAcross(fullText.slice(start, start + step), 25000));
+          out.push(excerptAcross(fullText.slice(i * step, (i + 1) * step), 25000));
         }
         return out;
       })();
-
-      // Tell the model what the student already has. Capped because the list
-      // itself costs tokens; the server-side dedupe below is what actually
-      // guarantees no repeats.
-      const avoidBlock = already.length
-        ? '\n\nThe student ALREADY has these questions. Do not repeat any of them, ' +
-          'and do not ask the same fact in different words:\n' +
-          already.slice(0, 60).map(s => '- ' + s.slice(0, 160)).join('\n')
-        : '';
 
       // Angles, cycled when there are more batches than angles. Two batches
       // sharing an angle still read different spans, so they are not asking
@@ -544,7 +524,7 @@ const handler = async (event) => {
           span = '\n\n[This set covers part ' + (i + 1) + ' of ' + quizSpans.length +
                  ' of the material — write questions ONLY from it]\n' + quizSpans[i];
         }
-        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + span + diffInstr + avoidBlock + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
+        const prompt = 'Topic: ' + topicStr + '\n\n' + batches[i] + span + diffInstr + '\n\nReturn JSON:\n{\n  "topic": "name",\n  "results": {\n    ' + MODE_MAP.quiz + '\n  }\n}';
         try {
           // 6k not 4k: each question now carries options, a full explanation,
           // and the topic/subtopic/bloom tags, and a truncated batch is lost.
@@ -556,17 +536,17 @@ const handler = async (event) => {
         // Publish after every batch so the page can show questions early.
         const sofar = [];
         for (let k = 0; k < slots.length; k++) if (slots[k]) sofar.push(...slots[k]);
-        const live = dedupeQuestions(sofar, already);
+        const live = dedupeQuestions(sofar);
         if (live.length) combinedResults.quiz = { questions: live };
         await saveProgress('Quiz: ' + qDone + ' of ' + batches.length + ' sets done — ' + live.length + ' questions…');
       });
       const all = [];
       for (let k = 0; k < slots.length; k++) if (slots[k]) all.push(...slots[k]);
-      const unique = dedupeQuestions(all, already);
+      const unique = dedupeQuestions(all);
       if (unique.length) combinedResults.quiz = { questions: unique };
       console.log(JSON.stringify({
-        event: 'quiz_done', requestId, batches: batches.length, topUp: topUp || 0,
-        raw: all.length, unique: unique.length, excluded: already.length,
+        event: 'quiz_done', requestId, batches: batches.length,
+        raw: all.length, unique: unique.length,
       }));
       await saveProgress('Quiz done — ' + unique.length + ' questions');
     }
