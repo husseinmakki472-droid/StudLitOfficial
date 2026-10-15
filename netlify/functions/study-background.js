@@ -275,6 +275,23 @@ function excerptAcross(text, budget) {
   return out.map((p, i) => '[excerpt ' + (i + 1) + ' of ' + pieces + ']\n' + p).join('\n\n…\n\n');
 }
 
+// Independent batches asking different angles of the same chapter will
+// sometimes land on the same question. Compared on the question text with
+// punctuation, case and spacing removed, so "What is ATP?" and "What is ATP"
+// count as one. Keeps the first, which preserves the easy→hard batch order.
+function dedupeQuestions(list) {
+  const seen = new Set();
+  const out = [];
+  for (const q of list || []) {
+    const text = q && typeof q.question === 'string' ? q.question : '';
+    const key = text.toLowerCase().replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(q);
+  }
+  return out;
+}
+
 function buildFileCtx(filesArr, urlsArr) {
   let ctx = '';
   if (filesArr.length) {
@@ -443,23 +460,47 @@ const handler = async (event) => {
 
     const diffInstr = '\n\nDIFFICULTY: ' + difficultyLevel.toUpperCase() + '.';
 
-    // ── QUIZ — 5 themed batches of 10, run concurrently ──────────────────
+    // ── QUIZ — themed batches of 10, run concurrently ───────────────────
     if (modesArr.indexOf('quiz') !== -1) {
-      // Split the document into one contiguous span per batch, so the five
-      // batches together cover every part of it.
+      const quizLen = fullText.trim().length;
+
+      // How many batches depends on how much material there is. This used to
+      // be a hard five, so a 200-page textbook and a two-page handout both
+      // produced the same ceiling of fifty questions — the long upload was
+      // being asked for roughly one question per four pages. One batch per
+      // ~12k characters, floored at the old five and capped at twelve so a
+      // huge upload cannot run the cost or the clock away.
+      const QUIZ_BATCHES = quizLen > 4000
+        ? Math.max(5, Math.min(12, Math.round(quizLen / 12000)))
+        : 5;
+
+      // Split the document into one contiguous span per batch, so the batches
+      // together cover every part of it.
       const quizSpans = (function () {
-        if (fullText.trim().length <= 4000) return null;
-        const n = 5, out = [], step = Math.ceil(fullText.length / n);
+        if (quizLen <= 4000) return null;
+        const n = QUIZ_BATCHES, out = [], step = Math.ceil(fullText.length / n);
         for (let i = 0; i < n; i++) out.push(excerptAcross(fullText.slice(i * step, (i + 1) * step), 25000));
         return out;
       })();
-      const batches = [
-        'Generate 10 multiple-choice questions testing DEFINITIONS AND KEY TERMS.',
-        'Generate 10 multiple-choice questions testing HOW THINGS WORK (processes, mechanisms, sequences).',
-        'Generate 10 SCENARIO-BASED multiple-choice questions set in real situations.',
-        'Generate 10 multiple-choice questions testing CAUSE AND EFFECT relationships.',
-        'Generate 10 HARD multiple-choice questions requiring analysis and synthesis of multiple concepts.',
+
+      // Angles, cycled when there are more batches than angles. Two batches
+      // sharing an angle still read different spans, so they are not asking
+      // the same thing twice.
+      const QUIZ_ANGLES = [
+        'testing DEFINITIONS AND KEY TERMS',
+        'testing HOW THINGS WORK (processes, mechanisms, sequences)',
+        'that are SCENARIO-BASED, set in real situations a student could meet',
+        'testing CAUSE AND EFFECT relationships',
+        'that are HARD and require analysing and combining several concepts',
+        'testing COMPARISONS — how related concepts differ and when each applies',
       ];
+      const batches = Array.from({ length: QUIZ_BATCHES }, (_, i) =>
+        'Generate 10 multiple-choice questions ' + QUIZ_ANGLES[i % QUIZ_ANGLES.length] + '.' +
+        // Without this the model routinely returns six and stops, which is how
+        // a fifty-question quiz arrives as thirty.
+        '\nWrite all 10. Do not stop early, do not summarise, and do not explain ' +
+        'what you are about to do — return the 10 questions.'
+      );
       // Indexed results so concurrency doesn't scramble easy→hard ordering.
       const slots = new Array(batches.length);
       let qDone = 0;
@@ -484,13 +525,19 @@ const handler = async (event) => {
         // Publish after every batch so the page can show questions early.
         const sofar = [];
         for (let k = 0; k < slots.length; k++) if (slots[k]) sofar.push(...slots[k]);
-        if (sofar.length) combinedResults.quiz = { questions: sofar };
-        await saveProgress('Quiz: ' + qDone + ' of ' + batches.length + ' sets done…');
+        const live = dedupeQuestions(sofar);
+        if (live.length) combinedResults.quiz = { questions: live };
+        await saveProgress('Quiz: ' + qDone + ' of ' + batches.length + ' sets done — ' + live.length + ' questions…');
       });
       const all = [];
       for (let k = 0; k < slots.length; k++) if (slots[k]) all.push(...slots[k]);
-      if (all.length) combinedResults.quiz = { questions: all };
-      await saveProgress('Quiz done — ' + all.length + ' questions');
+      const unique = dedupeQuestions(all);
+      if (unique.length) combinedResults.quiz = { questions: unique };
+      console.log(JSON.stringify({
+        event: 'quiz_done', requestId, batches: batches.length,
+        raw: all.length, unique: unique.length,
+      }));
+      await saveProgress('Quiz done — ' + unique.length + ' questions');
     }
 
     // ── FLASHCARDS — chunked over document, or themed batches without one ──

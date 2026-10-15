@@ -262,7 +262,9 @@ async function peekUsage(userId, isPro) {
 // Mode weights, from the per-chapter costs measured on a 114k-character
 // upload. Anything absent counts as one unit.
 const MODE_UNITS = {
-  tutor: 4, podcast: 4, practicetest: 3, notes: 2, quiz: 2,
+  // quiz is 3, not 2: its batch count now scales with the length of the
+  // upload, up to twelve calls on a long chapter instead of a flat five.
+  tutor: 4, podcast: 4, practicetest: 3, quiz: 3, notes: 2,
   solve: 1, flashcards: 1, summary: 1, keyconcepts: 1, fitb: 1, studyplan: 1,
 };
 
