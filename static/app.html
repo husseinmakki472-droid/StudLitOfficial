@@ -11,6 +11,10 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#7c5cfc">
 <link rel="manifest" href="/manifest.json">
+<!-- Inline so there is no extra request and no file to lose. Without any icon
+     link at all the browser tab showed the default blank page glyph. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237c5cfc'/%3E%3Ctext x='32' y='45' font-size='34' font-weight='bold' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' fill='white'%3ESL%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%237c5cfc'/%3E%3Ctext x='90' y='126' font-size='96' font-weight='bold' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' fill='white'%3ESL%3C/text%3E%3C/svg%3E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="StudLit">
@@ -3650,6 +3654,16 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .card-body { color: #3b3763 !important; }
       .card-body * { color: #3b3763 !important; }
       .modal-box { background: #fff !important; border: 1.5px solid #d4c9fb !important; }
+      /* These kept their dark-mode near-white colours on a white modal, so on
+         the pricing modal the "$" and the "/yr" were invisible and the price
+         read as a bare "99.99". Found by rendering the modal in light mode
+         rather than by reading the CSS. */
+      .price-currency { color: rgba(15,14,26,0.6) !important; }
+      .price-period { color: rgba(15,14,26,0.45) !important; }
+      .pricing-cancel-note { color: rgba(15,14,26,0.5) !important; }
+      .pricing-divider { background: rgba(0,0,0,0.1) !important; border-color: rgba(0,0,0,0.1) !important; }
+      .modal-close { background: #efecfd !important; border: 1px solid rgba(0,0,0,0.12) !important; color: rgba(15,14,26,0.6) !important; }
+      .modal-close:hover { background: #e3defb !important; color: #0f0e1a !important; }
       .new-set-modal { background: #fff !important; }
       .new-set-input { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #0f0e1a !important; }
       .sl-auth-sub { color: #3b3763 !important; }
