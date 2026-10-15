@@ -5315,6 +5315,71 @@ function quizSelect(el,picked,correct){
 function quizSkip(){quizData.splice(quizCurrent,1);if(!quizData.length){document.getElementById('quizBody').innerHTML=renderQuizScore();return;}if(quizCurrent>=quizData.length)quizCurrent=0;document.getElementById('quizBody').innerHTML=renderQuizQuestion();}
 function quizRetake(){quizMode='all';quizData=quizAllData.slice();quizCurrent=0;quizScore=0;quizAnswers=[];quizQStart=Date.now();quizRefresh();}
 
+/* ── Late arrivals ────────────────────────────────────────────────────────
+   Modes stream in batch by batch, and the first batch to land used to be the
+   last word: the renderer marked the mode "shown" and ignored everything
+   after it. A six-batch quiz generated sixty questions, displayed the ten
+   from batch one, and dropped the other fifty — paid for, logged on the
+   server as `"raw":60,"unique":60`, and never seen.
+
+   Re-rendering wholesale is not the fix either, because that is what the
+   guard was protecting against: it would reset the answers and the position
+   of whoever is already working through the set. So the interactive modes
+   merge instead — new items are appended, and nothing already on screen
+   moves. Everything else is static and is simply re-rendered. */
+function slQuizMergeIncoming(questions) {
+  if (!Array.isArray(questions) || !quizAllData.length) return 0;
+  const LETTERS = ['A', 'B', 'C', 'D'];
+  const have = new Set(quizAllData.map(q => quizStarKey(q.q)));
+  const extra = questions.map(q => {
+    let opts, correct;
+    if (Array.isArray(q.options)) { opts = q.options; correct = typeof q.correct === 'number' ? q.correct : 0; }
+    else if (q.options && typeof q.options === 'object') {
+      opts = LETTERS.map(l => (q.options[l] ? l + ') ' + q.options[l] : null)).filter(Boolean);
+      correct = Math.max(0, LETTERS.indexOf(String(q.correct_answer || 'A').toUpperCase().charAt(0)));
+    } else { opts = []; correct = 0; }
+    return { q: q.question || '', opts, correct, difficulty: q.difficulty || 'Medium',
+             explanation: q.explanation || '', topic: q.topic || '', subtopic: q.subtopic || '',
+             bloom: (q.bloom || '').toLowerCase() };
+  }).filter(q => q.q && q.opts.length && !have.has(quizStarKey(q.q)));
+
+  if (!extra.length) return 0;
+  quizAllData = quizAllData.concat(extra);
+  if (quizMode !== 'starred') quizData = quizData.concat(extra);
+  const count = document.querySelector('.result-meta .meta-tag.accent');
+  if (count) count.textContent = '📝 ' + quizData.length + ' Questions';
+  // Someone who already reached the end gets the new ones rather than being
+  // left staring at a score card that is no longer the whole story.
+  const body = document.getElementById('quizBody');
+  if (body && quizCurrent >= quizData.length - extra.length && quizAnswers.length) {
+    body.innerHTML = renderQuizQuestion();
+  }
+  return extra.length;
+}
+
+function slCardsMergeIncoming(cards) {
+  if (!Array.isArray(cards) || !fcAllCards.length) return 0;
+  const key = s => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
+  const have = new Set(fcAllCards.map(c => key(c.q)));
+  const extra = cards
+    .map(c => ({ q: c.front || '', a: c.back || '', diff: (c.difficulty || '').toLowerCase(),
+                 topic: c.topic || '', subtopic: c.subtopic || '', bloom: (c.bloom || '').toLowerCase() }))
+    .filter(c => c.q && !have.has(key(c.q)));
+  if (!extra.length) return 0;
+  fcAllCards = fcAllCards.concat(extra);
+  if (fcDiffFilter === 'all') fcCards = fcCards.concat(extra);
+  const cnt = document.querySelector('.fc-count');
+  if (cnt) cnt.textContent = (fcIndex + 1) + ' / ' + fcCards.length;
+  return extra.length;
+}
+
+/* Returns true when the mode was handled and should not be re-rendered. */
+function slMergeLate(mode, payload) {
+  if (mode === 'quiz') return slQuizMergeIncoming((payload && payload.questions) || []) >= 0;
+  if (mode === 'flashcards') return slCardsMergeIncoming((payload && payload.cards) || []) >= 0;
+  return false;
+}
+
 /* ── Starred questions ────────────────────────────────────────────────────
    A 200-page upload can now produce a couple of hundred questions, which is
    more than anyone works through in one sitting. Starring is how a student
@@ -5648,7 +5713,8 @@ async function pasteGenerate(){
       if(!results)return;
       if(pt&&pt!=='the uploaded content'){resolvedTopic2=pt;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
       Object.keys(results).forEach(mode=>{
-        if(_shown2.has(mode)||!results[mode]||modes.indexOf(mode)===-1)return;
+        if(!results[mode]||modes.indexOf(mode)===-1)return;
+        if(_shown2.has(mode)){ slMergeLate(mode, results[mode]); return; }
         _shown2.add(mode);
         wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,results[mode]);
         wzMarkTabLoaded(mode);
@@ -5658,7 +5724,10 @@ async function pasteGenerate(){
     await runStudyJob({topic:topic,modes:modes,files:filesPayload,urls:[],difficulty:genDiff,language:genLang},setGenProgress,_showReady2).then(data=>{
       if(data&&!data.error&&data.topic&&data.topic!=='the uploaded content'){resolvedTopic2=data.topic;document.getElementById('wzResultTitleEl').textContent=resolvedTopic2;}
       modes.forEach(mode=>{
-        if(_shown2.has(mode))return;
+        if(_shown2.has(mode)){
+          if(data&&!data.error&&data.results&&data.results[mode]) slMergeLate(mode, data.results[mode]);
+          return;
+        }
         if(data&&!data.error&&data.results&&data.results[mode]){_shown2.add(mode);wzResultTabs[mode]=wzRenderMode(mode,resolvedTopic2,data.results[mode]);}
         else{wzResultTabs[mode]=`<div class="error-card"><div class="error-card-label">⚠ ${escHtml(mode)}</div><div class="error-card-body">${escHtml((data&&data.error)||'No data.')}</div></div>`;}
         wzMarkTabLoaded(mode);
@@ -7330,8 +7399,10 @@ async function wzGenerate() {
         document.getElementById('wzResultTitleEl').textContent = resolvedTopic;
       }
       Object.keys(results).forEach(mode => {
-        if(shownModes.has(mode) || !results[mode]) return;
+        if(!results[mode]) return;
         if(methods.indexOf(mode) === -1) return;
+        // Already on screen: take the new items rather than discarding them.
+        if(shownModes.has(mode)){ slMergeLate(mode, results[mode]); return; }
         shownModes.add(mode);
         wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, results[mode]);
         wzMarkTabLoaded(mode);
@@ -7354,7 +7425,10 @@ async function wzGenerate() {
         batchModes.forEach(mode => {
           // Already on screen from a partial update — re-rendering would reset
           // quiz answers and flashcard position, so leave it alone.
-          if (shownModes.has(mode)) return;
+          if (shownModes.has(mode)) {
+            if (data && !data.error && data.results && data.results[mode]) slMergeLate(mode, data.results[mode]);
+            return;
+          }
           if (data && !data.error && data.results && data.results[mode]) {
             shownModes.add(mode);
             wzResultTabs[mode] = wzRenderMode(mode, resolvedTopic, data.results[mode]);
