@@ -227,7 +227,7 @@ const MODE_QTY = {
   tutor:        'Produce AT LEAST 8 sections, one per major concept. Every section needs: 3 substantial paragraphs (not one-liners), 2+ defined key terms, 2+ worked examples, a keyTakeaway, and a thinkAboutIt question. Teach a complete beginner — never skip steps.',
   practicetest: 'Produce three sections — shortAnswer, multipleChoice and essayPrompt — with AT LEAST 6 questions in each. Every question needs a full sampleAnswer that models what a strong student response looks like, not a one-line hint.',
   fitb:         'Produce AT LEAST 20 fill-in-the-blank sentences. Each sentence needs 2-3 blanks and must be substantial enough to test real understanding, not a trivial one-word gap.',
-  keyconcepts:  'Produce AT LEAST 20 concepts. Each needs a complete 2-3 sentence definition and an importance field explaining why it matters and how it connects to the other concepts.',
+  keyconcepts:  'Produce AT LEAST 20 concepts. Each needs a complete 2-3 sentence definition and an importance field explaining why it matters and how it connects to the other concepts. Also set priority to exactly one of core, supporting or contextual — core for what the topic cannot be understood without, contextual for background detail.',
   studyplan:    'Produce all 7 days. Each day needs 4-5 specific, actionable tasks naming the actual topics being studied — never generic filler like "review notes" — plus a duration and a focus area.',
   solve:        'Give the quickAnswer, then AT LEAST 5 stepByStep entries walking through the full reasoning, the keyInsight, 3 worked examples, and 2+ commonMistakes students make on this type of problem.'
 };
@@ -250,7 +250,7 @@ const MODE_MAP = {
     + '"summary":"A thorough recap of every major point, why each matters, and how they connect.",'
     + '"quiz":[{"question":"Question testing application, not recall","answer":"Complete answer a student can learn from"}]}',
   practicetest: '"practicetest":{"sections":[{"type":"shortAnswer","questions":[{"question":"q","sampleAnswer":"answer"}]},{"type":"multipleChoice","questions":[{"question":"q","options":["A) opt","B) opt","C) opt","D) opt"],"correct":0,"explanation":"why","sampleAnswer":"the correct option restated in full, followed by why it is right and why the others are wrong"}]},{"type":"essayPrompt","questions":[{"question":"prompt","sampleAnswer":"outline"}]}]}',
-  keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"2-3 sentence definition","importance":"why it matters"}]}',
+  keyconcepts: '"keyconcepts":{"concepts":[{"term":"term","definition":"2-3 sentence definition","importance":"why it matters and how it connects to the other concepts","priority":"core|supporting|contextual"}]}',
   studyplan: '"studyplan":{"totalDays":7,"steps":[{"day":1,"title":"Title","tasks":["task 1","task 2","task 3","task 4","task 5"],"duration":"45 min","focus":"focus area"}]}',
   solve: '"solve":{"quickAnswer":"answer","stepByStep":[{"step":1,"title":"step","content":"explanation"}],"keyInsight":"insight","examples":["ex 1","ex 2","ex 3"],"commonMistakes":["mistake 1","mistake 2"]}'
 };
@@ -731,7 +731,7 @@ const handler = async (event) => {
 
       const key = mode === 'keyconcepts' ? 'concepts' : 'sentences';
       const perChunk = mode === 'keyconcepts'
-        ? 'List every key term that appears in THIS part, with a complete definition and why it matters. 4-6 of them.'
+        ? 'List every key term that appears in THIS part, with a complete definition, why it matters, and a priority of core, supporting or contextual. 4-6 of them.'
         : 'Write 4-6 fill-in-the-blank sentences drawn ONLY from THIS part. Each needs 2-3 blanks.';
       const collected = [];
       let eDone = 0;

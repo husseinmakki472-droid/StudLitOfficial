@@ -403,6 +403,9 @@ body{letter-spacing:-.006em;font-weight:500}
 .notes-terms dd{margin:0;font-size:13px;line-height:1.6;color:rgba(240,239,255,0.6)}
 .notes-takeaway{display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;background:rgba(124,92,252,0.1);border:1px solid rgba(124,92,252,0.22);border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.6;color:rgba(240,239,255,0.75)}
 .notes-takeaway-tag{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#b494ff;background:rgba(124,92,252,0.18);border-radius:999px;padding:3px 9px;flex-shrink:0}
+/* Key concepts — the reason a term matters, previously generated and unused. */
+.concept-why{margin-top:7px;font-size:12.5px;line-height:1.6;color:rgba(240,239,255,0.45)}
+.concept-why-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.32);background:rgba(255,255,255,0.05);border-radius:999px;padding:2px 8px;margin-right:7px;vertical-align:1px}
 @media (max-width:560px){.notes-terms{grid-template-columns:1fr;gap:2px}.notes-terms dd{margin-bottom:7px}}
 .pt-answer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4ade80;margin-bottom:6px}
 .pt-answer-text{font-size:13.5px;color:rgba(240,239,255,0.7);line-height:1.7}
@@ -4197,6 +4200,8 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .notes-terms dt { color: #6d3fc9 !important; }
       .notes-takeaway { background: rgba(124,92,252,0.09) !important; border-color: rgba(124,92,252,0.26) !important; color: #3b3763 !important; }
       .notes-takeaway-tag { color: #5b3fd4 !important; background: rgba(124,92,252,0.16) !important; }
+      .concept-why { color: rgba(15,14,26,0.6) !important; }
+      .concept-why-tag { color: rgba(15,14,26,0.45) !important; background: rgba(0,0,0,0.05) !important; }
       .quiz-tool-btn { background: rgba(202,138,4,0.1) !important; border: 1.5px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
       .quiz-tool-btn:hover { background: rgba(202,138,4,0.18) !important; color: #854d0e !important; }
       .quiz-star-btn { border: 1px solid rgba(202,138,4,0.35) !important; color: #a16207 !important; }
@@ -5207,8 +5212,29 @@ function renderKeyConceptsHTML(topic, d){
   const t=topic||'your topic';
   const concepts=(d&&d.concepts)||[];
   if(!concepts.length)return'<div class="error-card"><div class="error-card-label">⚠ No concepts</div><div class="error-card-body">No key concepts data returned.</div></div>';
-  const impLevel=(imp)=>{if(!imp)return'med';const l=imp.toLowerCase();if(l==='high'||l.includes('core')||l.includes('critical')||l.includes('essential')||l.includes('fundamental'))return'high';if(l==='low'||l.includes('context')||l.includes('supplement')||l.includes('additional'))return'low';return'med';};
-  const items=concepts.map(c=>`<div class="concept-item"><div class="concept-term"><div class="concept-importance importance-${impLevel(c.importance)}"></div>${escHtml(c.term)}</div><div class="concept-def">${escHtml(c.definition||c.def||'')}</div></div>`).join('');
+  /* The dot reads `priority`, a field the model is now asked for explicitly.
+     It used to be derived by sniffing the `importance` prose for words like
+     "core" or "contextual" — but the prompt asks for a sentence explaining why
+     a term matters, and a sentence almost never contains those words, so every
+     concept fell through to the amber default and the legend below meant
+     nothing. The old sniffing stays as a fallback for sets generated before
+     the field existed. */
+  const sniff=(imp)=>{if(!imp)return'med';const l=String(imp).toLowerCase();if(l.includes('core')||l.includes('critical')||l.includes('essential')||l.includes('fundamental'))return'high';if(l.includes('context')||l.includes('supplement')||l.includes('additional')||l.includes('background'))return'low';return'med';};
+  const impLevel=(c)=>{
+    const pr=String(c&&c.priority||'').trim().toLowerCase();
+    if(pr==='core')return'high';
+    if(pr==='supporting')return'med';
+    if(pr==='contextual')return'low';
+    return sniff(c&&c.importance);
+  };
+  const LABEL={high:'Core',med:'Supporting',low:'Contextual'};
+  /* The importance prose was generated on every concept and never shown — the
+     student got the definition but never the reason it is worth knowing. */
+  const items=concepts.map(c=>{
+    const lvl=impLevel(c);
+    const why=c&&c.importance?`<div class="concept-why"><span class="concept-why-tag">Why it matters</span>${escHtml(c.importance)}</div>`:'';
+    return`<div class="concept-item"><div class="concept-term"><div class="concept-importance importance-${lvl}" title="${LABEL[lvl]}"></div>${escHtml(c.term)}</div><div class="concept-def">${escHtml(c.definition||c.def||'')}</div>${why}</div>`;
+  }).join('');
   return`${resultHeader('keyconcepts',t,[{text:'🔑 Key Concepts',accent:true},{text:concepts.length+' Terms'}])}<div class="content-card"><div class="card-label">Importance <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);margin-left:12px"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#f87171"></span>Core <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#fbbf24;margin-left:8px"></span>Supporting <span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:#4ade80;margin-left:8px"></span>Contextual</span></div>${items}</div>`;
 }
 
