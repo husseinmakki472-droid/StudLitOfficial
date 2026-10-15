@@ -2032,6 +2032,38 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .wz-sidebar-settings-btn{background:none;border:none;color:rgba(240,239,255,0.38);font-size:15px;cursor:pointer;padding:4px 5px;border-radius:7px;transition:all .15s;flex-shrink:0;line-height:1}
 .wz-sidebar-settings-btn:hover{color:#f0efff;background:rgba(255,255,255,0.07)}
 .wz-timer-block{margin-top:12px;padding:14px 12px 12px;border-top:1px solid rgba(255,255,255,0.07)}
+/* ── Focus timer ── one component, rendered into the sidebar, the floating
+   widget and the nav pill from the same state. ── */
+.slt{display:flex;flex-direction:column;align-items:center;gap:10px}
+.slt-ring-wrap{position:relative;width:108px;height:108px}
+.slt-ring{width:100%;height:100%;transform:rotate(-90deg)}
+.slt-track{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:6}
+.slt-prog{fill:none;stroke:var(--accent,#7c5cfc);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .4s linear,stroke .3s}
+.slt.is-break .slt-prog{stroke:#4ade80}
+.slt.is-danger .slt-prog{stroke:#f87171}
+.slt-centre{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none}
+.slt-time{font-family:'Plus Jakarta Sans',sans-serif;font-size:23px;font-weight:800;letter-spacing:-1px;color:#f0efff;line-height:1;font-variant-numeric:tabular-nums}
+.slt.is-danger .slt-time{color:#f87171}
+.slt-phase{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,239,255,0.34)}
+.slt.is-break .slt-phase{color:#4ade80}
+.slt-dots{display:flex;gap:5px}
+.slt-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.14);transition:background .25s}
+.slt-dot.on{background:var(--accent,#7c5cfc)}
+.slt-btns{display:flex;gap:6px;width:100%}
+.slt-btn{border:none;border-radius:10px;padding:8px 0;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s,background .15s}
+.slt-go{flex:1;background:linear-gradient(135deg,var(--accent,#7c5cfc),var(--accent-2,#b06ef3));color:#fff}
+.slt-go:hover{opacity:.88}
+.slt-rst{width:34px;background:rgba(255,255,255,0.06);color:rgba(240,239,255,0.45);border:1px solid rgba(255,255,255,0.08)}
+.slt-rst:hover{color:#f0efff;background:rgba(255,255,255,0.1)}
+.slt-presets{display:flex;gap:4px;width:100%}
+.slt-preset{flex:1;background:none;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:5px 1px;font-family:var(--font-body);font-size:9.5px;font-weight:700;color:rgba(240,239,255,0.3);cursor:pointer;transition:all .15s}
+.slt-preset:hover{color:rgba(240,239,255,0.7);border-color:rgba(255,255,255,0.18)}
+.slt-preset.active{border-color:rgba(124,92,252,0.5);color:#b494ff;background:rgba(124,92,252,0.1)}
+.slt-stat{font-size:10.5px;font-weight:600;color:rgba(240,239,255,0.33);text-align:center;line-height:1.4}
+.slt-stat strong{color:rgba(240,239,255,0.62);font-weight:800}
+.slt-pill.live{width:auto;padding:0 12px;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;color:#b494ff;border-color:rgba(124,92,252,0.4);background:rgba(124,92,252,0.12)}
+.slt-pill.live.is-break{color:#4ade80;border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.1)}
+.slt-pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:timerPulse 1.1s infinite alternate}
 .wz-timer-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,239,255,0.22);margin-bottom:10px;text-align:center}
 .wz-timer-display{font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:700;color:#f0efff;letter-spacing:-1px;line-height:1;text-align:center;margin-bottom:12px;transition:color .3s}
 .wz-timer-display.warn{color:#fbbf24}
@@ -2496,6 +2528,10 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
     <span id="themeLabel" class="theme-label"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark</span>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="event.stopPropagation()"></button>
   </div>
+    <!-- Doubles as the only way into the floating timer and as a live readout
+         once it is running, so a session started in the workspace stays
+         visible from every other tab. -->
+    <button class="nav-icon-btn slt-pill" id="sltNavPill" onclick="toggleTimer()" title="Focus timer" aria-label="Focus timer"></button>
     <button class="nav-icon-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Fullscreen" aria-label="Toggle fullscreen">
       <svg id="fsIconExpand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       <svg id="fsIconCompress" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 0 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
@@ -3675,6 +3711,19 @@ function buildLightInjectCSS(accent, a2, r, r2) {
          never applied and "← New Set" sat near-white on white. */
       .sl-result-back-btn { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.13) !important; color: rgba(15,14,26,0.65) !important; }
       .sl-result-back-btn:hover { background: #f4f1ff !important; color: #0f0e1a !important; }
+      .slt-track { stroke: rgba(0,0,0,0.09) !important; }
+      .slt-time { color: #0f0e1a !important; }
+      .slt-phase { color: rgba(15,14,26,0.45) !important; }
+      .slt-dot { background: rgba(0,0,0,0.13) !important; }
+      .slt-dot.on { background: #7c5cfc !important; }
+      .slt-rst { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.14) !important; color: rgba(15,14,26,0.6) !important; }
+      .slt-rst:hover { background: #f4f1ff !important; color: #0f0e1a !important; }
+      .slt-preset { border: 1.5px solid rgba(0,0,0,0.14) !important; color: rgba(15,14,26,0.6) !important; }
+      .slt-preset.active { border-color: #7c5cfc !important; color: #5b3fd4 !important; background: rgba(124,92,252,0.1) !important; }
+      .slt-stat { color: rgba(15,14,26,0.5) !important; }
+      .slt-stat strong { color: rgba(15,14,26,0.78) !important; }
+      .slt-pill.live { color: #5b3fd4 !important; background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.35) !important; }
+      .slt-pill.live.is-break { color: #15803d !important; background: rgba(74,222,128,0.12) !important; border-color: rgba(74,222,128,0.4) !important; }
       .new-set-modal { background: #fff !important; }
       .new-set-input { background: #fff !important; border: 1.5px solid #d4c9fb !important; color: #0f0e1a !important; }
       .sl-auth-sub { color: #3b3763 !important; }
@@ -6981,125 +7030,6 @@ function renderLb() {
 // ============================================================
 // TIMER
 // ============================================================
-var timerRunning = false;
-var timerInterval = null;
-var timerSecs = 25 * 60;
-var timerTotal = 25 * 60;
-var timerMode = 'min';
-
-function toggleTimer() {
-  var w = document.getElementById('timerWidget');
-  if (w) w.classList.toggle('open');
-}
-
-function timerSwitchMode(mode) {
-  timerMode = mode;
-  document.getElementById('timerTabMin').classList.toggle('active', mode === 'min');
-  document.getElementById('timerTabHr').classList.toggle('active', mode === 'hr');
-  var hoursWrap = document.getElementById('tHoursWrap');
-  if (hoursWrap) hoursWrap.style.display = mode === 'hr' ? 'flex' : 'none';
-  var presets = document.getElementById('timerPresets');
-  if (presets) {
-    if (mode === 'hr') {
-      presets.innerHTML = '<div class="timer-w-preset" onclick="timerPreset(this,30)">30m</div><div class="timer-w-preset" onclick="timerPreset(this,60)">1h</div><div class="timer-w-preset active" onclick="timerPreset(this,90)">1.5h</div><div class="timer-w-preset" onclick="timerPreset(this,120)">2h</div>';
-    } else {
-      presets.innerHTML = '<div class="timer-w-preset" onclick="timerPreset(this,5)">5m</div><div class="timer-w-preset active" onclick="timerPreset(this,25)">25m</div><div class="timer-w-preset" onclick="timerPreset(this,45)">45m</div><div class="timer-w-preset" onclick="timerPreset(this,60)">60m</div>';
-    }
-  }
-  var defaultMins = mode === 'hr' ? 90 : 25;
-  clearInterval(timerInterval); timerRunning = false;
-  timerTotal = defaultMins * 60; timerSecs = timerTotal;
-  timerUpdateDisplay();
-  var pb = document.getElementById('timerPlayBtn');
-  if (pb) pb.textContent = '▶ Start';
-}
-
-function timerToggle() {
-  if (timerRunning) {
-    clearInterval(timerInterval);
-    timerRunning = false;
-    var btn = document.getElementById('timerPlayBtn');
-    if (btn) btn.textContent = '▶ Resume';
-  } else {
-    if (timerSecs <= 0) { timerReset(); return; }
-    timerRunning = true;
-    var btn = document.getElementById('timerPlayBtn');
-    if (btn) btn.textContent = '⏸ Pause';
-    timerInterval = setInterval(function() {
-      timerSecs--;
-      timerUpdateDisplay();
-      if (timerSecs <= 0) {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        var d = document.getElementById('timerDisplay');
-        if (d) { d.textContent = '🎉 Done!'; d.className = 'timer-w-display'; }
-        var btn2 = document.getElementById('timerPlayBtn');
-        if (btn2) btn2.textContent = '▶ Start';
-        try{scoreEventServer('timer_complete',{minutes:Math.round((timerTotal||1500)/60)}).then(function(g){if(g.xp>0)addXP(g.xp,'timer');});}catch(e){}
-        setTimeout(timerReset, 2500);
-      }
-    }, 1000);
-  }
-}
-
-function timerReset() {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerSecs = timerTotal;
-  timerUpdateDisplay();
-  var btn = document.getElementById('timerPlayBtn');
-  if (btn) btn.textContent = '▶ Start';
-}
-
-function timerPreset(btn, mins) {
-  document.querySelectorAll('.timer-w-preset').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerTotal = mins * 60;
-  timerSecs = timerTotal;
-  timerUpdateDisplay();
-  var pb = document.getElementById('timerPlayBtn');
-  if (pb) pb.textContent = '▶ Start';
-}
-
-function timerCustom() {
-  var h = parseInt(document.getElementById('tHours') && document.getElementById('tHours').value) || 0;
-  var m = parseInt(document.getElementById('tMins').value) || 0;
-  var s = parseInt(document.getElementById('tSecs').value) || 0;
-  var total = h * 3600 + m * 60 + s;
-  if (!total) return;
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerTotal = total;
-  timerSecs = total;
-  timerUpdateDisplay();
-  document.querySelectorAll('.timer-w-preset').forEach(function(b){ b.classList.remove('active'); });
-  var pb = document.getElementById('timerPlayBtn');
-  if (pb) pb.textContent = '▶ Start';
-  if (document.getElementById('tHours')) document.getElementById('tHours').value = '';
-  document.getElementById('tMins').value = '';
-  document.getElementById('tSecs').value = '';
-}
-
-function timerUpdateDisplay() {
-  var h = Math.floor(timerSecs / 3600);
-  var m = Math.floor((timerSecs % 3600) / 60);
-  var s = timerSecs % 60;
-  var d = document.getElementById('timerDisplay');
-  var f = document.getElementById('timerFill');
-  if (d) {
-    var isHr = timerMode === 'hr' || timerTotal >= 3600;
-    if (isHr) {
-      d.className = 'timer-w-display hr-mode' + (timerSecs<=60?' danger':timerSecs<=timerTotal*0.15?' warn':'');
-      d.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    } else {
-      d.className = 'timer-w-display' + (timerSecs<=60?' danger':timerSecs<=timerTotal*0.25?' warn':'');
-      d.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    }
-  }
-  if (f) f.style.width = (timerTotal > 0 ? timerSecs / timerTotal * 100 : 100) + '%';
-}
 
 // Draggable timer (mouse + touch)
 (function() {
@@ -7381,27 +7311,7 @@ function wzBuildSidebar(methods) {
   </div>
   <div class="wz-sidebar-divider"></div>
   <div class="wz-sidebar-add" onclick="wzAddMethod()">+ ADD METHOD</div>
-  <div class="wz-timer-block" id="wzTimerBlock">
-    <div class="wz-timer-label">Timer</div>
-    <div class="wz-timer-display" id="wzTimerDisplay">25:00</div>
-    <div class="wz-timer-presets">
-      <div class="wz-timer-preset" onclick="wzTimerPreset(this,5)">5m</div>
-      <div class="wz-timer-preset active" onclick="wzTimerPreset(this,25)">25m</div>
-      <div class="wz-timer-preset" onclick="wzTimerPreset(this,45)">45m</div>
-      <div class="wz-timer-preset" onclick="wzTimerPreset(this,60)">1h</div>
-    </div>
-    <div class="wz-timer-btns">
-      <button class="wz-timer-btn wz-timer-start" id="wzTimerStartBtn" onclick="wzTimerToggle()">Start</button>
-      <button class="wz-timer-btn wz-timer-reset" onclick="wzTimerReset()">↺</button>
-    </div>
-    <div class="wz-timer-custom">
-      <div class="wz-timer-custom-lbl">Custom</div>
-      <input class="wz-timer-input" id="wzTMins" type="number" min="0" max="999" placeholder="mm">
-      <div class="wz-timer-sep">:</div>
-      <input class="wz-timer-input" id="wzTSecs" type="number" min="0" max="59" placeholder="ss" style="width:32px">
-      <button class="wz-timer-set" onclick="wzTimerCustom()">Set</button>
-    </div>
-  </div>
+  <div class="wz-timer-block" id="wzTimerBlock" data-slt-mount="sidebar"></div>
   <div class="wz-sidebar-profile">
     <div class="wz-sidebar-avatar-sm" id="wzSidebarAvatar">S</div>
     <div class="wz-sidebar-user-name" id="wzSidebarName">Student</div>
@@ -7913,73 +7823,286 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   });
 })();
 
-// ---- Sidebar Study Timer ----
-(function(){
-  const CIRC = 2 * Math.PI * 36; // 226.2
-  let _secs = 25*60, _total = 25*60, _running = false, _iv = null;
+/* ══ FOCUS TIMER ═══════════════════════════════════════════════════════════
+   One timer, replacing the two that used to exist — a floating widget and a
+   sidebar block with duplicated logic, where the sidebar one reported the
+   widget's duration when granting XP, so a five-minute session was credited
+   as twenty-five.
 
-  function _fmt(s) {
-    const m = Math.floor(s / 60), ss = s % 60;
-    return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+   The important property is that it does not count with setInterval. Browsers
+   throttle timers in background tabs and iOS suspends them outright, so a
+   counter that decrements once per tick silently loses minutes the moment the
+   phone locks — which is exactly when a study timer is running. Every reading
+   is derived from the wall clock instead, and the interval only decides how
+   often we look.                                                            */
+(function () {
+  const STATE_KEY = 'sl-timer-v2';
+  const LOG_KEY   = 'sl-focus-log';
+  const RING_C    = 2 * Math.PI * 36;        // the ring's circumference
+
+  const S = {
+    phase: 'work',        // 'work' | 'break'
+    workMins: 25,
+    breakMins: 5,
+    running: false,
+    endsAt: 0,            // epoch ms; authoritative while running
+    remaining: 25 * 60,   // seconds; authoritative while paused
+    round: 0,             // work phases completed in this run of sessions
+  };
+  let _iv = null, _lastCredit = 0, _baseTitle = document.title;
+
+  // ── Persistence ─────────────────────────────────────────────────────────
+  function save() {
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(S)); } catch (e) {}
   }
-  function _updateUI() {
-    const d = document.getElementById('wzTimerDisplay');
-    const btn = document.getElementById('wzTimerStartBtn');
-    if (d) {
-      d.textContent = _fmt(_secs);
-      d.className = 'wz-timer-display' + (_secs <= 60 ? ' danger' : _secs <= _total * 0.25 ? ' warn' : '');
+  function load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+      if (raw && typeof raw === 'object') Object.assign(S, raw);
+    } catch (e) {}
+    S.workMins = clamp(S.workMins, 1, 240);
+    S.breakMins = clamp(S.breakMins, 1, 60);
+    if (!Number.isFinite(S.remaining)) S.remaining = S.workMins * 60;
+  }
+  function clamp(n, lo, hi) { n = parseInt(n, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo; }
+
+  // ── Focus log ───────────────────────────────────────────────────────────
+  function today() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function readLog() {
+    try { return JSON.parse(localStorage.getItem(LOG_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function credit(seconds) {
+    if (!(seconds > 0)) return;
+    const log = readLog();
+    log[today()] = Math.round((log[today()] || 0) + seconds);
+    // A year is plenty; without pruning this grows forever.
+    const keys = Object.keys(log).sort();
+    while (keys.length > 400) delete log[keys.shift()];
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(log)); } catch (e) {}
+  }
+  function focusedToday() { return Math.round((readLog()[today()] || 0) / 60); }
+
+  // Consecutive days up to and including today with at least a minute logged.
+  // Yesterday counts as the start so a streak is not lost before you study.
+  function streakDays() {
+    const log = readLog();
+    let n = 0;
+    const d = new Date();
+    if (!(log[today()] >= 60)) d.setDate(d.getDate() - 1);
+    for (;;) {
+      const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (!(log[k] >= 60)) break;
+      n++;
+      d.setDate(d.getDate() - 1);
     }
-    if (btn && !_running) btn.textContent = _secs < _total && _secs > 0 ? 'Resume' : 'Start';
-  }
-  function _stop(setTotal) {
-    clearInterval(_iv); _iv = null; _running = false;
-    if (setTotal !== undefined) { _total = setTotal; _secs = setTotal; }
-    _updateUI();
+    return n;
   }
 
-  window.wzTimerToggle = function() {
-    if (_running) {
-      clearInterval(_iv); _iv = null; _running = false;
-      var btn = document.getElementById('wzTimerStartBtn');
-      if (btn) btn.textContent = '▶ Resume';
+  // ── Clock ───────────────────────────────────────────────────────────────
+  function phaseLen() { return (S.phase === 'work' ? S.workMins : S.breakMins) * 60; }
+
+  function secsLeft() {
+    if (!S.running) return Math.max(0, Math.round(S.remaining));
+    return Math.max(0, Math.round((S.endsAt - Date.now()) / 1000));
+  }
+
+  function chime() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      [0, 0.18].forEach((at, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = i ? 784 : 587.33;      // D5 then G5
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + at);
+        g.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + 0.42);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ctx.currentTime + at); o.stop(ctx.currentTime + at + 0.45);
+      });
+      setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1200);
+    } catch (e) { /* audio is a nicety, never a failure */ }
+  }
+
+  function completePhase() {
+    const wasWork = S.phase === 'work';
+    if (wasWork) {
+      S.round++;
+      try {
+        scoreEventServer('timer_complete', { minutes: S.workMins })
+          .then(g => { if (g && g.xp > 0) addXP(g.xp, 'timer'); });
+      } catch (e) {}
+    }
+    S.phase = wasWork ? 'break' : 'work';
+    S.remaining = phaseLen();
+    chime();
+
+    // Chain straight into the next phase only while someone is watching.
+    // Catching up after a backgrounded hour and silently burning through six
+    // phases would be worse than stopping at the boundary.
+    const visible = document.visibilityState !== 'hidden';
+    if (visible) {
+      S.running = true;
+      S.endsAt = Date.now() + S.remaining * 1000;
+      _lastCredit = Date.now();
     } else {
-      if (_secs <= 0) { _secs = _total; _updateUI(); return; }
-      _running = true;
-      var btn = document.getElementById('wzTimerStartBtn');
-      if (btn) btn.textContent = 'Pause';
-      _iv = setInterval(function() {
-        _secs--;
-        _updateUI();
-        if (_secs <= 0) {
-          clearInterval(_iv); _iv = null; _running = false;
-          var d = document.getElementById('wzTimerDisplay');
-          if (d) { d.textContent = '🎉'; d.className = 'wz-timer-display'; }
-          var btn2 = document.getElementById('wzTimerStartBtn');
-          if (btn2) btn2.textContent = '▶ Start';
-          try{scoreEventServer('timer_complete',{minutes:Math.round((timerTotal||1500)/60)}).then(function(g){if(g.xp>0)addXP(g.xp,'timer');});}catch(e){}
-          setTimeout(function(){ _secs = _total; _updateUI(); }, 2500);
-        }
-      }, 1000);
+      S.running = false;
+      S.endsAt = 0;
     }
+    save();
+    if (typeof showInfoToast === 'function') {
+      showInfoToast(wasWork
+        ? 'Focus block done — ' + S.workMins + ' minutes logged. Take ' + S.breakMins + '.'
+        : 'Break over — back to it.');
+    }
+  }
+
+  function tick() {
+    if (S.running) {
+      const now = Date.now();
+      // Credit real elapsed time rather than assuming one second per tick, so
+      // a throttled or suspended tab records what actually passed. Capped at
+      // the phase boundary so a sleeping laptop cannot bank hours.
+      if (S.phase === 'work' && _lastCredit) {
+        credit(Math.min((now - _lastCredit) / 1000, Math.max(0, (S.endsAt - _lastCredit) / 1000)));
+      }
+      _lastCredit = now;
+      if (now >= S.endsAt) { completePhase(); }
+    }
+    render();
+  }
+
+  function ensureLoop() {
+    if (_iv) return;
+    _iv = setInterval(tick, 500);
+  }
+
+  // ── Rendering ───────────────────────────────────────────────────────────
+  function fmt(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0')) + ':' + String(ss).padStart(2, '0');
+  }
+
+  function markup(variant) {
+    const left = secsLeft(), total = phaseLen() || 1;
+    const frac = Math.min(1, Math.max(0, left / total));
+    const offset = RING_C * (1 - frac);
+    const danger = S.phase === 'work' && left <= 60 && left > 0;
+    const dots = Array.from({ length: 4 }, (_, i) =>
+      '<span class="slt-dot' + (i < (S.round % 4 || (S.round && 4)) ? ' on' : '') + '"></span>').join('');
+    const mins = focusedToday(), st = streakDays();
+
+    return '' +
+      '<div class="slt' + (S.phase === 'break' ? ' is-break' : '') + (danger ? ' is-danger' : '') + '">' +
+        '<div class="slt-ring-wrap">' +
+          '<svg class="slt-ring" viewBox="0 0 80 80" aria-hidden="true">' +
+            '<circle class="slt-track" cx="40" cy="40" r="36"></circle>' +
+            '<circle class="slt-prog" cx="40" cy="40" r="36" stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"></circle>' +
+          '</svg>' +
+          '<div class="slt-centre">' +
+            '<div class="slt-time">' + fmt(left) + '</div>' +
+            '<div class="slt-phase">' + (S.phase === 'work' ? 'Focus' : 'Break') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="slt-dots" title="' + S.round + ' focus blocks completed">' + dots + '</div>' +
+        '<div class="slt-btns">' +
+          '<button class="slt-btn slt-go" onclick="sltToggle()">' + (S.running ? 'Pause' : (left < total ? 'Resume' : 'Start')) + '</button>' +
+          '<button class="slt-btn slt-rst" onclick="sltReset()" title="Reset this block">↺</button>' +
+          '<button class="slt-btn slt-rst" onclick="sltSkip()" title="Skip to ' + (S.phase === 'work' ? 'break' : 'focus') + '">⇥</button>' +
+        '</div>' +
+        '<div class="slt-presets">' +
+          [[15, 3], [25, 5], [45, 10], [50, 10]].map(pair =>
+            '<button class="slt-preset' + (S.workMins === pair[0] ? ' active' : '') + '" onclick="sltPreset(' + pair[0] + ',' + pair[1] + ')">' + pair[0] + '/' + pair[1] + '</button>'
+          ).join('') +
+        '</div>' +
+        '<div class="slt-stat">' +
+          '<strong>' + mins + 'm</strong> focused today' +
+          (st > 1 ? ' · <strong>' + st + '</strong> day streak' : '') +
+        '</div>' +
+      '</div>';
+  }
+
+  function render() {
+    document.querySelectorAll('[data-slt-mount]').forEach(el => {
+      el.innerHTML = markup(el.getAttribute('data-slt-mount'));
+    });
+    const pill = document.getElementById('sltNavPill');
+    if (pill) {
+      const left = secsLeft();
+      pill.classList.toggle('live', S.running);
+      pill.classList.toggle('is-break', S.phase === 'break');
+      pill.innerHTML = S.running
+        ? '<span class="slt-pill-dot"></span>' + fmt(left)
+        : '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>';
+      pill.title = S.running ? fmt(left) + ' left — ' + (S.phase === 'work' ? 'focus' : 'break') : 'Focus timer';
+    }
+    document.title = S.running ? fmt(secsLeft()) + ' · ' + (S.phase === 'work' ? 'Focus' : 'Break') : _baseTitle;
+  }
+
+  // ── Public controls ─────────────────────────────────────────────────────
+  window.sltToggle = function () {
+    if (S.running) {
+      S.remaining = secsLeft();
+      S.running = false; S.endsAt = 0; _lastCredit = 0;
+    } else {
+      if (S.remaining <= 0) S.remaining = phaseLen();
+      S.running = true;
+      S.endsAt = Date.now() + S.remaining * 1000;
+      _lastCredit = Date.now();
+      ensureLoop();
+    }
+    save(); render();
   };
-  window.wzTimerReset = function() { _stop(_total); };
-  window.wzTimerPreset = function(el, mins) {
-    document.querySelectorAll('.wz-timer-preset').forEach(function(b){ b.classList.remove('active'); });
-    if (el) el.classList.add('active');
-    _stop(mins * 60);
+  window.sltReset = function () {
+    S.running = false; S.endsAt = 0; _lastCredit = 0;
+    S.remaining = phaseLen();
+    save(); render();
   };
-  window.wzTimerCustom = function() {
-    var m = parseInt(document.getElementById('wzTMins')?.value) || 0;
-    var s = parseInt(document.getElementById('wzTSecs')?.value) || 0;
-    var total = m * 60 + s;
-    if (!total) return;
-    document.querySelectorAll('.wz-timer-preset').forEach(function(b){ b.classList.remove('active'); });
-    _stop(total);
-    var mi = document.getElementById('wzTMins'), si = document.getElementById('wzTSecs');
-    if (mi) mi.value = ''; if (si) si.value = '';
+  window.sltSkip = function () {
+    S.running = false; S.endsAt = 0; _lastCredit = 0;
+    S.phase = S.phase === 'work' ? 'break' : 'work';
+    S.remaining = phaseLen();
+    save(); render();
   };
-  window.wzTimerRefresh = function(){ _updateUI(); };
-  setTimeout(function(){ _updateUI(); }, 0);
+  window.sltPreset = function (work, brk) {
+    S.workMins = clamp(work, 1, 240);
+    S.breakMins = clamp(brk, 1, 60);
+    S.running = false; S.endsAt = 0; _lastCredit = 0;
+    S.phase = 'work'; S.remaining = phaseLen();
+    save(); render();
+  };
+  // The floating widget's only way in and out.
+  window.toggleTimer = function () {
+    const w = document.getElementById('timerWidget');
+    if (w) w.classList.toggle('open');
+    render();
+  };
+  // Kept because the workspace sidebar is rebuilt from a template string and
+  // calls this after re-inserting its mount point.
+  window.wzTimerRefresh = function () { render(); };
+  window.sltFocusedToday = focusedToday;
+  window.sltStreak = streakDays;
+  window.sltState = function () { return Object.assign({}, S, { left: secsLeft() }); };
+
+  // ── Start ───────────────────────────────────────────────────────────────
+  load();
+  if (S.running) {
+    // Returning to a timer that was left running: settle up against the clock
+    // before showing anything, so the first frame is already correct.
+    _lastCredit = Date.now();
+    if (Date.now() >= S.endsAt) { completePhase(); }
+  }
+  ensureLoop();
+  // A tab coming back to the foreground has usually missed many ticks.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') tick();
+  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+  else setTimeout(render, 0);
 })();
 
 // ---- Quick Notes ----
@@ -8628,36 +8751,10 @@ document.addEventListener('fullscreenchange', function() {
 
 <div class="timer-widget" id="timerWidget">
   <div class="timer-w-header">
-    <div class="timer-w-label">⏱ Timer</div>
+    <div class="timer-w-label">⏱ Focus</div>
     <button class="timer-w-close" onclick="toggleTimer()">✕</button>
   </div>
-  <div class="timer-mode-tabs">
-    <button class="timer-mode-tab active" id="timerTabMin" onclick="timerSwitchMode('min')">Minutes</button>
-    <button class="timer-mode-tab" id="timerTabHr" onclick="timerSwitchMode('hr')">Hours</button>
-  </div>
-  <div class="timer-w-display" id="timerDisplay">25:00</div>
-  <div class="timer-w-prog"><div class="timer-w-prog-fill" id="timerFill"></div></div>
-  <div class="timer-w-controls">
-    <button class="timer-w-play" id="timerPlayBtn" onclick="timerToggle()">▶ Start</button>
-    <button class="timer-w-reset" onclick="timerReset()" title="Reset">↺</button>
-  </div>
-  <div class="timer-w-presets" id="timerPresets">
-    <div class="timer-w-preset" onclick="timerPreset(this,5)">5m</div>
-    <div class="timer-w-preset active" onclick="timerPreset(this,25)">25m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,45)">45m</div>
-    <div class="timer-w-preset" onclick="timerPreset(this,60)">60m</div>
-  </div>
-  <div class="timer-w-custom" id="timerCustomRow">
-    <span class="timer-w-custom-lbl">Custom:</span>
-    <span id="tHoursWrap" style="display:none;align-items:center;gap:3px">
-      <input class="timer-w-input" id="tHours" placeholder="hh" type="number" min="0" max="23">
-      <span class="timer-w-sep">:</span>
-    </span>
-    <input class="timer-w-input" id="tMins" placeholder="mm" type="number" min="0" max="59">
-    <span class="timer-w-sep">:</span>
-    <input class="timer-w-input" id="tSecs" placeholder="ss" type="number" min="0" max="59">
-    <button class="timer-w-set" onclick="timerCustom()">Set</button>
-  </div>
+  <div data-slt-mount="widget"></div>
 </div>
 
 <div class="wz-modal-overlay" id="addMethodModal" onclick="if(event.target===this)closeAddMethodModal()">
