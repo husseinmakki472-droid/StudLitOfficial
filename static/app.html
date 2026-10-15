@@ -2063,6 +2063,13 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
 .slt-preset{flex:1;background:none;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:5px 1px;font-family:var(--font-body);font-size:9.5px;font-weight:700;color:rgba(240,239,255,0.3);cursor:pointer;transition:all .15s}
 .slt-preset:hover{color:rgba(240,239,255,0.7);border-color:rgba(255,255,255,0.18)}
 .slt-preset.active{border-color:rgba(124,92,252,0.5);color:#b494ff;background:rgba(124,92,252,0.1)}
+.slt-custom{display:flex;align-items:center;gap:4px;width:100%}
+.slt-cin{flex:1;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#f0efff;text-align:center;outline:none;-moz-appearance:textfield}
+.slt-cin::-webkit-outer-spin-button,.slt-cin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.slt-cin:focus{border-color:rgba(124,92,252,0.55)}
+.slt-cx{font-size:11px;font-weight:700;color:rgba(240,239,255,0.25)}
+.slt-cset{background:rgba(124,92,252,0.18);color:#b494ff;border:1px solid rgba(124,92,252,0.28);border-radius:7px;padding:5px 10px;font-family:var(--font-body);font-size:10.5px;font-weight:800;cursor:pointer;transition:background .15s;white-space:nowrap}
+.slt-cset:hover{background:rgba(124,92,252,0.3)}
 .slt-stat{font-size:10.5px;font-weight:600;color:rgba(240,239,255,0.33);text-align:center;line-height:1.4}
 .slt-stat strong{color:rgba(240,239,255,0.62);font-weight:800}
 .slt-pill.live{width:auto;padding:0 12px;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;color:#b494ff;border-color:rgba(124,92,252,0.4);background:rgba(124,92,252,0.12)}
@@ -3724,6 +3731,9 @@ function buildLightInjectCSS(accent, a2, r, r2) {
       .slt-rst:hover { background: #f4f1ff !important; color: #0f0e1a !important; }
       .slt-preset { border: 1.5px solid rgba(0,0,0,0.14) !important; color: rgba(15,14,26,0.6) !important; }
       .slt-preset.active { border-color: #7c5cfc !important; color: #5b3fd4 !important; background: rgba(124,92,252,0.1) !important; }
+      .slt-cin { background: #fff !important; border: 1.5px solid rgba(0,0,0,0.14) !important; color: #0f0e1a !important; }
+      .slt-cx { color: rgba(15,14,26,0.35) !important; }
+      .slt-cset { background: rgba(124,92,252,0.12) !important; color: #5b3fd4 !important; border: 1.5px solid rgba(124,92,252,0.3) !important; }
       .slt-stat { color: rgba(15,14,26,0.5) !important; }
       .slt-stat strong { color: rgba(15,14,26,0.78) !important; }
       .slt-pill.live { color: #5b3fd4 !important; background: rgba(124,92,252,0.1) !important; border-color: rgba(124,92,252,0.35) !important; }
@@ -7925,6 +7935,7 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
   const STATE_KEY = 'sl-timer-v2';
   const LOG_KEY   = 'sl-focus-log';
   const RING_C    = 2 * Math.PI * 36;        // the ring's circumference
+  const PRESETS   = [[15, 3], [25, 5], [45, 10], [50, 10]];
 
   const S = {
     phase: 'work',        // 'work' | 'break'
@@ -7936,6 +7947,9 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
     round: 0,             // work phases completed in this run of sessions
   };
   let _iv = null, _lastCredit = 0, _baseTitle = document.title;
+  // Last values written into the custom inputs, so a paint can tell an
+  // external change apart from something the user is mid-way through typing.
+  const _synced = { w: null, b: null };
 
   // ── Persistence ─────────────────────────────────────────────────────────
   function save() {
@@ -7946,8 +7960,8 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
       const raw = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
       if (raw && typeof raw === 'object') Object.assign(S, raw);
     } catch (e) {}
-    S.workMins = clamp(S.workMins, 1, 240);
-    S.breakMins = clamp(S.breakMins, 1, 60);
+    S.workMins = clamp(S.workMins, 1, 600);
+    S.breakMins = clamp(S.breakMins, 1, 120);
     if (!Number.isFinite(S.remaining)) S.remaining = S.workMins * 60;
   }
   function clamp(n, lo, hi) { n = parseInt(n, 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo; }
@@ -8073,49 +8087,98 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
     return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0')) + ':' + String(ss).padStart(2, '0');
   }
 
-  function markup(variant) {
-    const left = secsLeft(), total = phaseLen() || 1;
-    const frac = Math.min(1, Math.max(0, left / total));
-    const offset = RING_C * (1 - frac);
-    const danger = S.phase === 'work' && left <= 60 && left > 0;
-    const dots = Array.from({ length: 4 }, (_, i) =>
-      '<span class="slt-dot' + (i < (S.round % 4 || (S.round && 4)) ? ' on' : '') + '"></span>').join('');
-    const mins = focusedToday(), st = streakDays();
+  function dotsHTML() {
+    const lit = S.round % 4 === 0 && S.round > 0 ? 4 : S.round % 4;
+    return Array.from({ length: 4 }, (_, i) =>
+      '<span class="slt-dot' + (i < lit ? ' on' : '') + '"></span>').join('');
+  }
+  function statHTML() {
+    const st = streakDays();
+    return '<strong>' + focusedToday() + 'm</strong> focused today' +
+           (st > 1 ? ' · <strong>' + st + '</strong> day streak' : '');
+  }
 
+  function skeleton() {
     return '' +
-      '<div class="slt' + (S.phase === 'break' ? ' is-break' : '') + (danger ? ' is-danger' : '') + '">' +
+      '<div class="slt">' +
         '<div class="slt-ring-wrap">' +
           '<svg class="slt-ring" viewBox="0 0 80 80" aria-hidden="true">' +
             '<circle class="slt-track" cx="40" cy="40" r="36"></circle>' +
-            '<circle class="slt-prog" cx="40" cy="40" r="36" stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"></circle>' +
+            '<circle class="slt-prog" cx="40" cy="40" r="36" stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="0"></circle>' +
           '</svg>' +
           '<div class="slt-centre">' +
-            '<div class="slt-time">' + fmt(left) + '</div>' +
-            '<div class="slt-phase">' + (S.phase === 'work' ? 'Focus' : 'Break') + '</div>' +
+            '<div class="slt-time">--:--</div>' +
+            '<div class="slt-phase">Focus</div>' +
           '</div>' +
         '</div>' +
-        '<div class="slt-dots" title="' + S.round + ' focus blocks completed">' + dots + '</div>' +
+        '<div class="slt-dots"></div>' +
         '<div class="slt-btns">' +
-          '<button class="slt-btn slt-go" onclick="sltToggle()">' + (S.running ? 'Pause' : (left < total ? 'Resume' : 'Start')) + '</button>' +
+          '<button class="slt-btn slt-go" onclick="sltToggle()">Start</button>' +
           '<button class="slt-btn slt-rst" onclick="sltReset()" title="Reset this block">↺</button>' +
-          '<button class="slt-btn slt-rst" onclick="sltSkip()" title="Skip to ' + (S.phase === 'work' ? 'break' : 'focus') + '">⇥</button>' +
+          '<button class="slt-btn slt-rst slt-skip" onclick="sltSkip()" title="Skip ahead">⇥</button>' +
         '</div>' +
         '<div class="slt-presets">' +
-          [[15, 3], [25, 5], [45, 10], [50, 10]].map(pair =>
-            '<button class="slt-preset' + (S.workMins === pair[0] ? ' active' : '') + '" onclick="sltPreset(' + pair[0] + ',' + pair[1] + ')">' + pair[0] + '/' + pair[1] + '</button>'
-          ).join('') +
+          PRESETS.map(pr => '<button class="slt-preset" data-w="' + pr[0] + '" data-b="' + pr[1] + '" onclick="sltPreset(' + pr[0] + ',' + pr[1] + ')">' + pr[0] + '/' + pr[1] + '</button>').join('') +
         '</div>' +
-        '<div class="slt-stat">' +
-          '<strong>' + mins + 'm</strong> focused today' +
-          (st > 1 ? ' · <strong>' + st + '</strong> day streak' : '') +
+        '<div class="slt-custom">' +
+          '<input class="slt-cin slt-cw" type="number" min="1" max="600" inputmode="numeric" aria-label="Focus minutes" title="Focus minutes">' +
+          '<span class="slt-cx">/</span>' +
+          '<input class="slt-cin slt-cb" type="number" min="1" max="120" inputmode="numeric" aria-label="Break minutes" title="Break minutes">' +
+          '<button class="slt-cset" onclick="sltCustomFrom(this)">Set</button>' +
         '</div>' +
+        '<div class="slt-stat"></div>' +
       '</div>';
+  }
+
+  /* Updates the parts that change instead of rewriting the whole block every
+     half second. Rewriting was fine until the custom-minutes inputs arrived —
+     an innerHTML on every tick deletes whatever you are halfway through
+     typing, and moves the caret. */
+  function paint(root) {
+    const left = secsLeft(), total = phaseLen() || 1;
+    const el = root.querySelector('.slt');
+    if (!el) return;
+
+    el.classList.toggle('is-break', S.phase === 'break');
+    el.classList.toggle('is-danger', S.phase === 'work' && left <= 60 && left > 0);
+
+    const prog = el.querySelector('.slt-prog');
+    if (prog) prog.setAttribute('stroke-dashoffset', (RING_C * (1 - Math.min(1, Math.max(0, left / total)))).toFixed(2));
+
+    const t = el.querySelector('.slt-time'); if (t) t.textContent = fmt(left);
+    const ph = el.querySelector('.slt-phase'); if (ph) ph.textContent = S.phase === 'work' ? 'Focus' : 'Break';
+
+    const dots = el.querySelector('.slt-dots');
+    if (dots) { dots.innerHTML = dotsHTML(); dots.title = S.round + ' focus blocks completed'; }
+
+    const go = el.querySelector('.slt-go');
+    if (go) go.textContent = S.running ? 'Pause' : (left < total ? 'Resume' : 'Start');
+    const sk = el.querySelector('.slt-skip');
+    if (sk) sk.title = 'Skip to ' + (S.phase === 'work' ? 'break' : 'focus');
+
+    el.querySelectorAll('.slt-preset').forEach(b => {
+      b.classList.toggle('active',
+        parseInt(b.dataset.w, 10) === S.workMins && parseInt(b.dataset.b, 10) === S.breakMins);
+    });
+
+    // Only write to the inputs when the state behind them actually changed —
+    // a preset press or a Set. Syncing on every paint instead looked fine
+    // while an input had focus and then quietly reverted it the moment focus
+    // moved to the next field, so typing 90 and tabbing across lost the 90.
+    const cw = el.querySelector('.slt-cw'), cb = el.querySelector('.slt-cb');
+    if (cw && (_synced.w !== S.workMins || cw.value === '')) cw.value = S.workMins;
+    if (cb && (_synced.b !== S.breakMins || cb.value === '')) cb.value = S.breakMins;
+
+    const stat = el.querySelector('.slt-stat');
+    if (stat) stat.innerHTML = statHTML();
   }
 
   function render() {
     document.querySelectorAll('[data-slt-mount]').forEach(el => {
-      el.innerHTML = markup(el.getAttribute('data-slt-mount'));
+      if (!el.querySelector('.slt')) el.innerHTML = skeleton();
+      paint(el);
     });
+    _synced.w = S.workMins; _synced.b = S.breakMins;
     const pill = document.getElementById('sltNavPill');
     if (pill) {
       const left = secsLeft();
@@ -8154,9 +8217,23 @@ function wzChatKeydown2(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault(
     S.remaining = phaseLen();
     save(); render();
   };
+  window.sltCustomFrom = function (btn) {
+    const row = btn && btn.closest ? btn.closest('.slt-custom') : null;
+    if (!row) return;
+    const w = parseInt(row.querySelector('.slt-cw').value, 10);
+    const b = parseInt(row.querySelector('.slt-cb').value, 10);
+    if (!Number.isFinite(w) || w < 1) {
+      if (typeof showInfoToast === 'function') showInfoToast('Enter how many minutes to focus for.');
+      return;
+    }
+    sltPreset(w, Number.isFinite(b) && b >= 1 ? b : S.breakMins);
+    if (typeof showInfoToast === 'function') {
+      showInfoToast('Set to ' + S.workMins + ' min focus · ' + S.breakMins + ' min break.');
+    }
+  };
   window.sltPreset = function (work, brk) {
-    S.workMins = clamp(work, 1, 240);
-    S.breakMins = clamp(brk, 1, 60);
+    S.workMins = clamp(work, 1, 600);
+    S.breakMins = clamp(brk, 1, 120);
     S.running = false; S.endsAt = 0; _lastCredit = 0;
     S.phase = 'work'; S.remaining = phaseLen();
     save(); render();
