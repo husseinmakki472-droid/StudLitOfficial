@@ -3115,19 +3115,24 @@ body.light-mode .sl-user-info,[data-theme=”light”] .sl-user-info{border-top-
       <div class="sl-auth-sub" id="authSub">Sign in to pick up where you left off.</div>
     </div>
     <form class="sl-auth-form" onsubmit="slSubmitAuth(event)">
-      <label class="sl-auth-label" for="authEmail">Email</label>
+      <label class="sl-auth-label" id="authEmailLabel" for="authEmail">Email</label>
       <input class="new-set-input sl-auth-input" id="authEmail" type="email"
              autocomplete="email" placeholder="you@school.edu" required>
 
-      <label class="sl-auth-label" for="authPassword">Password</label>
+      <label class="sl-auth-label" id="authPasswordLabel" for="authPassword">Password</label>
       <input class="new-set-input sl-auth-input" id="authPassword" type="password"
              autocomplete="current-password" placeholder="At least 8 characters" required>
+
+      <label class="sl-auth-label" id="authPassword2Label" for="authPassword2"
+             style="display:none">Confirm new password</label>
+      <input class="new-set-input sl-auth-input" id="authPassword2" type="password"
+             autocomplete="new-password" placeholder="Type it again" style="display:none">
 
       <div class="sl-auth-msg" id="authMsg" role="alert"></div>
 
       <button class="btn-primary" id="authSubmit" type="submit" style="width:100%;margin-top:4px">Sign in</button>
     </form>
-    <div class="sl-auth-alt">
+    <div class="sl-auth-alt" id="authForgotRow">
       <button type="button" class="sl-link-btn" onclick="slForgotPassword()">Forgot your password?</button>
     </div>
     <div class="sl-auth-alt" id="authToggleText">
@@ -3252,6 +3257,11 @@ async function slAuthInit() {
     return;
   }
 
+  /* Read the address bar before createClient, because detectSessionInUrl
+     consumes the fragment on the way past. */
+  const fromLink = slLooksLikeRecovery();
+  const linkErr = fromLink ? '' : slLinkError();
+
   slAuth.client = lib.createClient(slAuth.cfg.supabaseUrl, slAuth.cfg.supabaseAnonKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
   });
@@ -3261,12 +3271,20 @@ async function slAuthInit() {
     slAuth.session = data ? data.session : null;
   } catch (e) { slAuth.session = null; }
 
-  slAuth.client.auth.onAuthStateChange(function (_evt, session) {
+  slAuth.client.auth.onAuthStateChange(function (evt, session) {
     slAuth.session = session;
+    if (evt === 'PASSWORD_RECOVERY') slBeginRecovery();
     slRefreshMe();
   });
 
   await slRefreshMe();
+  if (fromLink) {
+    slBeginRecovery();
+  } else if (linkErr) {
+    slStripAuthParams();
+    slOpenAuth('signin');
+    slAuthMsg(linkErr);
+  }
   slHandleCheckoutReturn();
 }
 
@@ -3359,22 +3377,97 @@ function slRenderAuth() {
   if (emailRow) emailRow.textContent = signedIn ? me.email : '—';
 }
 
+/* ── Password recovery ────────────────────────────────────────────────────
+   The reset email lands back on this page carrying a one-time credential,
+   and Supabase turns it into a session. That used to be the entire flow:
+   the link quietly signed you in, nothing ever asked for a new password, so
+   the old one still stood and you were locked out again on the next visit.
+   A reset that does not reset is worse than none — it looks like it worked.
+
+   Two signals, because which one arrives depends on the project's flow
+   setting: the implicit flow puts `type=recovery` in the URL fragment, while
+   PKCE puts a `code` in the query string and announces itself only through
+   the PASSWORD_RECOVERY event. Either is enough, and slBeginRecovery is
+   idempotent so both firing is harmless. */
+let slRecoveryPending = false;
+
+function slAuthUrlBits() {
+  return (window.location.hash || '') + '&' + (window.location.search || '');
+}
+
+function slLooksLikeRecovery() {
+  return /[#&?]type=recovery(&|$)/.test(slAuthUrlBits());
+}
+
+/* A link that has expired or been used already does not come back as a
+   recovery at all — Supabase bounces to `#error=access_denied&
+   error_code=otp_expired`. Without this the student lands on an ordinary
+   page with no hint that the link they just tapped was the problem. */
+function slLinkError() {
+  const where = slAuthUrlBits();
+  if (!/[#&?]error(_code|_description)?=/.test(where)) return '';
+  if (/expired/.test(where)) return 'That link has expired. Enter your email and request a new one.';
+  if (/access_denied/.test(where)) return 'That link is no longer valid. Enter your email and request a new one.';
+  return 'That link did not work. Enter your email and request a new one.';
+}
+
+/* The credential is spent the moment Supabase exchanges it, so take it out
+   of the address bar: it otherwise sits in history, in screenshots, and in
+   the Referer of the next outbound request. Only the auth parameters go — a
+   checkout return can share this URL, and slHandleCheckoutReturn still needs
+   to read its own. */
+function slStripAuthParams() {
+  try {
+    const u = new URL(window.location.href);
+    u.hash = '';
+    ['code', 'type', 'token_hash', 'access_token', 'refresh_token',
+     'error', 'error_code', 'error_description'].forEach(k => u.searchParams.delete(k));
+    history.replaceState(null, '', u.pathname + u.search);
+  } catch (e) {}
+}
+
+function slBeginRecovery() {
+  if (slRecoveryPending) return;
+  slRecoveryPending = true;
+  slStripAuthParams();
+  slOpenAuth('recover');
+}
+
+function slFinishRecovery() {
+  slRecoveryPending = false;
+  slAuthMode = 'signin';   // so the form is back to normal if reopened
+  ['authPassword', 'authPassword2'].forEach(function (id) {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
 /* ── Sign in / sign up ────────────────────────────────────────────────────*/
 let slAuthMode = 'signin';
 
 function slOpenAuth(mode) {
-  slAuthMode = mode === 'signup' ? 'signup' : 'signin';
+  /* A half-finished recovery outranks whatever the caller asked for. Until a
+     new password is set, signing in with the old one is the one thing that
+     will not work, so offering that form would send them in a circle. */
+  slAuthMode = slRecoveryPending ? 'recover' : (mode === 'signup' ? 'signup' : 'signin');
   const m = document.getElementById('authModal');
   if (!m) return;
   slAuthMsg('');
   slSyncAuthMode();
   m.classList.add('open');
-  setTimeout(function () { const e = document.getElementById('authEmail'); if (e) e.focus(); }, 120);
+  setTimeout(function () {
+    const e = document.getElementById(slAuthMode === 'recover' ? 'authPassword' : 'authEmail');
+    if (e) e.focus();
+  }, 120);
 }
 
 function slCloseAuth() {
   const m = document.getElementById('authModal');
   if (m) m.classList.remove('open');
+  // Dismissing the form mid-recovery leaves the old password in force. Say so,
+  // or the next sign-in failure looks like the reset link was the broken part.
+  if (slRecoveryPending && typeof showInfoToast === 'function') {
+    showInfoToast('Password not changed yet — tap Sign in to finish.');
+  }
 }
 
 function slAuthOutside(e) {
@@ -3382,6 +3475,7 @@ function slAuthOutside(e) {
 }
 
 function slToggleAuthMode() {
+  if (slAuthMode === 'recover') return;   // nothing to toggle to mid-reset
   slAuthMode = slAuthMode === 'signin' ? 'signup' : 'signin';
   slAuthMsg('');
   slSyncAuthMode();
@@ -3389,18 +3483,52 @@ function slToggleAuthMode() {
 
 function slSyncAuthMode() {
   const isUp = slAuthMode === 'signup';
+  const isRec = slAuthMode === 'recover';
   const t = document.getElementById('authTitle');
   const s = document.getElementById('authSub');
   const b = document.getElementById('authSubmit');
   const alt = document.getElementById('authToggleText');
-  if (t) t.textContent = isUp ? 'Create your account' : 'Welcome back';
-  if (s) s.textContent = isUp
-    ? 'Your study sets stay with your account, on every device.'
-    : 'Sign in to pick up where you left off.';
-  if (b) b.textContent = isUp ? 'Create account' : 'Sign in';
-  if (alt) alt.innerHTML = isUp
-    ? 'Already have an account? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Sign in</button>'
-    : 'New to StudLit? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Create an account</button>';
+  if (t) t.textContent = isRec ? 'Choose a new password'
+    : (isUp ? 'Create your account' : 'Welcome back');
+  if (s) s.textContent = isRec
+    ? 'Your reset link checked out. Pick a new password and you are back in.'
+    : (isUp ? 'Your study sets stay with your account, on every device.'
+            : 'Sign in to pick up where you left off.');
+  if (b) b.textContent = isRec ? 'Update password' : (isUp ? 'Create account' : 'Sign in');
+  if (alt) {
+    alt.style.display = isRec ? 'none' : '';
+    if (!isRec) alt.innerHTML = isUp
+      ? 'Already have an account? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Sign in</button>'
+      : 'New to StudLit? <button type="button" class="sl-link-btn" onclick="slToggleAuthMode()">Create an account</button>';
+  }
+
+  /* The email field goes away during recovery — the link already said who
+     this is. `required` has to come off with it: a hidden required input
+     blocks submit in every browser and cannot be focused to explain why,
+     so the form would simply stop responding. */
+  const emailLbl = document.getElementById('authEmailLabel');
+  const email = document.getElementById('authEmail');
+  if (emailLbl) emailLbl.style.display = isRec ? 'none' : '';
+  if (email) { email.style.display = isRec ? 'none' : ''; email.required = !isRec; }
+
+  const pwLbl = document.getElementById('authPasswordLabel');
+  const pw = document.getElementById('authPassword');
+  if (pwLbl) pwLbl.textContent = isRec ? 'New password' : 'Password';
+  // Telling the password manager which it is stops it offering the old
+  // password as a suggestion for the new one.
+  if (pw) pw.setAttribute('autocomplete', (isUp || isRec) ? 'new-password' : 'current-password');
+
+  const pw2Lbl = document.getElementById('authPassword2Label');
+  const pw2 = document.getElementById('authPassword2');
+  if (pw2Lbl) pw2Lbl.style.display = isRec ? '' : 'none';
+  if (pw2) {
+    pw2.style.display = isRec ? '' : 'none';
+    pw2.required = isRec;
+    if (!isRec) pw2.value = '';
+  }
+
+  const forgot = document.getElementById('authForgotRow');
+  if (forgot) forgot.style.display = isRec ? 'none' : '';
 }
 
 function slAuthMsg(text, kind) {
@@ -3417,9 +3545,19 @@ async function slSubmitAuth(e) {
 
   const email = (document.getElementById('authEmail') || {}).value || '';
   const password = (document.getElementById('authPassword') || {}).value || '';
-  if (!email.trim() || !password) { slAuthMsg('Enter your email and a password.'); return; }
-  if (slAuthMode === 'signup' && password.length < 8) {
-    slAuthMsg('Use at least 8 characters for your password.'); return;
+  const confirm = (document.getElementById('authPassword2') || {}).value || '';
+  const isRec = slAuthMode === 'recover';
+
+  // Recovery asks for no email: the link identified them already.
+  if (isRec) {
+    if (!password) { slAuthMsg('Enter a new password.'); return; }
+    if (password.length < 8) { slAuthMsg('Use at least 8 characters for your new password.'); return; }
+    if (password !== confirm) { slAuthMsg('Those two passwords do not match.'); return; }
+  } else {
+    if (!email.trim() || !password) { slAuthMsg('Enter your email and a password.'); return; }
+    if (slAuthMode === 'signup' && password.length < 8) {
+      slAuthMsg('Use at least 8 characters for your password.'); return;
+    }
   }
 
   const btn = document.getElementById('authSubmit');
@@ -3427,6 +3565,27 @@ async function slSubmitAuth(e) {
   slAuthMsg('');
 
   try {
+    if (isRec) {
+      /* No session means the recovery link was expired, already used, or
+         opened in a different browser than it was requested from. Supabase
+         answers that with "Auth session missing!", which tells the student
+         nothing they can act on — so send them back for a fresh link. */
+      if (!slAuth.signedIn()) {
+        slRecoveryPending = false;
+        slAuthMode = 'signin';
+        slSyncAuthMode();
+        slAuthMsg('That reset link has expired. Enter your email and request a new one.');
+        return;
+      }
+      const { error } = await slAuth.client.auth.updateUser({ password: password });
+      if (error) throw error;
+      slFinishRecovery();
+      await slRefreshMe();
+      slCloseAuth();
+      if (typeof showInfoToast === 'function') showInfoToast('Password updated — you are signed in.');
+      return;
+    }
+
     if (slAuthMode === 'signup') {
       const { data, error } = await slAuth.client.auth.signUp({
         email: email.trim(), password: password,
